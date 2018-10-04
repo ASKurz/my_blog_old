@@ -22,7 +22,7 @@ header:
 
 ## tl;dr
 
-I just self-published a book-length version of my project [*Statistical Rethinking* with brms, ggplot2, and the tidyverse](https://bookdown.org/connect/#/apps/1850/access. By using Yihui Xie’s [bookdown package](https://bookdown.org), I was able to do that for free. If you’ve never heard of it, bookdown enables [R](https://bookdown.org/rdpeng/rprogdatascience/history-and-overview-of-r.html#what-is-r) users to write books and other long-form articles with [R Markdown](https://rmarkdown.rstudio.com). You can save your bookdown products in a variety of formats (e.g., PDF, HTML) and publish them in several ways, too. The purpose of this post is to give readers a sense of how I used bookdown to make my project. I propose there are three fundamental skill sets you need basic fluency in before playing with bookdown. Those three are
+I just self-published a book-length version of my project [*Statistical Rethinking* with brms, ggplot2, and the tidyverse](https://bookdown.org/connect/#/apps/1850/access). By using Yihui Xie’s [bookdown package](https://bookdown.org), I was able to do that for free. If you’ve never heard of it, bookdown enables [R](https://bookdown.org/rdpeng/rprogdatascience/history-and-overview-of-r.html#what-is-r) users to write books and other long-form articles with [R Markdown](https://rmarkdown.rstudio.com). You can save your bookdown products in a variety of formats (e.g., PDF, HTML) and publish them in several ways, too. The purpose of this post is to give readers a sense of how I used bookdown to make my project. I propose there are three fundamental skill sets you need basic fluency in before playing with bookdown. Those three are
 
 * R and R Studio,
 * Scripts and R Markdown files, and
