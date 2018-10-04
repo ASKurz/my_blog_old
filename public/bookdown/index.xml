@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Book-length projects on A. Solomon Kurz</title>
+    <link>/bookdown/</link>
+    <description>Recent content in Book-length projects on A. Solomon Kurz</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>&amp;copy; 2018</copyright>
+    <lastBuildDate>Wed, 20 Apr 2016 00:00:00 -0500</lastBuildDate>
+    
+	<atom:link href="/bookdown/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Book-length projects</title>
+      <link>/bookdown/deep-learning/</link>
+      <pubDate>Wed, 20 Apr 2016 00:00:00 -0500</pubDate>
+      
+      <guid>/bookdown/deep-learning/</guid>
+      <description>Statistical Rethinking with brms, ggplot2, and the tidyverse I love Richard McElreath’s Statistical Rethinking. It&amp;rsquo;s the introductory textbook to Bayesian statistics I looked a couple years, for. However, I&amp;rsquo;ve come to prefer using Paul Bürkner’s brms package when doing Bayesian regression in R. So, this project is an attempt to re-express the code in McElreath’s textbook. All the models are re-fit in brms. In addition, I also show how to wrangle the data in the tidyverse style and make the plots with ggplot2.</description>
+    </item>
+    
+  </channel>
+</rss>
