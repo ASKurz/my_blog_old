@@ -7,7 +7,7 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Sun, 30 Sep 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 04 Oct 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/tidyerse/index.xml" rel="self" type="application/rss+xml" />
     
@@ -15,7 +15,7 @@
     <item>
       <title>bookdown, My Process</title>
       <link>/post/how-bookdown/</link>
-      <pubDate>Sun, 30 Sep 2018 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 04 Oct 2018 00:00:00 +0000</pubDate>
       
       <guid>/post/how-bookdown/</guid>
       <description>tl;dr I just self-published a book-length version of my project Statistical Rethinking with brms, ggplot2, and the tidyverse. I was able to do that for free with Yihui Xie’s bookdown package, which allows R users to write books and other long-form articles with R Markdown. You can save the product in a variety of formats (e.g., PDF, HTML) and publish in any number of ways, too. The purpose of this post is to give readers a sense of how I used bookdown to make my project.</description>
