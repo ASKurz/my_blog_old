@@ -11,24 +11,6 @@
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
-      <title>Book-length projects</title>
-      <link>/bookdown/deep-learning/</link>
-      <pubDate>Wed, 20 Apr 2016 00:00:00 -0500</pubDate>
-      
-      <guid>/bookdown/deep-learning/</guid>
-      <description>
-
-&lt;h2 id=&#34;statistical-rethinking-with-brms-ggplot2-and-the-tidyverse-https-bookdown-org-connect-apps-1850-access&#34;&gt;&lt;a href=&#34;https://bookdown.org/connect/#/apps/1850/access&#34; target=&#34;_blank&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt; with brms, ggplot2, and the tidyverse&lt;/a&gt;&lt;/h2&gt;
-
-&lt;p&gt;I love Richard McElreath’s &lt;a href=&#34;http://xcelab.net/rm/statistical-rethinking/&#34; target=&#34;_blank&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt;&lt;/a&gt;. It&amp;rsquo;s the introductory textbook to Bayesian statistics I looked a couple years, for. However, I&amp;rsquo;ve come to prefer using Paul Bürkner’s &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34; target=&#34;_blank&#34;&gt;brms package&lt;/a&gt; when doing Bayesian regression in &lt;a href=&#34;https://bookdown.org/rdpeng/rprogdatascience/history-and-overview-of-r.html&#34; target=&#34;_blank&#34;&gt;R&lt;/a&gt;. So, this project is an attempt to re-express the code in McElreath’s textbook. All the models are re-fit in brms. In addition, I also show how to wrangle the data in the &lt;a href=&#34;https://www.tidyverse.org&#34; target=&#34;_blank&#34;&gt;tidyverse&lt;/a&gt; style and make the plots with &lt;a href=&#34;https://ggplot2.tidyverse.org&#34; target=&#34;_blank&#34;&gt;ggplot2&lt;/a&gt;.&lt;/p&gt;
-
-&lt;h2 id=&#34;recoding-introduction-to-mediation-moderation-and-conditional-process-analysis-https-bookdown-org-connect-apps-1523-access&#34;&gt;&lt;a href=&#34;https://bookdown.org/connect/#/apps/1523/access&#34; target=&#34;_blank&#34;&gt;recoding &lt;em&gt;Introduction to Mediation, Moderation, and Conditional Process Analysis&lt;/em&gt;&lt;/a&gt;&lt;/h2&gt;
-
-&lt;p&gt;Andrew Hayes’s &lt;em&gt;Introduction to Mediation, Moderation, and Conditional Process Analysis&lt;/em&gt;, &lt;a href=&#34;http://afhayes.com/introduction-to-mediation-moderation-and-conditional-process-analysis.html&#34; target=&#34;_blank&#34;&gt;the second edition of which just came out&lt;/a&gt;, has become a staple in social science graduate education. Both editions of his text have been from a &lt;a href=&#34;https://en.wikipedia.org/wiki/Frequentist_inference&#34; target=&#34;_blank&#34;&gt;frequentist&lt;/a&gt; &lt;a href=&#34;https://en.wikipedia.org/wiki/Ordinary_least_squares&#34; target=&#34;_blank&#34;&gt;OLS&lt;/a&gt; perspective. This project is an effort to connect his work with the Bayesian paradigm. Herein I refit his models with my favorite &lt;a href=&#34;https://bookdown.org/rdpeng/rprogdatascience/history-and-overview-of-r.html&#34; target=&#34;_blank&#34;&gt;R&lt;/a&gt; package for Bayesian regression, Bürkner’s &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34; target=&#34;_blank&#34;&gt;brms&lt;/a&gt;. I also show how to wrangle the data in the &lt;a href=&#34;https://www.tidyverse.org&#34; target=&#34;_blank&#34;&gt;tidyverse&lt;/a&gt; style and make the plots with &lt;a href=&#34;https://ggplot2.tidyverse.org&#34; target=&#34;_blank&#34;&gt;ggplot2&lt;/a&gt;.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
       <title>Example Page</title>
       <link>/tutorial/example/</link>
       <pubDate>Sun, 09 Sep 2018 00:00:00 -0500</pubDate>
