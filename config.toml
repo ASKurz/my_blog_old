@@ -348,3 +348,6 @@ enableGitInfo = false
 #    name = "Wo"
 #    url = "#about"
 #    weight = 1
+
+[context.production.environment]
+  HUGO_VERSION = "0.49"
