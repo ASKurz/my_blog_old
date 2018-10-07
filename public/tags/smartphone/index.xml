@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Posts on A. Solomon Kurz</title>
-    <link>/post/</link>
-    <description>Recent content in Posts on A. Solomon Kurz</description>
+    <title>smartphone on A. Solomon Kurz</title>
+    <link>/tags/smartphone/</link>
+    <description>Recent content in smartphone on A. Solomon Kurz</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Sun, 01 Jan 2017 00:00:00 -0600</lastBuildDate>
+    <lastBuildDate>Sun, 07 Oct 2018 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="/post/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/tags/smartphone/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -22,15 +22,6 @@
 {{&amp;lt; tweet 1048730683940646914 &amp;gt;}}
 The whole thing was lovely. And it reminded me to pass on some advice: Stop using fee-based meditation apps!
 Headspace is popular and highly-rated. It’s free to download and has some nice features, like reminders to meditate.</description>
-    </item>
-    
-    <item>
-      <title>bookdown, My Process</title>
-      <link>/post/how-bookdown/</link>
-      <pubDate>Thu, 04 Oct 2018 00:00:00 +0000</pubDate>
-      
-      <guid>/post/how-bookdown/</guid>
-      <description>tl;dr I just self-published a book-length version of my project Statistical Rethinking with brms, ggplot2, and the tidyverse. By using Yihui Xie’s bookdown package, I was able to do it for free. If you’ve never heard of it, bookdown enables R users to write books and other long-form articles with R Markdown. You can save your bookdown products in a variety of formats (e.g., PDF, HTML) and publish them in several ways, too.</description>
     </item>
     
   </channel>
