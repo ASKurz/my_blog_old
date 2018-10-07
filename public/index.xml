@@ -17,64 +17,11 @@
       
       <guid>/post/how-bookdown/</guid>
       <description>&lt;p&gt;The other day, my Twitter feed informed me Penn Jilette just clocked in 1000 consecutive days of meditation using the Headspace app. Now he’s considering checking out Sam Harris’s new Waking Up meditation app. Sam left a congratulatory comment on Penn’s tweet.&lt;/p&gt;
-&lt;p&gt;{{&amp;lt; tweet 1048730683940646914 &amp;gt;}}&lt;/p&gt;
-&lt;p&gt;The whole thing was lovely. And it reminded me to pass on some advice: Stop using fee-based meditation apps!&lt;/p&gt;
-&lt;p&gt;Headspace is popular and highly-rated. It’s free to download and has some nice features, like reminders to meditate. However, if you want full access to its library of guided meditation audio recordings, you’ll need to pay a fee at a monthly, yearly, or lifetime rate.&lt;/p&gt;
-&lt;p&gt;The new Waking Up with Sam Harris app is also&lt;/p&gt;
-&lt;div id=&#34;consider-insight-timer&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Consider &lt;a href=&#34;https://insighttimer.com&#34;&gt;Insight Timer&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&#34;https://insighttimer.com&#34;&gt;Insight Timer&lt;/a&gt; comes with a free and pay versions. Just download the free version. It’s excellent and all you need for your meditation needs. Here’s why.&lt;/p&gt;
-&lt;div id=&#34;the-library-is-extensive.&#34; class=&#34;section level3&#34;&gt;
-&lt;h3&gt;The library is extensive.&lt;/h3&gt;
-&lt;p&gt;At the time of this writing, my free subscription to Insight Timer gives me access to some 12,000 guided meditation audios. Most of them are in English. But many are offered in other languages, such as Hebrew, Malay, and Spanish.&lt;/p&gt;
-&lt;div id=&#34;duration.&#34; class=&#34;section level4&#34;&gt;
-&lt;h4&gt;Duration.&lt;/h4&gt;
-&lt;p&gt;The durations vary. The bulk of the guided meditations seem to be in the 5-to-20-minute range. But some last more than an hour.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;people-and-their-voices.&#34; class=&#34;section level4&#34;&gt;
-&lt;h4&gt;People and their voices.&lt;/h4&gt;
-&lt;p&gt;Their deep library boasts an impressive cast of meditation leaders. I was happy to see some familiar high-profile meditation teachers, such as Tara Brach and Joseph Goldstein. But I’ve new favorites, like Stephen Pende Wormland and Dawn Mauricio. To be sure, the quality of the audio recordings varies. But more importantly, they also vary in terms of vocal tone and pacing. There should be a vocal style to suit just about everyone.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;emphasis.&#34; class=&#34;section level4&#34;&gt;
-&lt;h4&gt;Emphasis.&lt;/h4&gt;
-&lt;p&gt;I’m an academic and generally prefer meditations that are secular and connected to the clinical literature. The Insight Timer library contains offerings based on mindfulness-based stress reduction (MBSR) and its derivatives (e.g., mindfulness-based cognitive therapy, mindfulness-based relapse prevention).&lt;/p&gt;
-&lt;p&gt;But you can also find meditations grounded within a number of faith traditions.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;music.&#34; class=&#34;section level4&#34;&gt;
-&lt;h4&gt;Music.&lt;/h4&gt;
-&lt;p&gt;I’ve focused mainly on vocally-driven meditations. However, Insight Timer also contains music/sound-based recordings. I’m partial to recordings featuring Tibetan singing bowls.&lt;/p&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;div id=&#34;its-a-timer-too.&#34; class=&#34;section level3&#34;&gt;
-&lt;h3&gt;It’s a timer, too.&lt;/h3&gt;
-&lt;p&gt;Sometimes you just want a silent meditation. For those occasions, Insight Timer offers a nice timer feature. You can set it like a stop watch to whatever duration you prefer, and choose among an array of sounds to mark the beginning and end of the sit.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;it-tracks.&#34; class=&#34;section level3&#34;&gt;
-&lt;h3&gt;It tracks.&lt;/h3&gt;
-&lt;p&gt;If you go to the Profile section of the app, you’ll discover it keeps track of your use and displays various summaries in attractive bar plots [Yes, I agree with McElreath: “The only problem with barplots is that they have bars” (p. 203, &lt;a href=&#34;https://bookdown.org/connect/#/apps/1850/access&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt;&lt;/a&gt;). You can’t have everything.]. Which leads me to my next point.&lt;/p&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;div id=&#34;insight-timer-is-great-for-researchers&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Insight Timer is great for researchers&lt;/h2&gt;
-&lt;p&gt;Insight Timer allows you to download your data as a CSV file, which you can keep for yourself or email to others. Over the years, I’ve used the app to run group meditations within my research protocols. Since I selected the audios from the app, it allowed me to standardize the instructions across meditation sessions. Although I or one of my research assistants used the app on our phones to play the audios, our participants would use the timer functions on the apps on their phones to record their sessions. This gave us duplicate attendance records: one on a sign-in sheet and another on their phones. In longitudinal studies, participants could use the app on their own time and each of those sessions were recorded in the app. At the study, we were then able to download their use records as CSV files ready for pre-analysis data wrangling.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;parting-thoughts&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Parting thoughts&lt;/h2&gt;
-&lt;p&gt;Insight Timer has other functions, such as social networking and dharma talks. I just don’t care about those things, so you can learn about them on your own. But if you’re interested in learning about meditation or even if you’re a veteran meditator looking for a convenient app to augment your practice with, do consider Insight Timer. There’s no reason to spend your money on the alternatives when this powerful of a resource is available to you for free.&lt;/p&gt;
-&lt;/div&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Don&#39;t pay to meditate</title>
-      <link>/post/how-bookdown/</link>
-      <pubDate>Sun, 07 Oct 2018 00:00:00 +0000</pubDate>
-      
-      <guid>/post/how-bookdown/</guid>
-      <description>&lt;p&gt;The other day, my Twitter feed informed me Penn Jilette just clocked in 1000 consecutive days of meditation using the Headspace app. Now he’s considering checking out Sam Harris’s new Waking Up meditation app. Sam left a congratulatory comment on Penn’s tweet.&lt;/p&gt;
-&lt;p&gt;{{&amp;lt; tweet 1048730683940646914 &amp;gt;}}&lt;/p&gt;
-&lt;p&gt;The whole thing was lovely. And it reminded me to pass on some advice: Stop using fee-based meditation apps!&lt;/p&gt;
-&lt;p&gt;Headspace is popular and highly-rated. It’s free to download and has some nice features, like reminders to meditate. However, if you want full access to its library of guided meditation audio recordings, you’ll need to pay a fee at a monthly, yearly, or lifetime rate.&lt;/p&gt;
+&lt;blockquote class=&#34;twitter-tweet&#34;&gt;&lt;p lang=&#34;en&#34; dir=&#34;ltr&#34;&gt;Well done, Penn! &lt;a href=&#34;https://t.co/SZkKocIPEH&#34;&gt;https://t.co/SZkKocIPEH&lt;/a&gt;&lt;/p&gt;&amp;mdash; Sam Harris (@SamHarrisOrg) &lt;a href=&#34;https://twitter.com/SamHarrisOrg/status/1048730683940646914?ref_src=twsrc%5Etfw&#34;&gt;October 7, 2018&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;
+
+&lt;p&gt;The whole thing was rainbows and kittens. And it reminded me to pass on some advice: &lt;strong&gt;Stop using fee-based meditation apps!&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://www.headspace.com/headspace-meditation-app&#34;&gt;Headspace&lt;/a&gt; is popular and highly-rated. It’s free to download and has some nice features, like reminders to meditate. However, if you want full access to its library of guided meditation audio recordings, you’ll need to pay a fee at a monthly, yearly, or lifetime rate.&lt;/p&gt;
 &lt;p&gt;The new Waking Up with Sam Harris app is also&lt;/p&gt;
 &lt;div id=&#34;consider-insight-timer&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Consider &lt;a href=&#34;https://insighttimer.com&#34;&gt;Insight Timer&lt;/a&gt;&lt;/h2&gt;

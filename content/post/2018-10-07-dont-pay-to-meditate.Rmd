@@ -17,11 +17,13 @@ header:
 
 The other day, my Twitter feed informed me Penn Jilette just clocked in 1000 consecutive days of meditation using the Headspace app. Now he’s considering checking out Sam Harris’s new Waking Up meditation app. Sam left a congratulatory comment on Penn’s tweet.
 
-{{< tweet 1048730683940646914 >}}
+```{r echo = FALSE}
+blogdown::shortcode('tweet', '1048730683940646914')
+```
 
-The whole thing was lovely. And it reminded me to pass on some advice: Stop using fee-based meditation apps!
+The whole thing was rainbows and kittens. And it reminded me to pass on some advice: **Stop using fee-based meditation apps!**
 
-Headspace is popular and highly-rated. It’s free to download and has some nice features, like reminders to meditate. However, if you want full access to its library of guided meditation audio recordings, you’ll need to pay a fee at a monthly, yearly, or lifetime rate. 
+[Headspace](https://www.headspace.com/headspace-meditation-app) is popular and highly-rated. It’s free to download and has some nice features, like reminders to meditate. However, if you want full access to its library of guided meditation audio recordings, you’ll need to pay a fee at a monthly, yearly, or lifetime rate. 
 
 The new Waking Up with Sam Harris app is also 
 
