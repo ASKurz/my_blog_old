@@ -30,8 +30,8 @@
 &lt;h3&gt;The library is extensive.&lt;/h3&gt;
 &lt;p&gt;At the time of this writing, my free subscription to Insight Timer gives me access to some 12,000 guided meditation audios. Most of them are in English. But many are offered in other languages, such as Hebrew, Malay, and Spanish.&lt;/p&gt;
 &lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/static/img/IT_languages.PNG&#34; /&gt;
-
+&lt;img src=&#34;static/img/IT_languages.jpg&#34; alt=&#34;my image&#34; /&gt;
+&lt;p class=&#34;caption&#34;&gt;my image&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;duration.&#34; class=&#34;section level4&#34;&gt;
 &lt;h4&gt;Duration.&lt;/h4&gt;
