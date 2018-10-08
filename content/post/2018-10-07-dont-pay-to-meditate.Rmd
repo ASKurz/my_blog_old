@@ -37,16 +37,15 @@ At the time of this writing, my free subscription to Insight Timer gives me acce
 
 ![](/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg){width=30%}
 
-```{r echo = FALSE, fig.height = 3}
+```{r echo = FALSE, eval = F, fig.height = 3}
 knitr::include_graphics('/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg')
 ```
-
-
-![](/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg){ height=50px}
 
 #### Duration.
 
 The durations vary. The bulk of the guided meditations seem to be in the 5-to-20-minute range. But some last more than an hour.
+
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_duration.PNG){width=30%}
 
 #### People and their voices.
 
