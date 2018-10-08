@@ -40,7 +40,7 @@ knitr::include_graphics('/post/2018-10-07-dont-pay-to-meditate_files/IT_language
 ```
 
 
-![](/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg){ height=200px}
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg){ height=50px}
 
 #### Duration.
 
