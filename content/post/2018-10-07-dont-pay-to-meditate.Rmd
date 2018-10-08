@@ -35,7 +35,12 @@ The new [Waking Up with Sam Harris](https://wakingup.com/home-reviews/?_ga=2.267
 
 At the time of this writing, my free subscription to Insight Timer gives me access to some 12,000 guided meditation audios. Most of them are in English. But many are offered in other languages, such as Hebrew, Malay, and Spanish.
 
-![my image](static/img/IT_languages.jpg)
+```{r echo = FALSE}
+knitr::include_graphics('/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg')
+```
+
+
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg)
 
 #### Duration.
 
