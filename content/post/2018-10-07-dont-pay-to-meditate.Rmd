@@ -53,19 +53,31 @@ Their deep library boasts an impressive cast of meditation leaders. I was happy 
 
 I’m an academic and generally prefer meditations that are secular and connected to the clinical literature. Happily, the Insight Timer library contains offerings based on mindfulness-based stress reduction (MBSR) and its derivatives (e.g., mindfulness-based cognitive therapy, mindfulness-based relapse prevention).
 
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_mindfulness.PNG){width=33%}
+
 But you can also find meditations grounded within a number of faith traditions.
+
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_faith.PNG){width=33%}
 
 #### Music.
 
 I’ve focused mainly on vocally-driven meditations. However, Insight Timer also contains music/sound-based recordings. I’m partial to recordings featuring Tibetan singing bowls. 
 
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_bowls.PNG){width=33%}
+
 ### It’s a timer, too.
 
 Sometimes you just want a silent meditation. For those occasions, Insight Timer offers a nice timer feature. You can set it like a stop watch to whatever duration you prefer, and choose among an array of sounds to mark the beginning and end of the sit.
 
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_timer.PNG){width=33%}
+
 ### It tracks.
 
-If you go to the Profile section of the app, you’ll discover it keeps track of your use and displays various summaries in attractive bar plots [Yes, I agree with Richard McElreath: "The only problem with barplots is that they have bars" (p. 203, [*Statistical Rethinking*](https://bookdown.org/connect/#/apps/1850/access)). You can’t have everything.] Which leads me to my next point.
+If you go to the Profile section of the app, you’ll discover it keeps track of your use and displays various summaries in attractive bar plots.
+
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_track.PNG){width=33%}
+
+[Yes, I agree with Richard McElreath: "The only problem with barplots is that they have bars" (p. 203, [*Statistical Rethinking*](https://bookdown.org/connect/#/apps/1850/access)). You can’t have everything.]
 
 ## Insight Timer is great for researchers
 
