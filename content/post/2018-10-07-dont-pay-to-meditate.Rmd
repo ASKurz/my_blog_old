@@ -42,9 +42,9 @@ I have no problem with the Headspace and Waking Up apps. They have many fine fea
 
 ![](/post/2018-10-07-dont-pay-to-meditate_files/IT_bowl.png){width=50%}
 
-[Insight Timer](https://insighttimer.com) comes with a free and pay versions. Just download the free version. It’s excellent and all you need for your meditation needs. Here’s why.
+[Insight Timer](https://insighttimer.com) comes with a free and pay versions, too. But just download the free version. It’s excellent and all you need for your meditation needs. Let me list the reasons why.
 
-### The library is extensive.
+### The free library is extensive.
 
 At the time of this writing, my free subscription to Insight Timer gives me access to some 12,000 guided meditation audios. Most of them are in English. But many are offered in other languages, such as Hebrew, Malay, and Spanish.
 
@@ -52,13 +52,13 @@ At the time of this writing, my free subscription to Insight Timer gives me acce
 
 #### Duration.
 
-The durations vary. The bulk of the guided meditations seem to be in the 5-to-20-minute range. But some last more than an hour.
+Their durations vary. The bulk of the guided meditations seem to be in the 5-to-20-minute range. But some last more than an hour.
 
 ![](/post/2018-10-07-dont-pay-to-meditate_files/IT_duration.PNG){width=33%}
 
 #### People and their voices.
 
-Their deep library boasts an impressive cast of meditation leaders. I was happy to see some familiar high-profile meditation teachers, such as Tara Brach and Joseph Goldstein. But I have also discovered new favorites, like Stephen Pende Wormland and Dawn Mauricio. To be sure, the quality of the audio recordings varies. But more importantly, they also vary in terms of vocal tone and pacing. There should be a vocal style to suit just about everyone.
+Insight Timer's deep library boasts an impressive cast of meditation teachers. I was happy to see some familiar high-profile meditation teachers, such as Tara Brach and Joseph Goldstein. But I have also discovered new favorites, like Stephen Pende Wormland and Dawn Mauricio. To be sure, the quality of the audio recordings varies. But more importantly, they also vary in terms of vocal tone and pacing. There should be a vocal style to suit just about everyone.
 
 ![](/post/2018-10-07-dont-pay-to-meditate_files/IT_teachers.PNG){width=33%}
 
@@ -80,7 +80,7 @@ I’ve focused mainly on vocally-driven meditations. However, Insight Timer also
 
 ### It’s a timer, too.
 
-Sometimes you just want a silent meditation. For those occasions, Insight Timer offers a nice timer feature. You can set it like a stop watch to whatever duration you prefer, and choose among an array of sounds to mark the beginning and end of the sit.
+Sometimes you just want a silent meditation. For those occasions, Insight Timer offers a nice timer feature. You can set it like a stopwatch to whatever duration you prefer, and choose among an array of sounds to mark the beginning and end of your sit.
 
 ![](/post/2018-10-07-dont-pay-to-meditate_files/IT_timer.PNG){width=33%}
 
@@ -94,7 +94,7 @@ If you go to the Profile section of the app, you’ll discover it keeps track of
 
 ## Insight Timer is great for researchers
 
-Insight Timer allows you to download your data as a CSV file, which you can keep for yourself or email to others. Over the years, I’ve used the app to run group meditations within my research protocols. Since I selected the audios from the app, it allowed me to standardize the instructions across meditation sessions. Although I or one of my research assistants used the app on our phones to play the audios, our participants would use the timer functions on the apps on their phones to record their sessions. This gave us duplicate attendance records: one on a sign-in sheet and another on their phones. In longitudinal studies, participants could use the app on their own time and each of those sessions were recorded in the app. At the study, we were then able to download their use records as CSV files ready for pre-analysis data wrangling.
+Insight Timer allows you to download your data as a CSV file, which you can keep for yourself or email to others. Over the years, I’ve used the app to run group meditations within my research protocols. Since I selected the audios from the app, it allowed me to standardize the instructions across meditation sessions. Although my research assistants and I used the app on our phones to play the audios, our participants would use the timer functions on the apps on their phones to record their sessions. This gave us duplicate attendance records: one on a sign-in sheet and another on their phones. In longitudinal studies, participants could use the app on their own time and each of those sessions were recorded in the app. At the end of our studies, we were then able to download their use records as CSV files ready for pre-analysis data wrangling.
 
 ## Parting thoughts
 
