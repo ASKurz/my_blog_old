@@ -35,21 +35,19 @@ The new [Waking Up with Sam Harris](https://wakingup.com/home-reviews/?_ga=2.267
 
 At the time of this writing, my free subscription to Insight Timer gives me access to some 12,000 guided meditation audios. Most of them are in English. But many are offered in other languages, such as Hebrew, Malay, and Spanish.
 
-![](/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg){width=30%}
-
-```{r echo = FALSE, eval = F, fig.height = 3}
-knitr::include_graphics('/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg')
-```
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg){width=33%}
 
 #### Duration.
 
 The durations vary. The bulk of the guided meditations seem to be in the 5-to-20-minute range. But some last more than an hour.
 
-![](/post/2018-10-07-dont-pay-to-meditate_files/IT_duration.PNG){width=30%}
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_duration.PNG){width=33%}
 
 #### People and their voices.
 
 Their deep library boasts an impressive cast of meditation leaders. I was happy to see some familiar high-profile meditation teachers, such as Tara Brach and Joseph Goldstein. But I have also discovered new favorites, like Stephen Pende Wormland and Dawn Mauricio. To be sure, the quality of the audio recordings varies. But more importantly, they also vary in terms of vocal tone and pacing. There should be a vocal style to suit just about everyone.
+
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_teachers.PNG){width=33%}
 
 #### Emphasis.
 
