@@ -29,7 +29,7 @@ The new [Waking Up with Sam Harris](https://wakingup.com/home-reviews/?_ga=2.267
 
 ## Consider [Insight Timer](https://insighttimer.com)
 
-![](/post/2018-10-07-dont-pay-to-meditate_files/IT_bowl.png){width=75%}
+![](/post/2018-10-07-dont-pay-to-meditate_files/IT_bowl.png){width=50%}
 
 [Insight Timer](https://insighttimer.com) comes with a free and pay versions. Just download the free version. It’s excellent and all you need for your meditation needs. Here’s why.
 
@@ -53,7 +53,7 @@ Their deep library boasts an impressive cast of meditation leaders. I was happy 
 
 #### Emphasis.
 
-I’m an academic and generally prefer meditations that are secular and connected to the clinical literature. Happily, the Insight Timer library contains offerings based on mindfulness-based stress reduction (MBSR) and its derivatives (e.g., mindfulness-based cognitive therapy, mindfulness-based relapse prevention).
+I’m an academic and generally prefer meditations that are secular and connected to the clinical literature (e.g., [this recent meta-analysis](https://www.sciencedirect.com/science/article/pii/S0272735817303847?via%3Dihub)). Happily, the Insight Timer library contains offerings based on mindfulness-based stress reduction ([MBSR](https://www.umassmed.edu/cfm/mindfulness-based-programs/mbsr-courses/about-mbsr/history-of-mbsr/)) and its derivatives (e.g., [mindfulness-based cognitive therapy](http://www.mbct.com), [mindfulness-based relapse prevention](https://www.mindfulrp.com)).
 
 ![](/post/2018-10-07-dont-pay-to-meditate_files/IT_mindfulness.PNG){width=33%}
 
