@@ -26,9 +26,17 @@ blogdown::shortcode('tweet', '1048730683940646914')
 
 The whole thing was rainbows and kittens. And it reminded me to pass on some advice: **Stop using fee-based meditation apps!**
 
-[Headspace](https://www.headspace.com/headspace-meditation-app) is popular and highly-rated. It’s free to download and has some nice features, like reminders to meditate. However, if you want full access to its library of guided meditation audio recordings, you’ll need to pay a fee at a monthly, yearly, or lifetime rate. 
+## What?
 
-The new [Waking Up with Sam Harris](https://wakingup.com/home-reviews/?_ga=2.267492553.617729158.1538952176-2137086923.1448849490&utm_expid=.4j5YZcqhSKSYqCMuOBBY-A.1&utm_referrer=https%3A%2F%2Fsamharris.org%2F) app is also 
+The [Headspace app](https://www.headspace.com/headspace-meditation-app) is popular and highly-rated. It’s free to download and has some nice features, like reminders to meditate. However, if you want full access to its library of guided meditation audio recordings, you’ll need to pay a fee at a monthly, yearly, or lifetime rate.
+
+![](/post/2018-10-07-dont-pay-to-meditate_files/HS_subscription.PNG){width=33%}
+
+Sam Harris's [Waking Up app](https://wakingup.com/home-reviews/?_ga=2.267492553.617729158.1538952176-2137086923.1448849490&utm_expid=.4j5YZcqhSKSYqCMuOBBY-A.1&utm_referrer=https%3A%2F%2Fsamharris.org%2F) app is also free to download. It's new and, in fairness, we'll have to wait and see how its format will unfold. But at present it has more of a course-type format. The free version gives you access to five guided meditations and three lessons. But if you want full access to the app's content, you also have to subscribe.
+
+![](/post/2018-10-07-dont-pay-to-meditate_files/WU_subscribe.jpg){width=33%}
+
+I have no problem with the Headspace and Waking Up apps. They have many fine features. And I’m even a fan of a lot Harris’s work. But we have a cheaper, high-quality option:
 
 ## Consider [Insight Timer](https://insighttimer.com)
 
