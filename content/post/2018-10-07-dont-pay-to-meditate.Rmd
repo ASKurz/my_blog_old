@@ -7,6 +7,9 @@ categories: []
 tags:
   - app
   - Insight Timer
+  - MBCT
+  - MBRP
+  - MBSR
   - meditation
   - mindfulness
   - smartphone
@@ -15,7 +18,7 @@ header:
   image: ''
 ---
 
-The other day, my Twitter feed informed me Penn Jilette just clocked in 1000 consecutive days of meditation using the Headspace app. Now he’s considering checking out Sam Harris’s new Waking Up meditation app. Sam left a congratulatory comment on Penn’s tweet.
+The other day, my Twitter feed informed me Penn Jillette just clocked in 1000 consecutive days of meditation using the Headspace app. Now he’s considering checking out Sam Harris’s new Waking Up meditation app. Sam left a congratulatory comment on Penn’s tweet.
 
 ```{r echo = FALSE}
 blogdown::shortcode('tweet', '1048730683940646914')
@@ -79,7 +82,7 @@ If you go to the Profile section of the app, you’ll discover it keeps track of
 
 ![](/post/2018-10-07-dont-pay-to-meditate_files/IT_track.PNG){width=33%}
 
-[Yes, I agree with Richard McElreath: "The only problem with barplots is that they have bars" (p. 203, [*Statistical Rethinking*](https://bookdown.org/connect/#/apps/1850/access)). You can’t have everything.]
+[And yes, I generally agree with Richard McElreath: "The only problem with barplots is that they have bars" (p. 203, [*Statistical Rethinking*](https://bookdown.org/connect/#/apps/1850/access)). You can’t have everything.]
 
 ## Insight Timer is great for researchers
 
