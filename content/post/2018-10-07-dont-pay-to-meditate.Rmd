@@ -2,7 +2,7 @@
 title: Don't pay to meditate
 author: A. Solomon Kurz
 date: '2018-10-07'
-slug: how-bookdown
+slug: dont-pay-to-meditate
 categories: []
 tags:
   - app
@@ -90,6 +90,5 @@ Insight Timer allows you to download your data as a CSV file, which you can keep
 
 ## Parting thoughts
 
-Insight Timer has other functions, such as social networking and dharma talks. I just don’t care about those things, so you can learn about them on your own. But if you’re interested in learning about meditation or even if you’re a veteran meditator looking for a convenient app to augment your practice with, do consider Insight Timer. There’s no reason to spend your money on the alternatives when this powerful of a resource is available to you for free.
-
+Insight Timer has other functions, such as social networking and dharma talks. I just don’t care about those things, so you can learn about them on your own. But if you’re interested in learning about meditation or even if you’re a veteran meditator looking for a convenient app to augment your practice with, do consider Insight Timer. There’s no reason to spend your money on the alternatives before you capitalize on such a powerful resource that's available to you for free.
 
