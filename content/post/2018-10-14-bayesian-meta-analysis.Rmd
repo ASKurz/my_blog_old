@@ -31,7 +31,7 @@ Here’s the rough draft:
 
 If your mind isn’t fully blown by those measurement-error and missing-data models, let’s keep building. As it turns out, meta-analyses are often just special kinds of multilevel measurement-error models. Thus, you can use `brms::brm()` to fit Bayesian meta-analyses, too. 
 
-Before we proceed, I should acknowledge that this section is heavily influenced by Matti Vourre’s great blog post, [*Meta-analysis is a special case of Bayesian multilevel modeling*](https://vuorre.netlify.com/post/2016/2016-09-29-bayesian-meta-analysis/). Since McElreath’s text doesn’t directly address meta-analyses, we’ll also have to borrow a bit from Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin’s [*Bayesian data analysis, Third edition*](http://www.stat.columbia.edu/~gelman/book/).
+Before we proceed, I should acknowledge that this section is heavily influenced by Matti Vourre’s great blog post, [*Meta-analysis is a special case of Bayesian multilevel modeling*](https://vuorre.netlify.com/post/2016/2016-09-29-bayesian-meta-analysis/). Since McElreath’s text doesn’t directly address meta-analyses, we’ll also have to borrow a bit from Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin’s [*Bayesian data analysis, Third edition*](http://www.stat.columbia.edu/~gelman/book/). Here, Gelman and colleagues introduce the topic:
 
 > Discussions of meta-analysis are sometimes imprecise about the estimands of interest in the analysis, especially when the primary focus is on testing the null hypothesis of no effect in any of the studies to be combined. Our focus is on estimating meaningful parameters, and for this objective there appear to be three possibilities, accepting the overarching assumption that the studies are comparable in some broad sense. The first possibility is that we view the studies as identical replications of each other, in the sense we regard the individuals in all the studies as independent samples from a common population, with the same outcome measures and so on. A second possibility is that the studies are so different that the results of any one study provide no information about the results of any of the others. A third, more general, possibility is that we regard the studies as exchangeable but not necessarily either identical or completely unrelated; in other words we allow differences from study to study, but such that the differences are not expected *a priori* to have predictable effects favoring one study over another.… this third possibility represents a continuum between the two extremes, and it is this exchangeable model (with unknown hyperparameters characterizing the population distribution) that forms the basis of our Bayesian analysis…
 >
@@ -52,10 +52,9 @@ where $\mu$ is the meta-analytic effect (i.e., the population mean) and $\tau$ i
 Since there’s no example of a meta-analysis in the text, we’ll have to get our data elsewhere. Our data `spank` were transcribed directly from Gershoff and Grogan-Kaylor’s (2016) paper, [*Spanking and Child Outcomes: Old Controversies and New Meta-Analyses*](https://pdfs.semanticscholar.org/0d03/a2e9f085f0a268b4c0a52f5ac31c17a3e5f3.pdf). You can find it in [this project’s GitHub repository](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse). 
 
 ```{r, warning = F, message = F}
-library(tidyverse)
-
 spank <- readxl::read_excel("spank.xlsx")
 
+library(tidyverse)
 glimpse(spank)
 ```
 
@@ -69,9 +68,9 @@ $$\sigma_{pooled} = \sqrt{\frac{((n_1 - 1) \sigma_1^2) + ((n_2 - 1) \sigma_2^2)}
 
 McElreath didn't really focus on effect sizes in his text If you need a refresher, you might check out Kelley and Preacher's [*On effect size*](https://www.researchgate.net/profile/Ken_Kelley/publication/270757972_On_Effect_Size/links/0046351b0cd48217ce000000/On-Effect-Size.pdf). But in words, *Cohen's d* is a standardized mean difference between two groups.
 
-So if you look back up at the results of `glimpse(spank)`, you'll notice the column `d`, which is indeed a vector of *Cohen's d* effect sizes. The last two columns, `ll` and `ul` are the lower and upper limits of the associated 95% frequentist confidence intervals. But we don't want confidence intervals for our $d_i$s; we want their standard errors. Fortunately, we can compute those with the following formula
+So if you look back up at the results of `glimpse(spank)`, you'll notice the column `d`, which is indeed a vector of *Cohen's d* effect sizes. The last two columns, `ll` and `ul` are the lower and upper limits of the associated 95% frequentist confidence intervals. But we don't want confidence intervals for our `d`-values; we want their standard errors. Fortunately, we can compute those with the following formula
 
-$$SE = \frac{\text{upper limit} – \text{lower limit}}{3.92}$$
+$$SE = \frac{\text{upper limit } – \text{lower limit}}{3.92}$$
 
 Here it is in code.
 
@@ -83,7 +82,7 @@ spank <-
 glimpse(spank)
 ```
 
-Now are data are ready, we can express our first Bayesian meta-analysis with the formula
+Now our data are ready, we can express our first Bayesian meta-analysis with the formula
 
 $$
 \begin{eqnarray}
@@ -94,13 +93,15 @@ $$
 \end{eqnarray}
 $$
 
+The last two lines, of course, spell out our priors. In psychology, it’s pretty rare to see an *Cohen’s d* greater than the absolute value of $\pm 1$. So in the absence of more specific domain knowledge, it seems like $\text{Normal} (0, 1)$ is a reasonable place to start. Just like McElreath used $\text{HalfCauchy} (0, 1)$ as the default prior for the group-level standard deviations, it makes sense to use it here for our meta-analytic $\tau$ parameter.
+
 Let's load brms.
 
 ```{r, warning = F, message = F}
 library(brms)
 ```
 
-Here's how to fit it in brms.
+Here's the code for the first model.
 
 ```{r b14.5, cache = T, message = F, warning = F, results = 'hide'}
 b14.5 <- 
