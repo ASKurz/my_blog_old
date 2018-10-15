@@ -1,5 +1,5 @@
 ---
-title: Bayesian meta-analysis in brms: Rough draft
+title: Bayesian meta-analysis in brms, Rough draft
 author: A. Solomon Kurz
 date: '2018-10-14'
 slug: bayesian-meta-analysis
@@ -51,7 +51,9 @@ where $\mu$ is the meta-analytic effect (i.e., the population mean) and $\tau$ i
 
 Since there’s no example of a meta-analysis in the text, we’ll have to get our data elsewhere. Our data `spank` were transcribed directly from Gershoff and Grogan-Kaylor’s (2016) paper, [*Spanking and Child Outcomes: Old Controversies and New Meta-Analyses*](https://pdfs.semanticscholar.org/0d03/a2e9f085f0a268b4c0a52f5ac31c17a3e5f3.pdf). You can find it in [this project’s GitHub repository](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse). 
 
-```{r}
+```{r, warning = F, message = F}
+library(tidyverse)
+
 spank <- readxl::read_excel("spank.xlsx")
 
 glimpse(spank)
@@ -91,6 +93,12 @@ $$
 \tau & \sim & \text{HalfCauchy} (0, 1)
 \end{eqnarray}
 $$
+
+Let's load brms.
+
+```{r, warning = F, message = F}
+library(brms)
+```
 
 Here's how to fit it in brms.
 
@@ -159,12 +167,14 @@ posterior_samples(b14.6) %>%
 
 So at this point, the big story is there's more variability between the studies than there is the outcomes. But I still want to get a sense of the individual outcomes. Here we'll use `tidybayes::geom_halfeyeh()` to help us make our version of a forest plot.
 
-```{r, fig.width = 5, fig.height = 4}
+```{r, fig.width = 5, fig.height = 4, warning = F, message = F}
 # We’ll use this custom function to add the grand mean to the group-specific deviations
 add_overall_effect <- function(i){
   posterior_samples(b14.6)[, "b_Intercept"] + i
 }
 
+# load tidybayes
+library(tidybayes)
 posterior_samples(b14.6) %>% 
   select(starts_with("r_outcome")) %>% 
   mutate_all(add_overall_effect) %>% 
@@ -228,3 +238,9 @@ That difference isn't as large I'd expect it to be. But then again, I'm no spank
 There are other things you might do with these data. For examply, you might check for trends by year or, as the authors did in their manuscript, distinguish among different severities of corporal punishment. But I think this is as far as I’d like to go with these data. 
 
 If you’d like to learn more about these methods, do check out Vourre’s [*Meta-analysis is a special case of Bayesian multilevel modeling*](https://vuorre.netlify.com/post/2016/2016-09-29-bayesian-meta-analysis/). From his blog, you’ll learn additional tricks, like making a more traditional-looking forest plot with the `brmstools::forest()` function and how our Bayesian brms method compares with Frequentist meta-analyses via the [metafor package](http://www.metafor-project.org/doku.php/metafor). You might also check out Williams, Rast, and Bürkner’s manuscript, [*Bayesian Meta-Analysis with Weakly Informative Prior Distributions*](https://psyarxiv.com/7tbrm/) to give you an empirical justification for using a half-Cauchy prior for your meta-analysis $\tau$ parameters.
+
+## Session info
+
+```{r}
+sessionInfo()
+```
