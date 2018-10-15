@@ -1,5 +1,5 @@
 ---
-title: Bayesian meta-analysis in brms, Rough draft
+title: Bayesian meta-analysis in brms
 author: A. Solomon Kurz
 date: '2018-10-14'
 slug: bayesian-meta-analysis
@@ -93,7 +93,7 @@ $$
 \end{eqnarray}
 $$
 
-The last two lines, of course, spell out our priors. In psychology, it’s pretty rare to see an *Cohen’s d* greater than the absolute value of $\pm 1$. So in the absence of more specific domain knowledge, it seems like $\text{Normal} (0, 1)$ is a reasonable place to start. Just like McElreath used $\text{HalfCauchy} (0, 1)$ as the default prior for the group-level standard deviations, it makes sense to use it here for our meta-analytic $\tau$ parameter.
+The last two lines, of course, spell out our priors. In psychology, it’s pretty rare to see *Cohen’s d*-values greater than the absolute value of $\pm 1$. So in the absence of more specific domain knowledge, it seems like $\text{Normal} (0, 1)$ is a reasonable place to start. Just like McElreath used $\text{HalfCauchy} (0, 1)$ as the default prior for the group-level standard deviations, [it makes sense to use it here](https://psyarxiv.com/7tbrm/) for our meta-analytic $\tau$ parameter.
 
 Let's load brms.
 
