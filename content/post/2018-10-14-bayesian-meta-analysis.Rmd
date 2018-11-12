@@ -181,24 +181,18 @@ posterior_samples(b14.6) %>%
 So at this point, the big story is there's more variability between the studies than there is the outcomes. But I still want to get a sense of the individual outcomes. Here we'll use `tidybayes::geom_halfeyeh()` to help us make our version of a forest plot.
 
 ```{r, fig.width = 5, fig.height = 4, warning = F, message = F}
-# We’ll use this custom function to add the grand mean to the group-specific deviations
-add_overall_effect <- function(i){
-  posterior_samples(b14.6)[, "b_Intercept"] + i
-}
-
 # load tidybayes
 library(tidybayes)
-posterior_samples(b14.6) %>% 
-  select(starts_with("r_outcome")) %>% 
-  mutate_all(add_overall_effect) %>% 
-  gather(key, mu) %>% 
-  # these two lines clean up the text within `key`
-  mutate(key = str_remove(key, "r_outcome\\[") %>% str_remove(., ",Intercept\\]")) %>% 
-  mutate(key = str_replace_all(key, "[.]", " ")) %>% 
-  
+b14.6 %>%
+  spread_draws(b_Intercept, r_outcome[outcome,]) %>%
+  # add the grand mean to the group-specific deviations
+  mutate(mu = b_Intercept + r_outcome) %>%
+  ungroup() %>%
+  mutate(outcome = str_replace_all(outcome, "[.]", " ")) %>% 
+
   # plot
-  ggplot(aes(x = mu, y = reorder(key, mu))) +
-  geom_halfeyeh(point_interval = median_qi, .width = .95, size = 2/3) +
+  ggplot(aes(x = mu, y = reorder(outcome, mu))) +
+  geom_halfeyeh(.width = .95, size = 2/3) +
   labs(x = expression(italic("Cohen's d")),
        y = NULL) +
   theme(panel.grid   = element_blank(),
