@@ -15,7 +15,6 @@ tags:
 header:
   caption: ''
   image: ''
-draft: TRUE
 ---
 
 ## tl;dr
@@ -28,15 +27,15 @@ Over the past several months, I’ve been slowly chipping away at John Kruschke�
 
 ![](/img/Kruschke_sideways_Gaussians.png)
 
-In this example, he has lifespan data (i.e., `Longevity`) for fruit flies from five experimental conditions. Those are the black circles. In this section of the chapter, he used a Gaussian multilevel model in which the mean value for `Longevity` had a grand mean in addition to random effects for the five experimental conditions. Those sideways-turned blue Gaussians are his attempt to express the model-implied data generating distributions for each group.
+In this example, he has lifespan data (i.e., `Longevity`) for fruit flies from five experimental conditions (i.e., `CompanionNumber`). Those are the black circles. In this section of the chapter, he used a Gaussian multilevel model in which the mean value for `Longevity` had a grand mean in addition to random effects for the five experimental conditions. Those sideways-turned blue Gaussians are his attempt to express the model-implied data generating distributions for each group.
 
-If you haven’t gone through Kruschke’s text, you should know he relies on base R and all its [loop](https://bookdown.org/rdpeng/rprogdatascience/control-structures.html#for-loops)y glory. If you carefully go through his code, you can reproduce his plots in that fashion. I’m a [tidyverse](https://www.tidyverse.org) man and prefer to avoid writing a for loop at all costs. At first I tried to work with convenience functions within ggplot2 and friends, but only had limited success. After staring long and hard at Kruschke’s base code, I came up with a robust solution, which I’d like to share here.
+If you haven’t gone through Kruschke’s text, you should know he relies on base R and all its [loop](https://bookdown.org/rdpeng/rprogdatascience/control-structures.html#for-loops)y glory. If you carefully go through his code, you can reproduce his plots in that fashion. I’m a [tidyverse](https://www.tidyverse.org) man and prefer to avoid writing a `for()` loop at all costs. At first, I tried to work with convenience functions within ggplot2 and friends, but only had limited success. After staring long and hard at Kruschke’s base code, I came up with a robust solution, which I’d like to share here.
 
 In this post, we’ll practice making sideways Gaussians in the Kruschke style. We’ll do so with a simple intercept-only single-level model and then expand our approach to an intercept-only multilevel model like the one in the picture, above.
 
 ## My assumptions
 
-For the sake of this post, I’m presuming you’re familiar with [R](https://bookdown.org/rdpeng/rprogdatascience/history-and-overview-of-r.html), aware of the [tidyverse](https://bookdown.org/connect/#/apps/1850/access), and have fit a [Bayesian model](https://www.youtube.com/watch?v=4WVelCswXo4) or two. Yes. I admit that’s a narrow crowd. Sometimes the target’s a small one.
+For the sake of this post, I’m presuming you’re familiar with [R](https://bookdown.org/rdpeng/rprogdatascience/history-and-overview-of-r.html), aware of the [tidyverse](https://www.rstudio.com/resources/videos/data-science-in-the-tidyverse/), and have fit a [Bayesian model](https://www.youtube.com/watch?v=4WVelCswXo4) or two. Yes. I admit that’s a narrow crowd. Sometimes the target’s a small one.
 
 ## We need data.
 
@@ -65,7 +64,7 @@ With Kay’s code, we have `response` values for five `condition`s. All follow t
 ```{r}
 abc %>% 
   group_by(condition) %>% 
-  summarise(mean = mean(response) %>% round(digits = 1))
+  summarise(mean = mean(response) %>% round(digits = 2))
 ```
 
 Altogether, the data look like this.
@@ -99,7 +98,7 @@ fit1 <-
                 prior(student_t(3, 0, 1), class = sigma)))
 ```
 
-Extract the posterior draws and save them as a data frame, `post`.
+Extract the posterior draws and save them as a data frame we'll call `post`.
 
 ```{r}
 post <- posterior_samples(fit1)
@@ -213,13 +212,13 @@ sd <-
 head(sd)
 ```
 
-In our `sp` tibble, we have much of the same information we'd get from `brms::posterior_samples()`, but in the long format with respect to the random effects for `condition`. Also notice that each row is indexed by the chain, iteration, and draw number. Among those, `.draw` if the column that corresponds to a unique row from what we'd get from `brms::posterior_samples()`. This is the index that ranges from 1 to the number of chains multiplied by the number of post-warmup iterations (i.e., default 4000 in our case).
+In our `sp` [tibble](https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html), we have much of the same information we'd get from `brms::posterior_samples()`, but in the long format with respect to the random effects for `condition`. Also notice that each row is indexed by the chain, iteration, and draw number. Among those, `.draw` is the column that corresponds to a unique row like what we'd get from `brms::posterior_samples()`. This is the index that ranges from 1 to the number of chains multiplied by the number of post-warmup iterations (i.e., default 4000 in our case).
 
-But we need to wrangle a bit. Within `expand()`, we select the columns we’d like to keep within the `nesting()` function and then expand the tibble by adding a sequence of `response` values ranging from -4 to 4, for each. This sets us up to use the `dnorm()` function in the next line to compute the density for each of those `response` values based on 20 unique normal distributions for each of the five `condition` groups. "Why 20?" Because we need some reasonably small number and 20's the one Kruschke tended to use in his text and because, well, we set `filter(.draw < 21)`. But choose whatever number you like.
+But we need to wrangle a bit. Within the `expand()` function, we'll select the columns we’d like to keep within the `nesting()` function and then expand the tibble by adding a sequence of `response` values ranging from -4 to 4, for each. This sets us up to use the `dnorm()` function in the next line to compute the density for each of those `response` values based on 20 unique normal distributions for each of the five `condition` groups. "Why 20?" Because we need some reasonably small number and 20's the one Kruschke tended to use in his text and because, well, we set `filter(.draw < 21)`. But choose whatever number you like.
 
 The difficulty, however, is that all of these densities will have a minimum value of around 0 and all will be on the same basic scale. So we need a way to serially shift the density values up the y-axis in such a way that they’ll be sensibly separated by group. As far as I can figure, this’ll take us a couple steps. For the first step, we’ll create an intermediary variable, `g`, with which we’ll arbitrarily assign each of our five groups an integer index ranging from 0 to 4.
 
-The last step is tricky. There we use our `g` integers to sequentially shift the density values up. Since our `g` value for `a == 0`, those we'll keep 0 as their baseline. As our `g` value for `b == 1`, the baseline for those will now increase by 1. And so on for the other groups. But we still need to do a little more fiddling. What we want is for the maximum values of the density estimates to be a little lower than the baselines of the ones one grouping variable up. That is, we want the maximum values for the `a` densities to fall a little bit below 1 on the y-axis. It’s with the `* .75 / max(density) ` part of the code that we accomplish that task. If you want to experiment with more or less room between the top and bottom of each density, play around with increasing/decreasing that .75 value.
+The second step is tricky. There we use our `g` integers to sequentially shift the density values up. Since our `g` value for `a == 0`, those we'll keep 0 as their baseline. As our `g` value for `b == 1`, the baseline for those will now increase by 1. And so on for the other groups. But we still need to do a little more fiddling. What we want is for the maximum values of the density estimates to be a little lower than the baselines of the ones one grouping variable up. That is, we want the maximum values for the `a` densities to fall a little bit below 1 on the y-axis. It’s with the `* .75 / max(density) ` part of the code that we accomplish that task. If you want to experiment with more or less room between the top and bottom of each density, play around with increasing/decreasing that .75 value.
 
 ```{r}
 sd <-
@@ -268,7 +267,7 @@ sd %>%
                      labels = letters[1:5])
 ```
 
-Now we’re rolling. Time to make a cosmetic adjustment. First, recall the full range of the normal distribution spans from $-\infty$ to $\infty$. At a certain point, it’s just not informative to show the left and right tails. If you look back up at our motivating example, you’ll note Kruschke’s densities stopped well before trailing off into the tails. If you look closely to the code from his text, you’ll see he’s just showing the inner 95-percentile range for each. To follow suit, we can compute those ranges with `qnorm()`.
+Now we’re rolling. Let's make a cosmetic adjustment. Recall that the full range of the normal distribution spans from $-\infty$ to $\infty$. At a certain point, it’s just not informative to show the left and right tails. If you look back up at our motivating example, you’ll note Kruschke’s densities stopped well before trailing off into the tails. If you look closely to the code from his text, you’ll see he’s just showing the inner 95-percentile range for each. To follow suit, we can compute those ranges with `qnorm()`.
 
 ```{r}
 sd <-
@@ -294,7 +293,7 @@ sd %>%
                      labels = letters[1:5])
 ```
 
-Oh man, just look how sweet that is. Although I prefer our current method, another difference between that and Kruschke's example is all of his densities are the same relative height. In all our plots so far, though, the densities differ by their heights. We'll need a slight adjustment in our `sd` workflow for that. All we need to do is insert a `group_by()` statement between the two `mutate()` lines.
+Oh man, just look how sweet that is. Although I prefer our current method, another difference between it and Kruschke's example is all of his densities are the same relative height. In all our plots so far, though, the densities differ by their heights. We'll need a slight adjustment in our `sd` workflow for that. All we need to do is insert a `group_by()` statement between the two `mutate()` lines.
 
 ```{r, fig.height = 4, fig.width = 4}
 sd <-
@@ -376,7 +375,7 @@ sd %>%
   scale_x_continuous("condition",
                      breaks = 0:4,
                      labels = letters[1:5]) +
-  scale_color_viridis_c(option = "A", end = .9)
+  scale_color_viridis_c(option = "A", end = .92)
 ```
 
 There you have it--Kruschke-style sideways Gaussians for your model plots.
