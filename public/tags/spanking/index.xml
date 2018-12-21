@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>spanking on A. Solomon Kurz</title>
+    <link>/tags/spanking/</link>
+    <description>Recent content in spanking on A. Solomon Kurz</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>&amp;copy; 2018</copyright>
+    <lastBuildDate>Sun, 14 Oct 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/spanking/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Bayesian meta-analysis in brms</title>
+      <link>/post/bayesian-meta-analysis/</link>
+      <pubDate>Sun, 14 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/bayesian-meta-analysis/</guid>
+      <description>Preamble I released the first bookdown version of my Statistical Rethinking with brms, ggplot2, and the tidyverse project a couple weeks ago. I consider it the 0.9.0 version. I wanted a little time to step back from the project before giving it a final edit for the first major edition. I also wanted to give others a little time to take a look and suggest edits, which some thankfully have.</description>
+    </item>
+    
+  </channel>
+</rss>

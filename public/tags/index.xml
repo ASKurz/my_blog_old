@@ -7,7 +7,7 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Thu, 04 Oct 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 20 Dec 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
     
@@ -15,7 +15,7 @@
     <item>
       <title>Bayesian</title>
       <link>/tags/bayesian/</link>
-      <pubDate>Thu, 04 Oct 2018 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 20 Dec 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/bayesian/</guid>
       <description></description>
@@ -45,6 +45,15 @@
       <pubDate>Sun, 07 Oct 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/insight-timer/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>Kruschke</title>
+      <link>/tags/kruschke/</link>
+      <pubDate>Thu, 20 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/kruschke/</guid>
       <description></description>
     </item>
     
@@ -87,7 +96,7 @@
     <item>
       <title>R</title>
       <link>/tags/r/</link>
-      <pubDate>Thu, 04 Oct 2018 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 20 Dec 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/r/</guid>
       <description></description>
@@ -96,7 +105,7 @@
     <item>
       <title>Statistical Rethinking</title>
       <link>/tags/statistical-rethinking/</link>
-      <pubDate>Thu, 04 Oct 2018 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 14 Oct 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/statistical-rethinking/</guid>
       <description></description>
@@ -123,7 +132,7 @@
     <item>
       <title>brms</title>
       <link>/tags/brms/</link>
-      <pubDate>Thu, 04 Oct 2018 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 20 Dec 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/brms/</guid>
       <description></description>
@@ -139,6 +148,15 @@
     </item>
     
     <item>
+      <title>meta-analysis</title>
+      <link>/tags/meta-analysis/</link>
+      <pubDate>Sun, 14 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/meta-analysis/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>mindfulness</title>
       <link>/tags/mindfulness/</link>
       <pubDate>Sun, 07 Oct 2018 00:00:00 +0000</pubDate>
@@ -148,11 +166,29 @@
     </item>
     
     <item>
+      <title>plot</title>
+      <link>/tags/plot/</link>
+      <pubDate>Thu, 20 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/plot/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>smartphone</title>
       <link>/tags/smartphone/</link>
       <pubDate>Sun, 07 Oct 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/smartphone/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>spanking</title>
+      <link>/tags/spanking/</link>
+      <pubDate>Sun, 14 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/spanking/</guid>
       <description></description>
     </item>
     
@@ -168,9 +204,18 @@
     <item>
       <title>tutorial</title>
       <link>/tags/tutorial/</link>
-      <pubDate>Thu, 04 Oct 2018 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 20 Dec 2018 00:00:00 +0000</pubDate>
       
       <guid>/tags/tutorial/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>tydiverse</title>
+      <link>/tags/tydiverse/</link>
+      <pubDate>Thu, 20 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/tydiverse/</guid>
       <description></description>
     </item>
     
