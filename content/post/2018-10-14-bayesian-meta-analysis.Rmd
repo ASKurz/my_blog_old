@@ -25,7 +25,7 @@ Now some time has passed, it’s become clear I’d like to add a bonus section 
 
 I intend to tack this section onto the end of chapter 14. If you have any [constrictive criticisms, please pass them along](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/issues).
 
-Here’s the rough draft (which I updated on 2018-10-20):
+Here’s the rough draft (which I updated on 2018-11-12):
 
 ## Rough draft: Meta-analysis
 
@@ -139,7 +139,7 @@ spank %>%
   knitr::kable()
 ```
 
-There are a few things to note. First, all of our outcomes are negative. We prefer conditions associated with lower values for things like `Child aggression` and `Adult mental health problems`. Second, the way the data are coded, larger effect sizes are interpreted as more negative outcomes associated with children having been spanked. That is, our analysis suggests spanking children is associated with worse outcomes. What might not be immediately apparent is that even though there are 111 cases in the data, there are only 76 distinct studies.
+There are a few things to note. First, with the possible exception of `Adult support for physical punishment`, all of the outcomes are negative. We prefer conditions associated with lower values for things like `Child aggression` and `Adult mental health problems`. Second, the way the data are coded, larger effect sizes are interpreted as more negative outcomes associated with children having been spanked. That is, our analysis suggests spanking children is associated with worse outcomes. What might not be immediately apparent is that even though there are 111 cases in the data, there are only 76 distinct studies.
 
 ```{r}
 spank %>% 

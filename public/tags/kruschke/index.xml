@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Kruschke on A. Solomon Kurz</title>
+    <link>/tags/kruschke/</link>
+    <description>Recent content in Kruschke on A. Solomon Kurz</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <copyright>&amp;copy; 2018</copyright>
+    <lastBuildDate>Thu, 20 Dec 2018 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="/tags/kruschke/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Make rotated Gaussians, Kruschke style</title>
+      <link>/post/make-rotated-gaussians-kruschke-style/</link>
+      <pubDate>Thu, 20 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/make-rotated-gaussians-kruschke-style/</guid>
+      <description>tl;dr You too can make sideways Gaussian density curves within the tidyverse. Here’s how.
+ Here’s the deal: I like making pictures. Over the past several months, I’ve been slowly chipping away at John Kruschke’s Doing Bayesian data analysis, Second Edition: A tutorial with R, JAGS, and Stan. Kruschke has a unique plotting style. One of the quirks is once in a while he likes to express the results of his analyses in plots where he shows the data alongside density curves of the model-implied data-generating distributions.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -7,10 +7,29 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Thu, 04 Oct 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 20 Dec 2018 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/brms/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Make rotated Gaussians, Kruschke style</title>
+      <link>/post/make-rotated-gaussians-kruschke-style/</link>
+      <pubDate>Thu, 20 Dec 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/make-rotated-gaussians-kruschke-style/</guid>
+      <description>tl;dr You too can make sideways Gaussian density curves within the tidyverse. Here’s how.
+ Here’s the deal: I like making pictures. Over the past several months, I’ve been slowly chipping away at John Kruschke’s Doing Bayesian data analysis, Second Edition: A tutorial with R, JAGS, and Stan. Kruschke has a unique plotting style. One of the quirks is once in a while he likes to express the results of his analyses in plots where he shows the data alongside density curves of the model-implied data-generating distributions.</description>
+    </item>
+    
+    <item>
+      <title>Bayesian meta-analysis in brms</title>
+      <link>/post/bayesian-meta-analysis/</link>
+      <pubDate>Sun, 14 Oct 2018 00:00:00 +0000</pubDate>
+      
+      <guid>/post/bayesian-meta-analysis/</guid>
+      <description>Preamble I released the first bookdown version of my Statistical Rethinking with brms, ggplot2, and the tidyverse project a couple weeks ago. I consider it the 0.9.0 version. I wanted a little time to step back from the project before giving it a final edit for the first major edition. I also wanted to give others a little time to take a look and suggest edits, which some thankfully have.</description>
+    </item>
     
     <item>
       <title>bookdown, My Process</title>
