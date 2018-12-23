@@ -31,9 +31,9 @@ Here’s the rough draft (which I updated on 2018-11-12):
 
 If your mind isn’t fully blown by those measurement-error and missing-data models, let’s keep building. As it turns out, meta-analyses are often just special kinds of multilevel measurement-error models. Thus, you can use `brms::brm()` to fit Bayesian meta-analyses, too. 
 
-Before we proceed, I should acknowledge that this section is heavily influenced by Matti Vourre’s great blog post, [*Meta-analysis is a special case of Bayesian multilevel modeling*](https://vuorre.netlify.com/post/2016/2016-09-29-bayesian-meta-analysis/). And since McElreath’s text doesn’t directly address meta-analyses, we’ll take further inspiration from Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin’s [*Bayesian data analysis, Third edition*](http://www.stat.columbia.edu/~gelman/book/). Here, Gelman and colleagues introduce the topic:
+Before we proceed, I should acknowledge that this section is heavily influenced by Matti Vourre’s great blog post, [*Meta-analysis is a special case of Bayesian multilevel modeling*](https://vuorre.netlify.com/post/2016/2016-09-29-bayesian-meta-analysis/). And since McElreath’s text doesn’t directly address meta-analyses, we’ll take further inspiration from Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin’s [*Bayesian data analysis, Third edition*](http://www.stat.columbia.edu/~gelman/book/). We'll let Gelman and colleagues introduce the topic:
 
-> Discussions of meta-analysis are sometimes imprecise about the estimands of interest in the analysis, especially when the primary focus is on testing the null hypothesis of no effect in any of the studies to be combined. Our focus is on estimating meaningful parameters, and for this objective there appear to be three possibilities, accepting the overarching assumption that the studies are comparable in some broad sense. The first possibility is that we view the studies as identical replications of each other, in the sense we regard the individuals in all the studies as independent samples from a common population, with the same outcome measures and so on. A second possibility is that the studies are so different that the results of any one study provide no information about the results of any of the others. A third, more general, possibility is that we regard the studies as exchangeable but not necessarily either identical or completely unrelated; in other words we allow differences from study to study, but such that the differences are not expected *a priori* to have predictable effects favoring one study over another.… this third possibility represents a continuum between the two extremes, and it is this exchangeable model (with unknown hyperparameters characterizing the population distribution) that forms the basis of our Bayesian analysis…
+> Discussions of meta-analysis are sometimes imprecise about the estimands of interest in the analysis, especially when the primary focus is on testing the null hypothesis of no effect in any of the studies to be combined. Our focus is on estimating meaningful parameters, and for this objective there appear to be three possibilities, accepting the overarching assumption that the studies are comparable in some broad sense. The first possibility is that we view the studies as identical replications of each other, in the sense we regard the individuals in all the studies as independent samples from a common population, with the same outcome measures and so on. A second possibility is that the studies are so different that the results of any one study provide no information about the results of any of the others. A third, more general, possibility is that we regard the studies as exchangeable but not necessarily either identical or completely unrelated; in other words we allow differences from study to study, but such that the differences are not expected *a priori* to have predictable effects favoring one study over another.… This third possibility represents a continuum between the two extremes, and it is this exchangeable model (with unknown hyperparameters characterizing the population distribution) that forms the basis of our Bayesian analysis…
 >
 > The first potential estimand of a meta-analysis, or a hierarchically structured problem in general, is the mean of the distribution of effect sizes, since this represents the overall 'average' effect across all studies that could be regarded as exchangeable with the observed studies. Other possible estimands are the effect size in any of the observed studies and the effect size in another, comparable (exchangeable) unobserved study. (pp. 125—126, *emphasis* in the original)
 
@@ -102,7 +102,7 @@ $$
 \end{eqnarray}
 $$
 
-The last two lines, of course, spell out our priors. In psychology, it’s pretty rare to see *Cohen’s d*-values greater than the absolute value of $\pm 1$. So in the absence of more specific domain knowledge--which I don't have--, it seems like $\text{Normal} (0, 1)$ is a reasonable place to start. Just like McElreath used $\text{HalfCauchy} (0, 1)$ as the default prior for the group-level standard deviations, [it makes sense to use it here](https://psyarxiv.com/7tbrm/) for our meta-analytic $\tau$ parameter.
+The last two lines, of course, spell out our priors. In psychology, it’s pretty rare to see *Cohen’s d*-values greater than the absolute value of $\pm 1$. So in the absence of more specific domain knowledge--which I don't have--, it seems like $\text{Normal} (0, 1)$ is a reasonable place to start. And just like McElreath used $\text{HalfCauchy} (0, 1)$ as the default prior for the group-level standard deviations, [it makes sense to use it here](https://psyarxiv.com/7tbrm/) for our meta-analytic $\tau$ parameter.
 
 Let's load brms.
 
@@ -178,7 +178,7 @@ posterior_samples(b14.6) %>%
   theme(panel.grid = element_blank())
 ```
 
-So at this point, the big story is there's more variability between the studies than there is the outcomes. But I still want to get a sense of the individual outcomes. Here we'll use `tidybayes::geom_halfeyeh()` to help us make our version of a forest plot.
+So at this point, the big story is there's more variability between the studies than there is the outcomes. But I still want to get a sense of the individual outcomes. Here we'll use `tidybayes::geom_halfeyeh()` to help us make our version of a [forest plot](https://cran.r-project.org/web/packages/forestplot/vignettes/forestplot.html).
 
 ```{r, fig.width = 5, fig.height = 4, warning = F, message = F}
 # load tidybayes
@@ -191,7 +191,8 @@ b14.6 %>%
   mutate(outcome = str_replace_all(outcome, "[.]", " ")) %>% 
 
   # plot
-  ggplot(aes(x = mu, y = reorder(outcome, mu))) +
+  ggplot(aes(x = mu, y = outcome, fill = mu)) +
+  # ggplot(aes(x = mu, y = reorder(outcome, mu))) +
   geom_halfeyeh(.width = .95, size = 2/3) +
   labs(x = expression(italic("Cohen's d")),
        y = NULL) +
@@ -250,3 +251,36 @@ If you’d like to learn more about these methods, do check out Vourre’s [*Met
 ```{r}
 sessionInfo()
 ```
+
+
+
+
+```{r}
+set.seed(5)
+n = 10
+n_condition = 5
+ABC =
+  data_frame(
+    condition = rep(c("A","B","C","D","E"), n),
+    response = rnorm(n * 5, c(0,1,2,1,-1), 0.5)
+  )
+
+m <- brm(response ~ (1|condition), 
+         data = ABC, 
+         control = list(adapt_delta = .99),
+  prior = c(
+    prior(normal(0, 1), class = Intercept),
+    prior(student_t(3, 0, 1), class = sd),
+    prior(student_t(3, 0, 1), class = sigma)
+  ))
+```
+
+```{r}
+m %>%
+  spread_draws(b_Intercept, r_condition[condition,]) %>%
+  mutate(condition_mean = b_Intercept + r_condition) %>%
+
+  ggplot(aes(y = condition, x = condition_mean, fill = condition_mean)) +
+  geom_halfeyeh()
+```
+
