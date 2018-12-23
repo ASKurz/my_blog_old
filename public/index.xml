@@ -16,7 +16,8 @@
       <pubDate>Thu, 20 Dec 2018 00:00:00 +0000</pubDate>
       
       <guid>/post/make-rotated-gaussians-kruschke-style/</guid>
-      <description>&lt;div id=&#34;tldr&#34; class=&#34;section level2&#34;&gt;
+      <description>&lt;p&gt;[edited 2018-12-21]&lt;/p&gt;
+&lt;div id=&#34;tldr&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;tl;dr&lt;/h2&gt;
 &lt;p&gt;You too can make sideways Gaussian density curves within the tidyverse. Here’s how.&lt;/p&gt;
 &lt;/div&gt;
@@ -340,6 +341,155 @@ sd %&amp;gt;%
 &lt;p&gt;&lt;img src=&#34;/post/2018-12-20-make-rotated-gaussians-kruschke-style_files/figure-html/unnamed-chunk-20-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;There you have it–Kruschke-style sideways Gaussians for your model plots.&lt;/p&gt;
 &lt;/div&gt;
+&lt;div id=&#34;afterward&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Afterward&lt;/h2&gt;
+&lt;p&gt;After releasing the initial version of this post, some of us had a lively twitter discussion on how to improve the code.&lt;/p&gt;
+&lt;blockquote class=&#34;twitter-tweet&#34;&gt;&lt;p lang=&#34;en&#34; dir=&#34;ltr&#34;&gt;Ah, hrm. Took some digging, but it looks like negative density + setting `min_height = NA` (otherwise negative values are cut off) might work &lt;a href=&#34;https://t.co/gmF9kpo2T7&#34;&gt;pic.twitter.com/gmF9kpo2T7&lt;/a&gt;&lt;/p&gt;&amp;mdash; Matthew Kay (@mjskay) &lt;a href=&#34;https://twitter.com/mjskay/status/1076395687020056576?ref_src=twsrc%5Etfw&#34;&gt;December 22, 2018&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;
+
+&lt;p&gt;Part of that discussion had to do with the possibility of using functions from &lt;a href=&#34;https://twitter.com/ClausWilke/&#34;&gt;Claus Wilke&lt;/a&gt;’s great &lt;a href=&#34;https://github.com/clauswilke/ggridges&#34;&gt;ggridges package&lt;/a&gt;. After some great efforts, especially from &lt;a href=&#34;https://twitter.com/mjskay/&#34;&gt;Matthew Kay&lt;/a&gt;, we came up with solutions. In this section, we’ll cover them in some detail.&lt;/p&gt;
+&lt;p&gt;First, here’s a slightly more compact way to prepare the data for the plot.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;abc %&amp;gt;%
+  distinct(condition) %&amp;gt;%
+  add_fitted_draws(fit2, n = 20, dpar = c(&amp;quot;mu&amp;quot;, &amp;quot;sigma&amp;quot;)) %&amp;gt;% 
+  mutate(lower    = qnorm(.025, mean = mu, sd = sigma),
+         upper    = qnorm(.975, mean = mu, sd = sigma)) %&amp;gt;% 
+  mutate(response = map2(lower, upper, seq, length.out = 200)) %&amp;gt;% 
+  mutate(density  = pmap(list(response, mu, sigma), dnorm)) %&amp;gt;% 
+  unnest() %&amp;gt;% 
+  group_by(.draw) %&amp;gt;% 
+  mutate(density  = density * .75 / max(density)) %&amp;gt;% 
+  
+  glimpse()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 20,000
+## Variables: 12
+## $ condition  &amp;lt;chr&amp;gt; &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;...
+## $ .row       &amp;lt;int&amp;gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+## $ .chain     &amp;lt;int&amp;gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,...
+## $ .iteration &amp;lt;int&amp;gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,...
+## $ .draw      &amp;lt;int&amp;gt; 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24,...
+## $ .value     &amp;lt;dbl&amp;gt; 0.01617751, 0.01617751, 0.01617751, 0.01617751, 0.0...
+## $ mu         &amp;lt;dbl&amp;gt; 0.01617751, 0.01617751, 0.01617751, 0.01617751, 0.0...
+## $ sigma      &amp;lt;dbl&amp;gt; 0.5227205, 0.5227205, 0.5227205, 0.5227205, 0.52272...
+## $ lower      &amp;lt;dbl&amp;gt; -1.008336, -1.008336, -1.008336, -1.008336, -1.0083...
+## $ upper      &amp;lt;dbl&amp;gt; 1.040691, 1.040691, 1.040691, 1.040691, 1.040691, 1...
+## $ response   &amp;lt;dbl&amp;gt; -1.0083358, -0.9980392, -0.9877425, -0.9774459, -0....
+## $ density    &amp;lt;dbl&amp;gt; 0.1098804, 0.1141834, 0.1186089, 0.1231581, 0.12783...&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This could use some walking out. With the first two lines, we made a &lt;span class=&#34;math inline&#34;&gt;\(5 \times 1\)&lt;/span&gt; tibble containing the five levels of &lt;code&gt;condition&lt;/code&gt;, &lt;code&gt;a&lt;/code&gt; through &lt;code&gt;f&lt;/code&gt;. The &lt;code&gt;add_fitted_draws()&lt;/code&gt; function comes from tidybayes. The first argument took our brms model fit, &lt;code&gt;fit2&lt;/code&gt;. With the &lt;code&gt;n&lt;/code&gt; argument, we indicated we just wanted &lt;code&gt;20&lt;/code&gt; draws. With &lt;code&gt;dpar&lt;/code&gt;, we indicated we requested distributional regression parameters in the output. In our case, those were the &lt;span class=&#34;math inline&#34;&gt;\(\mu\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; values for each level of &lt;code&gt;condition&lt;/code&gt;. Here’s what that looks like.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;abc %&amp;gt;%
+  distinct(condition) %&amp;gt;%
+  add_fitted_draws(fit2, n = 20, dpar = c(&amp;quot;mu&amp;quot;, &amp;quot;sigma&amp;quot;)) %&amp;gt;% 
+  
+  head()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 8
+## # Groups:   condition, .row [1]
+##   condition  .row .chain .iteration .draw  .value      mu sigma
+##   &amp;lt;chr&amp;gt;     &amp;lt;int&amp;gt;  &amp;lt;int&amp;gt;      &amp;lt;int&amp;gt; &amp;lt;int&amp;gt;   &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
+## 1 a             1     NA         NA    55  0.0294  0.0294 0.481
+## 2 a             1     NA         NA   126  0.0284  0.0284 0.581
+## 3 a             1     NA         NA   404  0.215   0.215  0.576
+## 4 a             1     NA         NA   813  0.382   0.382  0.605
+## 5 a             1     NA         NA  1111 -0.111  -0.111  0.500
+## 6 a             1     NA         NA  1218  0.265   0.265  0.556&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Next, we established the lower- and upper-bounds bounds for the density lines, which were 95% intervals in this example. In the second &lt;code&gt;mutate()&lt;/code&gt; function, we used the &lt;a href=&#34;https://purrr.tidyverse.org/reference/map2.html&#34;&gt;&lt;code&gt;purrr::map2()&lt;/code&gt;&lt;/a&gt; function to feed those two values into the first two arguments of the &lt;code&gt;seq()&lt;/code&gt; function. Those arguments, recall, are &lt;code&gt;from&lt;/code&gt; and &lt;code&gt;to&lt;/code&gt;. We then hard coded &lt;code&gt;200&lt;/code&gt; into the &lt;code&gt;length.out&lt;/code&gt; argument. As a result, we turned our regular old tibble into a nested tibble. In each row of our new &lt;code&gt;response&lt;/code&gt; column, we now have a &lt;span class=&#34;math inline&#34;&gt;\(200 \times 1\)&lt;/span&gt; data frame containing the &lt;code&gt;seq()&lt;/code&gt; output. If you’re new to nested data structures, I recommend checking out Hadley Wickham’s &lt;a href=&#34;https://www.youtube.com/watch?v=rz3_FDVt9eg&#34;&gt;&lt;em&gt;Managing many models with R&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;abc %&amp;gt;%
+  distinct(condition) %&amp;gt;%
+  add_fitted_draws(fit2, n = 20, dpar = c(&amp;quot;mu&amp;quot;, &amp;quot;sigma&amp;quot;)) %&amp;gt;% 
+  mutate(lower    = qnorm(.025, mean = mu, sd = sigma),
+         upper    = qnorm(.975, mean = mu, sd = sigma)) %&amp;gt;% 
+  mutate(response = map2(lower, upper, seq, length.out = 200)) %&amp;gt;% 
+  
+  head()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 11
+## # Groups:   condition, .row [1]
+##   condition  .row .chain .iteration .draw  .value      mu sigma  lower
+##   &amp;lt;chr&amp;gt;     &amp;lt;int&amp;gt;  &amp;lt;int&amp;gt;      &amp;lt;int&amp;gt; &amp;lt;int&amp;gt;   &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt;
+## 1 a             1     NA         NA   346  0.164   0.164  0.680 -1.17 
+## 2 a             1     NA         NA   696  0.104   0.104  0.569 -1.01 
+## 3 a             1     NA         NA   734  0.436   0.436  0.529 -0.600
+## 4 a             1     NA         NA  1214 -0.0241 -0.0241 0.527 -1.06 
+## 5 a             1     NA         NA  1313  0.205   0.205  0.502 -0.780
+## 6 a             1     NA         NA  1348  0.210   0.210  0.488 -0.747
+## # ... with 2 more variables: upper &amp;lt;dbl&amp;gt;, response &amp;lt;list&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Much as the &lt;code&gt;purrr::map2()&lt;/code&gt; function allowed us to iterate over two arguments, the &lt;code&gt;purrr::pmap()&lt;/code&gt; function will allow us to iterate over an arbitrary number of arguments. In the case of our third &lt;code&gt;mutate()&lt;/code&gt; function, we’ll iterate over the first three arguments of the &lt;code&gt;dnorm()&lt;/code&gt; function. In case you forgot, those arguments are &lt;code&gt;x&lt;/code&gt;, &lt;code&gt;mean&lt;/code&gt;, and &lt;code&gt;sd&lt;/code&gt;, respectively. With our &lt;code&gt;list()&lt;/code&gt;, we indicated we wanted to insert into them &lt;code&gt;response&lt;/code&gt;, &lt;code&gt;mu&lt;/code&gt;, and &lt;code&gt;sigma&lt;/code&gt;. This returns the desired &lt;code&gt;density&lt;/code&gt; values. Since our &lt;code&gt;map2()&lt;/code&gt; and &lt;code&gt;pmap()&lt;/code&gt; operations returned a nested tibble, we then followed them up with the &lt;code&gt;unnest()&lt;/code&gt; function to make it easier to access the results.&lt;/p&gt;
+&lt;p&gt;Before &lt;code&gt;unnest&lt;/code&gt;ing, our nested tibble had 100 observations. After &lt;code&gt;unnest()&lt;/code&gt;, we converted it to the long format, resulting in &lt;span class=&#34;math inline&#34;&gt;\(100 \times 200 = 20,000\)&lt;/span&gt; observations.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;abc %&amp;gt;%
+  distinct(condition) %&amp;gt;%
+  add_fitted_draws(fit2, n = 20, dpar = c(&amp;quot;mu&amp;quot;, &amp;quot;sigma&amp;quot;)) %&amp;gt;% 
+  mutate(lower    = qnorm(.025, mean = mu, sd = sigma),
+         upper    = qnorm(.975, mean = mu, sd = sigma)) %&amp;gt;% 
+  mutate(response = map2(lower, upper, seq, length.out = 200)) %&amp;gt;% 
+  mutate(density  = pmap(list(response, mu, sigma), dnorm)) %&amp;gt;% 
+  unnest() %&amp;gt;% 
+  
+  glimpse()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 20,000
+## Variables: 12
+## $ condition  &amp;lt;chr&amp;gt; &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;...
+## $ .row       &amp;lt;int&amp;gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+## $ .chain     &amp;lt;int&amp;gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,...
+## $ .iteration &amp;lt;int&amp;gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,...
+## $ .draw      &amp;lt;int&amp;gt; 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79, 79,...
+## $ .value     &amp;lt;dbl&amp;gt; 0.4660642, 0.4660642, 0.4660642, 0.4660642, 0.46606...
+## $ mu         &amp;lt;dbl&amp;gt; 0.4660642, 0.4660642, 0.4660642, 0.4660642, 0.46606...
+## $ sigma      &amp;lt;dbl&amp;gt; 0.6173348, 0.6173348, 0.6173348, 0.6173348, 0.61733...
+## $ lower      &amp;lt;dbl&amp;gt; -0.7438897, -0.7438897, -0.7438897, -0.7438897, -0....
+## $ upper      &amp;lt;dbl&amp;gt; 1.676018, 1.676018, 1.676018, 1.676018, 1.676018, 1...
+## $ response   &amp;lt;dbl&amp;gt; -0.7438897, -0.7317294, -0.7195690, -0.7074087, -0....
+## $ density    &amp;lt;dbl&amp;gt; 0.09467322, 0.09838071, 0.10219373, 0.10611336, 0.1...&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Hopefully, our last two lines are familiar. We &lt;code&gt;group_by(.draw)&lt;/code&gt; just like in previous examples. However, our final &lt;code&gt;mutate()&lt;/code&gt; line is a little simpler than in previous versions. Before we had to make that intermediary variable, &lt;code&gt;g&lt;/code&gt;. Because we intend to plot these data with help from ggridges, we no longer have need for &lt;code&gt;g&lt;/code&gt;. You’ll see. But the upshot is the only reason we’re adding this last &lt;code&gt;mutate()&lt;/code&gt; line is to scale all the Gaussians to have the same maximum height the way Kruschke did.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;afd &amp;lt;-
+  abc %&amp;gt;%
+  distinct(condition) %&amp;gt;%
+  add_fitted_draws(fit2, n = 20, dpar = c(&amp;quot;mu&amp;quot;, &amp;quot;sigma&amp;quot;)) %&amp;gt;% 
+  mutate(lower    = qnorm(.025, mean = mu, sd = sigma),
+         upper    = qnorm(.975, mean = mu, sd = sigma)) %&amp;gt;% 
+  mutate(response = map2(lower, upper, seq, length.out = 200)) %&amp;gt;% 
+  mutate(density  = pmap(list(response, mu, sigma), dnorm)) %&amp;gt;% 
+  unnest() %&amp;gt;% 
+  group_by(.draw) %&amp;gt;% 
+  mutate(density  = density * .75 / max(density))
+
+glimpse(afd)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 20,000
+## Variables: 12
+## $ condition  &amp;lt;chr&amp;gt; &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;a&amp;quot;, &amp;quot;...
+## $ .row       &amp;lt;int&amp;gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ...
+## $ .chain     &amp;lt;int&amp;gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,...
+## $ .iteration &amp;lt;int&amp;gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,...
+## $ .draw      &amp;lt;int&amp;gt; 292, 292, 292, 292, 292, 292, 292, 292, 292, 292, 2...
+## $ .value     &amp;lt;dbl&amp;gt; 0.1433711, 0.1433711, 0.1433711, 0.1433711, 0.14337...
+## $ mu         &amp;lt;dbl&amp;gt; 0.1433711, 0.1433711, 0.1433711, 0.1433711, 0.14337...
+## $ sigma      &amp;lt;dbl&amp;gt; 0.579493, 0.579493, 0.579493, 0.579493, 0.579493, 0...
+## $ lower      &amp;lt;dbl&amp;gt; -0.9924143, -0.9924143, -0.9924143, -0.9924143, -0....
+## $ upper      &amp;lt;dbl&amp;gt; 1.279156, 1.279156, 1.279156, 1.279156, 1.279156, 1...
+## $ response   &amp;lt;dbl&amp;gt; -0.9924143, -0.9809993, -0.9695844, -0.9581695, -0....
+## $ density    &amp;lt;dbl&amp;gt; 0.1098804, 0.1141834, 0.1186089, 0.1231581, 0.12783...&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Let’s open &lt;a href=&#34;https://github.com/clauswilke/ggridges&#34;&gt;ggridges&lt;/a&gt;&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(ggridges)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Note how contrary to before, we set the global y axis to our &lt;code&gt;condition&lt;/code&gt; grouping variable. It’s within the &lt;code&gt;geom_ridgeline()&lt;/code&gt; function that we now specify &lt;code&gt;height = density&lt;/code&gt;. Other than that, the main thing to point out is you might want to adjust the &lt;code&gt;ylim&lt;/code&gt; parameters. Otherwise the margins aren’t the best.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;afd %&amp;gt;%
+  
+  ggplot(aes(x = response, y = condition)) +
+  geom_ridgeline(aes(height = density, group = interaction(condition, .draw)),
+                 fill = NA, size = 1/3, color = adjustcolor(&amp;quot;steelblue&amp;quot;, alpha.f = 1/2)) +
+  geom_jitter(data = abc,
+              height = .05, shape = 1, alpha = 2/3) +
+  coord_cartesian(ylim = c(1.25, 5.5))&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-12-20-make-rotated-gaussians-kruschke-style_files/figure-html/unnamed-chunk-28-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;“But I wanted my Gaussians tipped to the left!”, you say. Yep, we can do that, too. Three things: First, we’ll want to adjust the &lt;code&gt;height&lt;/code&gt; parameter to &lt;code&gt;-density&lt;/code&gt;. We want our Gaussians to extend under their baselines. Along with that, we need to include &lt;code&gt;min_height = NA&lt;/code&gt;. Finally, we’ll switch out &lt;code&gt;coord_cartesian()&lt;/code&gt; for good old &lt;code&gt;coord_flip()&lt;/code&gt;. And you can adjust your &lt;code&gt;ylim&lt;/code&gt; parameters as desired.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;afd %&amp;gt;%
+  
+  ggplot(aes(x = response, y = condition)) +
+  geom_ridgeline(aes(height = -density, group = interaction(condition, .draw)),
+                 fill = NA, size = 1/3, color = adjustcolor(&amp;quot;steelblue&amp;quot;, alpha.f = 1/2),
+                 min_height = NA) +
+  geom_jitter(data = abc,
+              height = .05, shape = 1, alpha = 2/3) +
+  coord_flip(ylim = c(0.5, 4.75))&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-12-20-make-rotated-gaussians-kruschke-style_files/figure-html/unnamed-chunk-29-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;I think it’s important to note that I’ve never met any of the people who helped me with this project. Academic twitter, man–it’s a good place to be.&lt;/p&gt;
+&lt;/div&gt;
 &lt;div id=&#34;session-info&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Session info&lt;/h2&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
@@ -358,64 +508,63 @@ sd %&amp;gt;%
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] tidybayes_1.0.3 brms_2.7.0      Rcpp_1.0.0      bindrcpp_0.2.2 
-##  [5] forcats_0.3.0   stringr_1.3.1   dplyr_0.7.6     purrr_0.2.5    
-##  [9] readr_1.1.1     tidyr_0.8.1     tibble_1.4.2    ggplot2_3.1.0  
-## [13] tidyverse_1.2.1
+##  [1] ggridges_0.5.0  tidybayes_1.0.3 brms_2.7.0      Rcpp_1.0.0     
+##  [5] bindrcpp_0.2.2  forcats_0.3.0   stringr_1.3.1   dplyr_0.7.6    
+##  [9] purrr_0.2.5     readr_1.1.1     tidyr_0.8.1     tibble_1.4.2   
+## [13] ggplot2_3.1.0   tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] colorspace_1.3-2          ggridges_0.5.0           
-##   [3] rsconnect_0.8.8           rprojroot_1.3-2          
-##   [5] ggstance_0.3              markdown_0.8             
-##   [7] base64enc_0.1-3           rstudioapi_0.7           
-##   [9] rstan_2.18.2              svUnit_0.7-12            
-##  [11] DT_0.4                    mvtnorm_1.0-8            
-##  [13] lubridate_1.7.4           xml2_1.2.0               
-##  [15] bridgesampling_0.4-0      mnormt_1.5-5             
-##  [17] knitr_1.20                shinythemes_1.1.1        
-##  [19] bayesplot_1.6.0           jsonlite_1.5             
-##  [21] broom_0.4.5               shiny_1.1.0              
-##  [23] compiler_3.5.1            httr_1.3.1               
-##  [25] backports_1.1.2           assertthat_0.2.0         
-##  [27] Matrix_1.2-14             lazyeval_0.2.1           
-##  [29] cli_1.0.1                 later_0.7.3              
-##  [31] htmltools_0.3.6           prettyunits_1.0.2        
-##  [33] tools_3.5.1               igraph_1.2.1             
-##  [35] coda_0.19-2               gtable_0.2.0             
-##  [37] glue_1.3.0                reshape2_1.4.3           
-##  [39] cellranger_1.1.0          nlme_3.1-137             
-##  [41] blogdown_0.8              crosstalk_1.0.0          
-##  [43] psych_1.8.4               xfun_0.3                 
-##  [45] ps_1.2.1                  rvest_0.3.2              
-##  [47] mime_0.5                  miniUI_0.1.1.1           
-##  [49] gtools_3.8.1              MASS_7.3-50              
-##  [51] zoo_1.8-2                 scales_1.0.0             
-##  [53] colourpicker_1.0          hms_0.4.2                
-##  [55] promises_1.0.1            Brobdingnag_1.2-5        
-##  [57] parallel_3.5.1            inline_0.3.15            
-##  [59] shinystan_2.5.0           yaml_2.1.19              
-##  [61] gridExtra_2.3             loo_2.0.0                
-##  [63] StanHeaders_2.18.0-1      stringi_1.2.3            
-##  [65] dygraphs_1.1.1.5          pkgbuild_1.0.2           
-##  [67] rlang_0.3.0.1             pkgconfig_2.0.1          
-##  [69] matrixStats_0.54.0        evaluate_0.10.1          
-##  [71] lattice_0.20-35           bindr_0.1.1              
-##  [73] rstantools_1.5.0          htmlwidgets_1.2          
-##  [75] labeling_0.3              tidyselect_0.2.4         
-##  [77] processx_3.2.1            plyr_1.8.4               
-##  [79] magrittr_1.5              bookdown_0.7             
-##  [81] R6_2.3.0                  pillar_1.2.3             
-##  [83] haven_1.1.2               foreign_0.8-70           
-##  [85] withr_2.1.2               xts_0.10-2               
-##  [87] abind_1.4-5               modelr_0.1.2             
-##  [89] crayon_1.3.4              arrayhelpers_1.0-20160527
-##  [91] utf8_1.1.4                rmarkdown_1.10           
-##  [93] grid_3.5.1                readxl_1.1.0             
-##  [95] callr_3.1.0               threejs_0.3.1            
-##  [97] digest_0.6.18             xtable_1.8-2             
-##  [99] httpuv_1.4.4.2            stats4_3.5.1             
-## [101] munsell_0.5.0             viridisLite_0.3.0        
-## [103] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##   [1] colorspace_1.3-2          rsconnect_0.8.8          
+##   [3] rprojroot_1.3-2           ggstance_0.3             
+##   [5] markdown_0.8              base64enc_0.1-3          
+##   [7] rstudioapi_0.7            rstan_2.18.2             
+##   [9] svUnit_0.7-12             DT_0.4                   
+##  [11] mvtnorm_1.0-8             lubridate_1.7.4          
+##  [13] xml2_1.2.0                bridgesampling_0.4-0     
+##  [15] mnormt_1.5-5              knitr_1.20               
+##  [17] shinythemes_1.1.1         bayesplot_1.6.0          
+##  [19] jsonlite_1.5              broom_0.4.5              
+##  [21] shiny_1.1.0               compiler_3.5.1           
+##  [23] httr_1.3.1                backports_1.1.2          
+##  [25] assertthat_0.2.0          Matrix_1.2-14            
+##  [27] lazyeval_0.2.1            cli_1.0.1                
+##  [29] later_0.7.3               htmltools_0.3.6          
+##  [31] prettyunits_1.0.2         tools_3.5.1              
+##  [33] igraph_1.2.1              coda_0.19-2              
+##  [35] gtable_0.2.0              glue_1.3.0               
+##  [37] reshape2_1.4.3            cellranger_1.1.0         
+##  [39] nlme_3.1-137              blogdown_0.8             
+##  [41] crosstalk_1.0.0           psych_1.8.4              
+##  [43] xfun_0.3                  ps_1.2.1                 
+##  [45] rvest_0.3.2               mime_0.5                 
+##  [47] miniUI_0.1.1.1            gtools_3.8.1             
+##  [49] MASS_7.3-50               zoo_1.8-2                
+##  [51] scales_1.0.0              colourpicker_1.0         
+##  [53] hms_0.4.2                 promises_1.0.1           
+##  [55] Brobdingnag_1.2-5         parallel_3.5.1           
+##  [57] inline_0.3.15             shinystan_2.5.0          
+##  [59] yaml_2.1.19               gridExtra_2.3            
+##  [61] loo_2.0.0                 StanHeaders_2.18.0-1     
+##  [63] stringi_1.2.3             dygraphs_1.1.1.5         
+##  [65] pkgbuild_1.0.2            rlang_0.3.0.1            
+##  [67] pkgconfig_2.0.1           matrixStats_0.54.0       
+##  [69] evaluate_0.10.1           lattice_0.20-35          
+##  [71] bindr_0.1.1               rstantools_1.5.0         
+##  [73] htmlwidgets_1.2           labeling_0.3             
+##  [75] tidyselect_0.2.4          processx_3.2.1           
+##  [77] plyr_1.8.4                magrittr_1.5             
+##  [79] bookdown_0.7              R6_2.3.0                 
+##  [81] pillar_1.2.3              haven_1.1.2              
+##  [83] foreign_0.8-70            withr_2.1.2              
+##  [85] xts_0.10-2                abind_1.4-5              
+##  [87] modelr_0.1.2              crayon_1.3.4             
+##  [89] arrayhelpers_1.0-20160527 utf8_1.1.4               
+##  [91] rmarkdown_1.10            grid_3.5.1               
+##  [93] readxl_1.1.0              callr_3.1.0              
+##  [95] threejs_0.3.1             digest_0.6.18            
+##  [97] xtable_1.8-2              httpuv_1.4.4.2           
+##  [99] stats4_3.5.1              munsell_0.5.0            
+## [101] viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>
@@ -1117,6 +1266,16 @@ m &amp;lt;- brm(response ~ (1|condition),
 &lt;h2 id=&#34;tip-2&#34;&gt;Tip 2&lt;/h2&gt;
 
 &lt;p&gt;&amp;hellip;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Privacy Policy</title>
+      <link>/privacy/</link>
+      <pubDate>Thu, 28 Jun 2018 00:00:00 -0500</pubDate>
+      
+      <guid>/privacy/</guid>
+      <description>&lt;p&gt;&amp;hellip;&lt;/p&gt;
 </description>
     </item>
     
