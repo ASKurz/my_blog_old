@@ -18,11 +18,13 @@ header:
 
 The purpose of this post is to demonstrate the advantages of the Student's $t$-distribution for regression with outliers, particularly within a [Bayesian framework](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists).
 
-For this project, I’m presuming you are familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting regression models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is [R](https://www.r-bloggers.com/why-use-r-five-reasons/), with a heavy use of the [tidyverse](http://style.tidyverse.org)--which you might learn a lot about [here, especially chapter 5](http://r4ds.had.co.nzhttp://r4ds.had.co.nz)-- and [Paul Bürkner](https://twitter.com/paulbuerkner)'s [brms](https://github.com/paul-buerkner/brms) package.
+## I make assumptions
+
+I’m presuming you are familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting regression models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is [R](https://www.r-bloggers.com/why-use-r-five-reasons/), with a heavy use of the [tidyverse](http://style.tidyverse.org)--which you might learn a lot about [here, especially chapter 5](http://r4ds.had.co.nzhttp://r4ds.had.co.nz)-- and [Paul Bürkner](https://twitter.com/paulbuerkner)'s [brms](https://github.com/paul-buerkner/brms) package.
 
 ## The problem
 
-Regression models typically use the Gaussian likelihood. Say you have some criterion variable $y$, which you can describe with a mean $\mu$ and standard deviation $\sigma$. Further, you'd like to describe $y$ using a predictor $x$. Using the Gaussian likelihood, we can describe the model as
+Simple regression models typically use the Gaussian likelihood. Say you have some criterion variable $y$, which you can reasonably describe with a mean $\mu$ and standard deviation $\sigma$. Further, you'd like to describe $y$ with a predictor $x$. Using the Gaussian likelihood, we can describe the model as
 
 $$
 \begin{eqnarray}
@@ -31,18 +33,19 @@ y_i & \sim & \text{Normal}(\mu_i, \sigma) \\
 \end{eqnarray}
 $$
 
-With this formulation, we use $x$ to model the mean of $y$. $\beta_0$ is the intercept of the regression model and $\beta_1$ is its slope with respect to $x$. After accounting for $y$'s relation with $x$, the leftover variability in $y$ is described by $\sigma$, often called error or residual variance. The reason we describe the model in terms of $\mu$ and $\sigma$ is because those are the two parameters by which we define the Normal distribution, the Gaussian likelihood.
+With this formulation, we use $x$ to model the mean of $y$. The $\beta_0$ parameter is the intercept of the regression model and $\beta_1$ is its slope with respect to $x$. After accounting for $y$'s relation with $x$, the leftover variability in $y$ is described by $\sigma$, often called error or residual variance. The reason we describe the model in terms of $\mu$ and $\sigma$ is because those are the two parameters by which we define the Normal distribution, the Gaussian likelihood.
 
 The Gaussian is a sensible default choice for many data types. You might say it works unreasonably well. Unfortunately, the normal (i.e., Gaussian) distribution is sensitive to outliers. 
 
 The normal distribution is a special case of Student's $t$-distribution with the $\nu$ parameter (i.e., the degree of freedom) set to infinity. However, when $\nu$ is small, Student's $t$-distribution is more robust to multivariate outliers. See [Gelman & Hill (2007, chapter 6)](http://www.stat.columbia.edu/~gelman/arm/) or [Kruschke (2014, chapter 16)](https://sites.google.com/site/doingbayesiandataanalysis/) for textbook treatments on the topic.
 
-In this project, we demonstrate how vulnerable the Gaussian likelihood is to outliers and then compare it too different ways of using Student's $t$-likelihood for the same data.
+In this post, we demonstrate how vulnerable the Gaussian likelihood is to outliers and then compare it to different ways of using Student's $t$-likelihood for the same data.
 
 First, we'll get a sense of the distributions with a plot.
 
 ```{r, fig.width = 5.5, fig.height = 3.25, warning = F, message = F}
 library(tidyverse)
+
 tibble(x = seq(from = -6, to = 6, by = .01)) %>% 
   expand(x, nu = c(1, 2.5, 5, 10, Inf)) %>% 
   mutate(density = dt(x = x, df = nu),
@@ -58,21 +61,20 @@ tibble(x = seq(from = -6, to = 6, by = .01)) %>%
   theme(panel.grid = element_blank())
 ```
 
-So the difference is that a Student's $t$ with a low $\nu$ will have notably heavier tails than the conventional Gaussian distribution. It’s easiest to see the difference when $\nu$ approaches 1. Even then, the difference can be subtle when looking at a plot. Another way is to compare how probable relatively extreme values are in a Student's $t$-distribution relative to the Gaussian. For the sake of demonstration, here we'll compare Gauss with Student's $t$ with a $\nu$ of 5. In the plot above, they are clearly different, but not shockingly so. However, that difference is very notable in the tails.
+So the difference is that a Student's $t$-distribution with a low $\nu$ will have notably heavier tails than the conventional Gaussian distribution. It’s easiest to see the difference when $\nu$ approaches 1. Even then, the difference can be subtle when looking at a plot. Another way is to compare how probable relatively extreme values are in a Student's $t$-distribution relative to the Gaussian. For the sake of demonstration, here we'll compare Gauss with Student's $t$ with a $\nu$ of 5. In the plot above, they are clearly different, but not shockingly so. However, that difference is very notable in the tails.
 
-Let’s look closer with our table.
-
-In the table, below, we compare the probability of a given z-score or lower within the Gaussian and a $\nu = 5$ Student's $t$. In the rightmost column, we compare the probabilities in a ratio.
+Let’s look more closely with a table. Below, we compare the probability of a given z-score or lower within the Gaussian and a $\nu = 5$ Student's $t$. In the rightmost column, we compare the probabilities in a ratio.
 
 ```{r}
 # Here we pic our nu
 nu <- 5
 
-tibble(Z_score               = 0:-5,
-       p_Gauss               = pnorm(Z_score, mean = 0, sd = 1),
-       p_Student_t           = pt(Z_score, df = nu),
+tibble(z_score               = 0:-5,
+       p_Gauss               = pnorm(z_score, mean = 0, sd = 1),
+       p_Student_t           = pt(z_score, df = nu),
        `Student/Gauss ratio` = p_Student_t/p_Gauss) %>%
-  mutate_if(is.double, round, digits = 5)
+  mutate_if(is.double, round, digits = 5) %>% 
+  knitr::kable()
 ```
 
 Note how low z-scores are more probable in this Student’s $t$ than in the Gaussian. This is most apparent in the `Student/Gauss ratio` column on the right. A consequence of this is that extreme scores are less influential to your solutions when you use a small-$\nu$ Student’s $t$-distribution in place of the Gaussian. That is, the small-$\nu$ Student’s $t$ is more robust than the Gaussian to unusual and otherwise influential observations.
@@ -89,7 +91,7 @@ s <- matrix(c(1, .6,
              nrow = 2, ncol = 2)
 ```
 
-By the two `.6`s on the off-diagonal positions, we indicate we'd like our two variables to have a correlation of .6.
+By the two `.6`s on the off-diagonal positions, we indicated we'd like our two variables to have a correlation of .6.
 
 Second, our variables also need means, which we'll define with a mean vector.
 
@@ -115,9 +117,9 @@ The first few rows look like so:
 head(d)
 ```
 
-Side note. For more information on simulating data, check out [this nice r-bloggers post](https://www.r-bloggers.com/creating-sample-datasets-exercises/).
+As an aside, check out [this nice r-bloggers post](https://www.r-bloggers.com/creating-sample-datasets-exercises/) for more information on simulating data with this method.
 
-This line reorders our data by `x`, placing the smallest values on top.
+Anyway, this line reorders our data by `x`, placing the smallest values on top.
 
 ```{r}
 d <-
@@ -138,7 +140,7 @@ o[c(1:2), 1] <- c(5, 4)
 head(o)
 ```
 
-With the code, above, we replaced the first two values of our first variable, `y`. They both started out quite negative. Now they are positive values of a large magnitude in the standardized metric.
+With the code, above, we replaced the first two values of our first variable, `y`. They both started out quite negative. Now they are positive values of a large magnitude within the standardized metric.
 
 ## Frequentist [OLS](https://en.wikipedia.org/wiki/Ordinary_least_squares) models
 
@@ -166,9 +168,10 @@ tidy(fit1) %>% mutate_if(is.double, round, digits = 2)
 
 Just two odd and influential values dramatically changed the model parameters, particularly the slope. Let's plot the data and the models to get a visual sense of what happened.
 
-```{r, fig.width = 3.25, fig.height = 3}
+```{r, fig.width = 6.75, fig.height = 3, message = F, warning = F}
 # The well-behaived data
-ggplot(data = d, aes(x = x, y = y)) +
+p1 <-
+  ggplot(data = d, aes(x = x, y = y)) +
   stat_smooth(method = "lm", color = "grey92", fill = "grey67", alpha = 1, fullrange = T) +
   geom_point(size = 1, alpha = 3/4) +
   scale_x_continuous(limits = c(-4, 4)) +
@@ -176,8 +179,10 @@ ggplot(data = d, aes(x = x, y = y)) +
                   ylim = -3:5) +
   labs(title = "No Outliers") +
   theme(panel.grid = element_blank())
+
 # The data with two outliers
-ggplot(data = o, aes(x = x, y = y, color = y > 3)) +
+p2 <-
+  ggplot(data = o, aes(x = x, y = y, color = y > 3)) +
   stat_smooth(method = "lm", color = "grey92", fill = "grey67", alpha = 1, fullrange = T) +
   geom_point(size = 1, alpha = 3/4) +
   scale_color_viridis_d(option = "A", end = 4/7) +
@@ -187,9 +192,13 @@ ggplot(data = o, aes(x = x, y = y, color = y > 3)) +
   labs(title = "Two Outliers") +
   theme(panel.grid = element_blank(),
         legend.position = "none")
+
+library(gridExtra)
+
+grid.arrange(p1, p2, ncol = 2)
 ```
 
-The two outliers were quite influential on the slope. It went from a nice clear diagonal to almost horizontal. You'll also note how the 95% intervals (i.e., the bowtie shape) were a bit wider when based on the `o` data.
+The two outliers were quite influential on the slope. It went from a nice clear diagonal to almost horizontal. You'll also note how the 95% intervals (i.e., the bowtie shapes) were a bit wider when based on the `o` data.
 
 One of the popular ways to quantify outlier status is with Mahalanobis' distance. However, the Mahalanobis distance is primarilly valid for multivariate normal data. Though the data in this example are indeed multivariate normal--or at least they were before we injected two outlying values into them--I am going to resist relying on Mahalanobis' distance. There are other more general approaches that will be of greater use when you need to explore other variants of the generalized linear model. The `broom::augment()` function will give us access to one.
 
@@ -228,7 +237,7 @@ For the model of the well-behaved data, `fit0`, we have $D_i$ values all hoverin
 
 ## Switch to a Bayesian framework
 
-In this project, we'll use the [brms package](https://cran.r-project.org/web/packages/brms/index.html) to fit our Bayesian regression models. You can learn a lot about brms [here](https://cran.r-project.org/web/packages/brms/vignettes/brms_overview.pdf) and [here](https://github.com/paul-buerkner/brms). To keep things simple, we'll use [weakly-regularizing priors](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
+In this project, we'll use the [brms package](https://cran.r-project.org/web/packages/brms/index.html) to fit our Bayesian regression models. You can learn a lot about brms [here](https://cran.r-project.org/web/packages/brms/vignettes/brms_overview.pdf) and [here](https://github.com/paul-buerkner/brms). Bayesian models, of course, require us to use priors. To keep things simple, we'll use [weakly-regularizing priors](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations).
 
 ```{r, warning = F, message = F}
 library(brms)
@@ -243,8 +252,8 @@ b0 <-
   brm(data = d, family = gaussian,
       y ~ 1 + x,
       prior = c(prior(normal(0, 10), class = Intercept),
-                prior(normal(0, 10),  class = b),
-                prior(cauchy(0, 1),   class = sigma)))
+                prior(normal(0, 10), class = b),
+                prior(cauchy(0, 1),  class = sigma)))
 b1 <- 
   update(b0, 
          newdata = o)
@@ -361,9 +370,9 @@ b2 <-
   brm(data = o, family = student,
       y ~ 1 + x,
       prior = c(prior(normal(0, 10), class = Intercept),
-                prior(normal(0, 10),  class = b),
-                prior(gamma(2, 0.1),  class = nu),
-                prior(cauchy(0, 1),   class = sigma)))
+                prior(normal(0, 10), class = b),
+                prior(gamma(2, 0.1), class = nu),
+                prior(cauchy(0, 1),  class = sigma)))
 ```
 
 For the next model, we'll switch out that weak gamma(2, 0.1) for a stronger gamma(4, 1). In some disciplines, the gamma distribution is something of an exotic bird. So before fitting the model, it might be useful to take a peek at what these gamma priors looks like. In the plot, below, the orange density in the background is the default gamma(2, 0.1) and the purple density in the foreground is the stronger gamma(4, 1).
@@ -394,9 +403,9 @@ So the default prior is centered around values in the 2 to 30 range, but has a l
 b3 <- 
   update(b2,
          prior = c(prior(normal(0, 10), class = Intercept),
-                   prior(normal(0, 10),  class = b),
-                   prior(gamma(4, 1),    class = nu),
-                   prior(cauchy(0, 1),   class = sigma)))
+                   prior(normal(0, 10), class = b),
+                   prior(gamma(4, 1),   class = nu),
+                   prior(cauchy(0, 1),  class = sigma)))
 ```
 
 For our final model, we'll fix the $\nu$ parameter in a `bf()` statement.
@@ -434,7 +443,7 @@ b_estimates %>%
   mutate_if(is.double, round, digits = 2)  # This is just to round the numbers
 ```
 
-The models differ by their intercepts, slopes, sigmas, and $\nu$s. For the sake of this project, we'll focus on the slopes. Here we compare the different Bayesian models' slopes by their posterior means and 95% intervals in a coefficient plot.
+The models differ by their intercepts, slopes, sigmas, and $\nu$s. For the sake of this post, we'll focus on the slopes. Here we compare the different Bayesian models' slopes by their posterior means and 95% intervals in a coefficient plot.
 
 ```{r, fig.width = 6, fig.height = 2}
 b_estimates %>%
@@ -501,7 +510,7 @@ loo_b1$diagnostics$pareto_k %>%
     facet_wrap(~fit)
 ```
 
-Oh man, those Student's $t$ models made our world shiny! In a succession from `b2` through `b4`, each model looked better by `pareto_k`. All were way better than the typical Gaussian model, `b1`. While we're at it, we might compare those for with their LOO values.
+Oh man, those Student's $t$ models worked sweet! In a succession from `b2` through `b4`, each model looked better by `pareto_k`. All were way better than the typical Gaussian model, `b1`. While we're at it, we might compare those for with their LOO values.
 
 ```{r}
 compare_ic(loo_b1, loo_b2, loo_b3, loo_b4)
