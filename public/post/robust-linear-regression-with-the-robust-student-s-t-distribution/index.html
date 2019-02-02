@@ -387,6 +387,7 @@ tibble(Z_score               = 0:-5,
 <p>With means of <code>0</code> and variances of <code>1</code>, our data are in a standardized metric.</p>
 <p>Third, we’ll use the <code>mvrnorm()</code> function from the <a href="https://cran.r-project.org/web/packages/MASS/index.html">MASS package</a> to simulate our data.</p>
 <pre class="r"><code>set.seed(3)
+
 d &lt;- MASS::mvrnorm(n = 100, mu = m, Sigma = s) %&gt;%
   as_tibble() %&gt;%
   rename(y = V1, x = V2)</code></pre>
@@ -438,7 +439,7 @@ head(o)</code></pre>
 </div>
 <div id="frequentist-ols-models" class="section level2">
 <h2>Frequentist <a href="https://en.wikipedia.org/wiki/Ordinary_least_squares">OLS</a> models</h2>
-<p>To get a quick sense of what we’ve done, we’ll first fit two models with OLS regression. The first model, <code>fit0</code>, is of the multivariate normal data, <code>d</code>. The second model, <code>fit1</code>, is on the otherwise identical data with the two odd and influential values, <code>o</code>. Here is our model code.</p>
+<p>To get a quick sense of what we’ve done, we’ll first fit two models with OLS regression via the <code>lm()</code> function. The first model, <code>fit0</code>, is of the multivariate normal data, <code>d</code>. The second model, <code>fit1</code>, is on the otherwise identical data with the two odd and influential values, <code>o</code>. Here is our model code.</p>
 <pre class="r"><code>fit0 &lt;- lm(data = d, y ~ 1 + x)
 fit1 &lt;- lm(data = o, y ~ 1 + x)</code></pre>
 <p>We’ll use the <a href="https://cran.r-project.org/web/packages/broom/index.html">broom package</a> to assist with model summaries and other things.</p>
@@ -480,6 +481,7 @@ ggplot(data = o, aes(x = x, y = y, color = y &gt; 3)) +
 <p>One of the popular ways to quantify outlier status is with Mahalanobis’ distance. However, the Mahalanobis distance is primarilly valid for multivariate normal data. Though the data in this example are indeed multivariate normal–or at least they were before we injected two outlying values into them–I am going to resist relying on Mahalanobis’ distance. There are other more general approaches that will be of greater use when you need to explore other variants of the generalized linear model. The <code>broom::augment()</code> function will give us access to one.</p>
 <pre class="r"><code>aug0 &lt;- augment(fit0)
 aug1 &lt;- augment(fit1)
+
 glimpse(aug1)</code></pre>
 <pre><code>## Observations: 100
 ## Variables: 9
@@ -609,7 +611,7 @@ pareto_k_table(loo_b1)</code></pre>
 <p>Those numbers correspond to the row numbers in the data, <code>o</code>. These are exactly the cases that plagued our second OLS model, <code>fit1</code>, and are also the ones we hand coded to be outliers.</p>
 <p>With the simple <code>plot()</code> function, we can get a diagnostic plot for the <code>pareto_k</code> values.</p>
 <pre class="r"><code>plot(loo_b1)</code></pre>
-<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-23-1.png" width="480" /></p>
+<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-21-1.png" width="480" /></p>
 <p>There they are, cases 1 and 2, lurking in the “bad” and “[just] ok” ranges. We can also make a similar plot with ggplot2. Though it takes a little more work, ggplot2 makes it easy to compare <code>pareto_k</code> plots across models with a little faceting.</p>
 <pre class="r"><code>loo_b0$diagnostics$pareto_k %&gt;%  # The well-behaived data
   as_tibble() %&gt;%
@@ -633,7 +635,7 @@ pareto_k_table(loo_b1)</code></pre>
   theme(panel.grid = element_blank(),
         axis.title.x = element_text(face = &quot;italic&quot;, family = &quot;Times&quot;)) +
   facet_wrap(~fit)</code></pre>
-<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-24-1.png" width="768" /></p>
+<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-22-1.png" width="768" /></p>
 <p>So with <code>b0</code>–the model based on the well-behaved multivariate normal data, <code>d</code>–, all the <code>pareto_k</code> values hovered around zero in the “good” range. Things got concerning with model <code>b1</code>. But we know all that. Let’s move forward.</p>
 </div>
 <div id="what-do-we-do-with-those-overly-influential-outlying-values" class="section level4">
@@ -687,7 +689,7 @@ tibble(x = seq(from = 0, to = 60, by = .1)) %&gt;%
   coord_cartesian(xlim = 0:50) +
   theme(panel.grid      = element_blank(),
         legend.position = &quot;none&quot;)</code></pre>
-<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-28-1.png" width="768" /></p>
+<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-24-1.png" width="768" /></p>
 <p>So the default prior is centered around values in the 2 to 30 range, but has a long gentle-sloping tail, allowing the model to yield much larger values for <span class="math inline">\(\nu\)</span>, as needed. The prior we use below is almost entirely concentrated in the single-digit range. In this case, that will preference Student’s <span class="math inline">\(t\)</span> likelihoods with very small <span class="math inline">\(\nu\)</span> parameters and correspondingly thick tails–easily allowing for extreme values.</p>
 <pre class="r"><code>b3 &lt;- 
   update(b2,
@@ -750,7 +752,7 @@ tibble(x = seq(from = 0, to = 60, by = .1)) %&gt;%
   theme(panel.grid   = element_blank(),
         axis.ticks.y = element_blank(),
         axis.text.y  = element_text(hjust = 0))</code></pre>
-<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-33-1.png" width="576" /></p>
+<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-27-1.png" width="576" /></p>
 <p>You might think of the <code>b0</code> slope as the “true” slope. That’s the one estimated from the well-behaved multivariate normal data, <code>d</code>. That estimate’s just where we’d want it to be. The <code>b1</code> slope is a disaster–way lower than the others. The slopes for <code>b1.1</code> and <code>b1.2</code> get better, but at the expense of deleting data. All three of our Student’s <span class="math inline">\(t\)</span> models produced slopes that were pretty close to the <code>b0</code> slope. They weren’t perfect, but, all in all, Students <span class="math inline">\(t\)</span>-distribution did pretty okay.</p>
 </div>
 <div id="we-need-more-loo-and-more-pareto_k." class="section level3">
@@ -789,7 +791,7 @@ loo_b4 &lt;- loo(b4)</code></pre>
   theme(panel.grid   = element_blank(),
         axis.title.x = element_text(face = &quot;italic&quot;, family = &quot;Times&quot;)) +
     facet_wrap(~fit)</code></pre>
-<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-35-1.png" width="768" /></p>
+<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-28-1.png" width="768" /></p>
 <p>Oh man, those Student’s <span class="math inline">\(t\)</span> models made our world shiny! In a succession from <code>b2</code> through <code>b4</code>, each model looked better by <code>pareto_k</code>. All were way better than the typical Gaussian model, <code>b1</code>. While we’re at it, we might compare those for with their LOO values.</p>
 <pre class="r"><code>compare_ic(loo_b1, loo_b2, loo_b3, loo_b4)</code></pre>
 <pre><code>##          LOOIC    SE
@@ -848,7 +850,7 @@ fitted_bs %&gt;%
   theme(panel.grid      = element_blank(),
         legend.position = &quot;none&quot;) +
   facet_wrap(~model)</code></pre>
-<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-37-1.png" width="768" /></p>
+<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-30-1.png" width="768" /></p>
 <p>For each subplot, the gray band is the 95% interval band and the overlapping light gray line is the posterior mean. Model <code>b0</code>, recall, is our baseline comparison model. This is of the well-behaved no-outlier data, <code>d</code>, using the good old Gaussian likelihood. Model <code>b1</code> is of the outlier data, <code>o</code>, but still using the non-robust Gaussian likelihood. Model <code>b3</code> uses a robust Student’s <span class="math inline">\(t\)</span> likelihood with <span class="math inline">\(\nu\)</span> estimated with the fairly narrow gamma(4, 1) prior. For my money, <code>b3</code> did a pretty good job.</p>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 3.5.1 (2018-07-02)
@@ -959,10 +961,6 @@ fitted_bs %&gt;%
 
 <div class="container">
   <footer class="site-footer">
-  
-  <p class="powered-by">
-    <a href="/privacy/">Privacy Policy</a>
-  </p>
   
 
   <p class="powered-by">

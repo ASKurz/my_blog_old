@@ -127,6 +127,7 @@ tibble(Z_score               = 0:-5,
 &lt;p&gt;With means of &lt;code&gt;0&lt;/code&gt; and variances of &lt;code&gt;1&lt;/code&gt;, our data are in a standardized metric.&lt;/p&gt;
 &lt;p&gt;Third, we’ll use the &lt;code&gt;mvrnorm()&lt;/code&gt; function from the &lt;a href=&#34;https://cran.r-project.org/web/packages/MASS/index.html&#34;&gt;MASS package&lt;/a&gt; to simulate our data.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;set.seed(3)
+
 d &amp;lt;- MASS::mvrnorm(n = 100, mu = m, Sigma = s) %&amp;gt;%
   as_tibble() %&amp;gt;%
   rename(y = V1, x = V2)&lt;/code&gt;&lt;/pre&gt;
@@ -178,7 +179,7 @@ head(o)&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;frequentist-ols-models&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Frequentist &lt;a href=&#34;https://en.wikipedia.org/wiki/Ordinary_least_squares&#34;&gt;OLS&lt;/a&gt; models&lt;/h2&gt;
-&lt;p&gt;To get a quick sense of what we’ve done, we’ll first fit two models with OLS regression. The first model, &lt;code&gt;fit0&lt;/code&gt;, is of the multivariate normal data, &lt;code&gt;d&lt;/code&gt;. The second model, &lt;code&gt;fit1&lt;/code&gt;, is on the otherwise identical data with the two odd and influential values, &lt;code&gt;o&lt;/code&gt;. Here is our model code.&lt;/p&gt;
+&lt;p&gt;To get a quick sense of what we’ve done, we’ll first fit two models with OLS regression via the &lt;code&gt;lm()&lt;/code&gt; function. The first model, &lt;code&gt;fit0&lt;/code&gt;, is of the multivariate normal data, &lt;code&gt;d&lt;/code&gt;. The second model, &lt;code&gt;fit1&lt;/code&gt;, is on the otherwise identical data with the two odd and influential values, &lt;code&gt;o&lt;/code&gt;. Here is our model code.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit0 &amp;lt;- lm(data = d, y ~ 1 + x)
 fit1 &amp;lt;- lm(data = o, y ~ 1 + x)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;We’ll use the &lt;a href=&#34;https://cran.r-project.org/web/packages/broom/index.html&#34;&gt;broom package&lt;/a&gt; to assist with model summaries and other things.&lt;/p&gt;
@@ -220,6 +221,7 @@ ggplot(data = o, aes(x = x, y = y, color = y &amp;gt; 3)) +
 &lt;p&gt;One of the popular ways to quantify outlier status is with Mahalanobis’ distance. However, the Mahalanobis distance is primarilly valid for multivariate normal data. Though the data in this example are indeed multivariate normal–or at least they were before we injected two outlying values into them–I am going to resist relying on Mahalanobis’ distance. There are other more general approaches that will be of greater use when you need to explore other variants of the generalized linear model. The &lt;code&gt;broom::augment()&lt;/code&gt; function will give us access to one.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;aug0 &amp;lt;- augment(fit0)
 aug1 &amp;lt;- augment(fit1)
+
 glimpse(aug1)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Observations: 100
 ## Variables: 9
@@ -349,7 +351,7 @@ pareto_k_table(loo_b1)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Those numbers correspond to the row numbers in the data, &lt;code&gt;o&lt;/code&gt;. These are exactly the cases that plagued our second OLS model, &lt;code&gt;fit1&lt;/code&gt;, and are also the ones we hand coded to be outliers.&lt;/p&gt;
 &lt;p&gt;With the simple &lt;code&gt;plot()&lt;/code&gt; function, we can get a diagnostic plot for the &lt;code&gt;pareto_k&lt;/code&gt; values.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;plot(loo_b1)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-23-1.png&#34; width=&#34;480&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-21-1.png&#34; width=&#34;480&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;There they are, cases 1 and 2, lurking in the “bad” and “[just] ok” ranges. We can also make a similar plot with ggplot2. Though it takes a little more work, ggplot2 makes it easy to compare &lt;code&gt;pareto_k&lt;/code&gt; plots across models with a little faceting.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;loo_b0$diagnostics$pareto_k %&amp;gt;%  # The well-behaived data
   as_tibble() %&amp;gt;%
@@ -373,7 +375,7 @@ pareto_k_table(loo_b1)&lt;/code&gt;&lt;/pre&gt;
   theme(panel.grid = element_blank(),
         axis.title.x = element_text(face = &amp;quot;italic&amp;quot;, family = &amp;quot;Times&amp;quot;)) +
   facet_wrap(~fit)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-24-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-22-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;So with &lt;code&gt;b0&lt;/code&gt;–the model based on the well-behaved multivariate normal data, &lt;code&gt;d&lt;/code&gt;–, all the &lt;code&gt;pareto_k&lt;/code&gt; values hovered around zero in the “good” range. Things got concerning with model &lt;code&gt;b1&lt;/code&gt;. But we know all that. Let’s move forward.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;what-do-we-do-with-those-overly-influential-outlying-values&#34; class=&#34;section level4&#34;&gt;
@@ -427,7 +429,7 @@ tibble(x = seq(from = 0, to = 60, by = .1)) %&amp;gt;%
   coord_cartesian(xlim = 0:50) +
   theme(panel.grid      = element_blank(),
         legend.position = &amp;quot;none&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-28-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-24-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;So the default prior is centered around values in the 2 to 30 range, but has a long gentle-sloping tail, allowing the model to yield much larger values for &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt;, as needed. The prior we use below is almost entirely concentrated in the single-digit range. In this case, that will preference Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt; likelihoods with very small &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt; parameters and correspondingly thick tails–easily allowing for extreme values.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;b3 &amp;lt;- 
   update(b2,
@@ -490,7 +492,7 @@ tibble(x = seq(from = 0, to = 60, by = .1)) %&amp;gt;%
   theme(panel.grid   = element_blank(),
         axis.ticks.y = element_blank(),
         axis.text.y  = element_text(hjust = 0))&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-33-1.png&#34; width=&#34;576&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-27-1.png&#34; width=&#34;576&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;You might think of the &lt;code&gt;b0&lt;/code&gt; slope as the “true” slope. That’s the one estimated from the well-behaved multivariate normal data, &lt;code&gt;d&lt;/code&gt;. That estimate’s just where we’d want it to be. The &lt;code&gt;b1&lt;/code&gt; slope is a disaster–way lower than the others. The slopes for &lt;code&gt;b1.1&lt;/code&gt; and &lt;code&gt;b1.2&lt;/code&gt; get better, but at the expense of deleting data. All three of our Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt; models produced slopes that were pretty close to the &lt;code&gt;b0&lt;/code&gt; slope. They weren’t perfect, but, all in all, Students &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution did pretty okay.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;we-need-more-loo-and-more-pareto_k.&#34; class=&#34;section level3&#34;&gt;
@@ -529,7 +531,7 @@ loo_b4 &amp;lt;- loo(b4)&lt;/code&gt;&lt;/pre&gt;
   theme(panel.grid   = element_blank(),
         axis.title.x = element_text(face = &amp;quot;italic&amp;quot;, family = &amp;quot;Times&amp;quot;)) +
     facet_wrap(~fit)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-35-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-28-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;Oh man, those Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt; models made our world shiny! In a succession from &lt;code&gt;b2&lt;/code&gt; through &lt;code&gt;b4&lt;/code&gt;, each model looked better by &lt;code&gt;pareto_k&lt;/code&gt;. All were way better than the typical Gaussian model, &lt;code&gt;b1&lt;/code&gt;. While we’re at it, we might compare those for with their LOO values.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;compare_ic(loo_b1, loo_b2, loo_b3, loo_b4)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##          LOOIC    SE
@@ -588,7 +590,7 @@ fitted_bs %&amp;gt;%
   theme(panel.grid      = element_blank(),
         legend.position = &amp;quot;none&amp;quot;) +
   facet_wrap(~model)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-37-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-30-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;For each subplot, the gray band is the 95% interval band and the overlapping light gray line is the posterior mean. Model &lt;code&gt;b0&lt;/code&gt;, recall, is our baseline comparison model. This is of the well-behaved no-outlier data, &lt;code&gt;d&lt;/code&gt;, using the good old Gaussian likelihood. Model &lt;code&gt;b1&lt;/code&gt; is of the outlier data, &lt;code&gt;o&lt;/code&gt;, but still using the non-robust Gaussian likelihood. Model &lt;code&gt;b3&lt;/code&gt; uses a robust Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt; likelihood with &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt; estimated with the fairly narrow gamma(4, 1) prior. For my money, &lt;code&gt;b3&lt;/code&gt; did a pretty good job.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## R version 3.5.1 (2018-07-02)
@@ -1156,37 +1158,36 @@ glimpse(afd)&lt;/code&gt;&lt;/pre&gt;
 ##   [4] ggstance_0.3              markdown_0.8              base64enc_0.1-3          
 ##   [7] rstudioapi_0.7            rstan_2.18.2              svUnit_0.7-12            
 ##  [10] DT_0.4                    mvtnorm_1.0-8             lubridate_1.7.4          
-##  [13] xml2_1.2.0                bridgesampling_0.4-0      codetools_0.2-15         
-##  [16] mnormt_1.5-5              knitr_1.20                shinythemes_1.1.1        
-##  [19] bayesplot_1.6.0           jsonlite_1.5              broom_0.4.5              
-##  [22] shiny_1.1.0               compiler_3.5.1            httr_1.3.1               
-##  [25] backports_1.1.2           assertthat_0.2.0          Matrix_1.2-14            
-##  [28] lazyeval_0.2.1            cli_1.0.1                 later_0.7.3              
-##  [31] htmltools_0.3.6           prettyunits_1.0.2         tools_3.5.1              
-##  [34] igraph_1.2.1              coda_0.19-2               gtable_0.2.0             
-##  [37] glue_1.3.0                reshape2_1.4.3            cellranger_1.1.0         
-##  [40] nlme_3.1-137              blogdown_0.8              crosstalk_1.0.0          
-##  [43] psych_1.8.4               xfun_0.3                  ps_1.2.1                 
-##  [46] rvest_0.3.2               mime_0.5                  miniUI_0.1.1.1           
-##  [49] gtools_3.8.1              MASS_7.3-50               zoo_1.8-2                
-##  [52] scales_1.0.0              colourpicker_1.0          hms_0.4.2                
-##  [55] promises_1.0.1            Brobdingnag_1.2-5         parallel_3.5.1           
-##  [58] inline_0.3.15             shinystan_2.5.0           yaml_2.1.19              
-##  [61] gridExtra_2.3             loo_2.0.0                 StanHeaders_2.18.0-1     
-##  [64] stringi_1.2.3             dygraphs_1.1.1.5          pkgbuild_1.0.2           
-##  [67] rlang_0.3.0.1             pkgconfig_2.0.1           matrixStats_0.54.0       
-##  [70] evaluate_0.10.1           lattice_0.20-35           bindr_0.1.1              
-##  [73] rstantools_1.5.0          htmlwidgets_1.2           labeling_0.3             
-##  [76] tidyselect_0.2.4          processx_3.2.1            plyr_1.8.4               
-##  [79] magrittr_1.5              bookdown_0.7              R6_2.3.0                 
-##  [82] pillar_1.2.3              haven_1.1.2               foreign_0.8-70           
-##  [85] withr_2.1.2               xts_0.10-2                abind_1.4-5              
-##  [88] modelr_0.1.2              crayon_1.3.4              arrayhelpers_1.0-20160527
-##  [91] utf8_1.1.4                rmarkdown_1.10            grid_3.5.1               
-##  [94] readxl_1.1.0              callr_3.1.0               threejs_0.3.1            
-##  [97] digest_0.6.18             xtable_1.8-2              httpuv_1.4.4.2           
-## [100] stats4_3.5.1              munsell_0.5.0             viridisLite_0.3.0        
-## [103] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##  [13] xml2_1.2.0                bridgesampling_0.4-0      mnormt_1.5-5             
+##  [16] knitr_1.20                shinythemes_1.1.1         bayesplot_1.6.0          
+##  [19] jsonlite_1.5              broom_0.4.5               shiny_1.1.0              
+##  [22] compiler_3.5.1            httr_1.3.1                backports_1.1.2          
+##  [25] assertthat_0.2.0          Matrix_1.2-14             lazyeval_0.2.1           
+##  [28] cli_1.0.1                 later_0.7.3               htmltools_0.3.6          
+##  [31] prettyunits_1.0.2         tools_3.5.1               igraph_1.2.1             
+##  [34] coda_0.19-2               gtable_0.2.0              glue_1.3.0               
+##  [37] reshape2_1.4.3            cellranger_1.1.0          nlme_3.1-137             
+##  [40] blogdown_0.8              crosstalk_1.0.0           psych_1.8.4              
+##  [43] xfun_0.3                  ps_1.2.1                  rvest_0.3.2              
+##  [46] mime_0.5                  miniUI_0.1.1.1            gtools_3.8.1             
+##  [49] MASS_7.3-50               zoo_1.8-2                 scales_1.0.0             
+##  [52] colourpicker_1.0          hms_0.4.2                 promises_1.0.1           
+##  [55] Brobdingnag_1.2-5         parallel_3.5.1            inline_0.3.15            
+##  [58] shinystan_2.5.0           yaml_2.1.19               gridExtra_2.3            
+##  [61] loo_2.0.0                 StanHeaders_2.18.0-1      stringi_1.2.3            
+##  [64] dygraphs_1.1.1.5          pkgbuild_1.0.2            rlang_0.3.0.1            
+##  [67] pkgconfig_2.0.1           matrixStats_0.54.0        evaluate_0.10.1          
+##  [70] lattice_0.20-35           bindr_0.1.1               rstantools_1.5.0         
+##  [73] htmlwidgets_1.2           labeling_0.3              tidyselect_0.2.4         
+##  [76] processx_3.2.1            plyr_1.8.4                magrittr_1.5             
+##  [79] bookdown_0.7              R6_2.3.0                  pillar_1.2.3             
+##  [82] haven_1.1.2               foreign_0.8-70            withr_2.1.2              
+##  [85] xts_0.10-2                abind_1.4-5               modelr_0.1.2             
+##  [88] crayon_1.3.4              arrayhelpers_1.0-20160527 utf8_1.1.4               
+##  [91] rmarkdown_1.10            grid_3.5.1                readxl_1.1.0             
+##  [94] callr_3.1.0               threejs_0.3.1             digest_0.6.18            
+##  [97] xtable_1.8-2              httpuv_1.4.4.2            stats4_3.5.1             
+## [100] munsell_0.5.0             viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>
@@ -1597,8 +1598,8 @@ m &amp;lt;- brm(response ~ (1|condition),
 &lt;pre&gt;&lt;code&gt;## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 3.5e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.35 seconds.
+## Chain 1: Gradient evaluation took 4.2e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.42 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -1615,15 +1616,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.698616 seconds (Warm-up)
-## Chain 1:                0.594893 seconds (Sampling)
-## Chain 1:                1.29351 seconds (Total)
+## Chain 1:  Elapsed Time: 0.519844 seconds (Warm-up)
+## Chain 1:                0.528078 seconds (Sampling)
+## Chain 1:                1.04792 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 1.5e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.15 seconds.
+## Chain 2: Gradient evaluation took 2.2e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.22 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -1640,15 +1641,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.713423 seconds (Warm-up)
-## Chain 2:                0.803974 seconds (Sampling)
-## Chain 2:                1.5174 seconds (Total)
+## Chain 2:  Elapsed Time: 0.563743 seconds (Warm-up)
+## Chain 2:                0.60743 seconds (Sampling)
+## Chain 2:                1.17117 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 1.2e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
+## Chain 3: Gradient evaluation took 1.3e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -1665,9 +1666,9 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.735096 seconds (Warm-up)
-## Chain 3:                0.674966 seconds (Sampling)
-## Chain 3:                1.41006 seconds (Total)
+## Chain 3:  Elapsed Time: 0.665637 seconds (Warm-up)
+## Chain 3:                0.525027 seconds (Sampling)
+## Chain 3:                1.19066 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
@@ -1690,9 +1691,9 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.680389 seconds (Warm-up)
-## Chain 4:                0.778703 seconds (Sampling)
-## Chain 4:                1.45909 seconds (Total)
+## Chain 4:  Elapsed Time: 0.542127 seconds (Warm-up)
+## Chain 4:                0.613192 seconds (Sampling)
+## Chain 4:                1.15532 seconds (Total)
 ## Chain 4:&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
   spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%
@@ -1888,16 +1889,6 @@ m &amp;lt;- brm(response ~ (1|condition),
 &lt;h2 id=&#34;tip-2&#34;&gt;Tip 2&lt;/h2&gt;
 
 &lt;p&gt;&amp;hellip;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Privacy Policy</title>
-      <link>/privacy/</link>
-      <pubDate>Thu, 28 Jun 2018 00:00:00 -0500</pubDate>
-      
-      <guid>/privacy/</guid>
-      <description>&lt;p&gt;&amp;hellip;&lt;/p&gt;
 </description>
     </item>
     
