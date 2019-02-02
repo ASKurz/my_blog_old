@@ -20,6 +20,14 @@
     
     <url>
     
+      <loc>/post/how-to-survive-a-plague-part-1-n-of-a-premature-book-report/</loc>
+      <lastmod>2019-02-02T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/post/make-rotated-gaussians-kruschke-style/</loc>
       <lastmod>2018-12-20T00:00:00+00:00</lastmod>
     </url>
@@ -129,6 +137,15 @@
     
       <loc>/tags/github/</loc>
       <lastmod>2018-10-04T00:00:00+00:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/hiv-aids/</loc>
+      <lastmod>2019-02-02T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
