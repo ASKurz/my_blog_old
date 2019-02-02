@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Thu, 20 Dec 2018 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 02 Feb 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/r/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Robust Linear Regression with the Robust Student’s $t$-Distribution</title>
+      <link>/post/robust-linear-regression-with-the-robust-student-s-t-distribution/</link>
+      <pubDate>Sat, 02 Feb 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/robust-linear-regression-with-the-robust-student-s-t-distribution/</guid>
+      <description>The purpose of this post is to demonstrate the advantages of the Student’s \(t\)-distribution for regression with outliers, particularly within a Bayesian framework.
+For this project, I’m presuming you are familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting regression models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is R, with a heavy use of the tidyverse–which you might learn a lot about here, especially chapter 5– and Paul Bürkner’s brms package.</description>
+    </item>
     
     <item>
       <title>Make rotated Gaussians, Kruschke style</title>
