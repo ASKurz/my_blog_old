@@ -56,12 +56,13 @@
     </item>
     
     <item>
-      <title>Robust Linear Regression with the Robust Student’s $t$-Distribution</title>
+      <title>Robust Linear Regression with Student’s $t$-Distribution</title>
       <link>/post/robust-linear-regression-with-the-robust-student-s-t-distribution/</link>
       <pubDate>Sat, 02 Feb 2019 00:00:00 +0000</pubDate>
       
       <guid>/post/robust-linear-regression-with-the-robust-student-s-t-distribution/</guid>
-      <description>&lt;p&gt;The purpose of this post is to demonstrate the advantages of the Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution for regression with outliers, particularly within a &lt;a href=&#34;https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists&#34;&gt;Bayesian framework&lt;/a&gt;.&lt;/p&gt;
+      <description>&lt;p&gt;[edited Feb 3, 2018]&lt;/p&gt;
+&lt;p&gt;The purpose of this post is to demonstrate the advantages of the Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution for regression with outliers, particularly within a &lt;a href=&#34;https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists&#34;&gt;Bayesian framework&lt;/a&gt;.&lt;/p&gt;
 &lt;div id=&#34;i-make-assumptions&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;I make assumptions&lt;/h2&gt;
 &lt;p&gt;I’m presuming you are familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting regression models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is &lt;a href=&#34;https://www.r-bloggers.com/why-use-r-five-reasons/&#34;&gt;R&lt;/a&gt;, with a heavy use of the &lt;a href=&#34;http://style.tidyverse.org&#34;&gt;tidyverse&lt;/a&gt;–which you might learn a lot about &lt;a href=&#34;http://r4ds.had.co.nzhttp://r4ds.had.co.nz&#34;&gt;here, especially chapter 5&lt;/a&gt;– and &lt;a href=&#34;https://twitter.com/paulbuerkner&#34;&gt;Paul Bürkner&lt;/a&gt;’s &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;brms&lt;/a&gt; package.&lt;/p&gt;
@@ -501,35 +502,32 @@ tibble(x = seq(from = 0, to = 60, by = .1)) %&amp;gt;%
          seed = 1)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Now we’ve got all those models, we can gather their results into a sole tibble.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;b_estimates &amp;lt;-
-  tidy(b0) %&amp;gt;%
-  bind_rows(tidy(b1),
-            tidy(b1.1),
-            tidy(b1.2),
-            tidy(b2),
-            tidy(b3),
-            tidy(b4)) %&amp;gt;%
+  tibble(model = c(&amp;quot;b0&amp;quot;, &amp;quot;b1&amp;quot;, &amp;quot;b1.1&amp;quot;, &amp;quot;b1.2&amp;quot;, &amp;quot;b2&amp;quot;, &amp;quot;b3&amp;quot;, &amp;quot;b4&amp;quot;)) %&amp;gt;% 
+  mutate(fit   = map(model, get)) %&amp;gt;% 
+  mutate(tidy  = map(fit, tidy)) %&amp;gt;% 
+  unnest(tidy) %&amp;gt;% 
   filter(term %in% c(&amp;quot;b_Intercept&amp;quot;, &amp;quot;b_x&amp;quot;)) %&amp;gt;%
-  mutate(model = rep(c(&amp;quot;b0&amp;quot;, &amp;quot;b1&amp;quot;, &amp;quot;b1.1&amp;quot;, &amp;quot;b1.2&amp;quot;, &amp;quot;b2&amp;quot;, &amp;quot;b3&amp;quot;, &amp;quot;b4&amp;quot;), each = 2)) %&amp;gt;%
-  select(model, everything()) %&amp;gt;%
   arrange(term)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;To get a sense of what we’ve done, let’s take a peek at our models tibble.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;b_estimates %&amp;gt;%
   mutate_if(is.double, round, digits = 2)  # This is just to round the numbers&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##    model        term estimate std.error lower upper
-## 1     b0 b_Intercept    -0.01      0.09 -0.15  0.13
-## 2     b1 b_Intercept     0.12      0.11 -0.05  0.30
-## 3   b1.1 b_Intercept     0.07      0.10 -0.09  0.23
-## 4   b1.2 b_Intercept     0.02      0.09 -0.12  0.16
-## 5     b2 b_Intercept     0.04      0.09 -0.11  0.20
-## 6     b3 b_Intercept     0.04      0.09 -0.11  0.19
-## 7     b4 b_Intercept     0.04      0.09 -0.11  0.19
-## 8     b0         b_x     0.44      0.10  0.29  0.61
-## 9     b1         b_x     0.15      0.13 -0.05  0.36
-## 10  b1.1         b_x     0.28      0.12  0.09  0.47
-## 11  b1.2         b_x     0.40      0.10  0.23  0.56
-## 12    b2         b_x     0.35      0.11  0.17  0.53
-## 13    b3         b_x     0.36      0.10  0.19  0.53
-## 14    b4         b_x     0.37      0.10  0.20  0.54&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 14 x 6
+##    model term        estimate std.error  lower upper
+##    &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt;          &amp;lt;dbl&amp;gt;     &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
+##  1 b0    b_Intercept    -0.01      0.09 -0.15   0.13
+##  2 b1    b_Intercept     0.12      0.11 -0.05   0.3 
+##  3 b1.1  b_Intercept     0.07      0.1  -0.09   0.23
+##  4 b1.2  b_Intercept     0.02      0.09 -0.12   0.16
+##  5 b2    b_Intercept     0.04      0.09 -0.11   0.2 
+##  6 b3    b_Intercept     0.04      0.09 -0.11   0.19
+##  7 b4    b_Intercept     0.04      0.09 -0.11   0.19
+##  8 b0    b_x             0.44      0.1   0.290  0.61
+##  9 b1    b_x             0.15      0.13 -0.05   0.36
+## 10 b1.1  b_x             0.28      0.12  0.09   0.47
+## 11 b1.2  b_x             0.4       0.1   0.23   0.56
+## 12 b2    b_x             0.35      0.11  0.17   0.53
+## 13 b3    b_x             0.36      0.1   0.19   0.53
+## 14 b4    b_x             0.37      0.1   0.2    0.54&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;The models differ by their intercepts, slopes, sigmas, and &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt;s. For the sake of this post, we’ll focus on the slopes. Here we compare the different Bayesian models’ slopes by their posterior means and 95% intervals in a coefficient plot.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;b_estimates %&amp;gt;%
   filter(term == &amp;quot;b_x&amp;quot;) %&amp;gt;% # b_Intercept b_x
@@ -557,27 +555,22 @@ tibble(x = seq(from = 0, to = 60, by = .1)) %&amp;gt;%
 loo_b3 &amp;lt;- loo(b3)
 loo_b4 &amp;lt;- loo(b4)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;With a little data wrangling, we can compare our models by how they look in our custom &lt;code&gt;pareto_k&lt;/code&gt; diagnostic plots.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;loo_b1$diagnostics$pareto_k %&amp;gt;% 
-  as_tibble() %&amp;gt;%
-  mutate(i = 1:n()) %&amp;gt;%
-  bind_rows(
-    # add loo_b2
-    loo_b2$diagnostics$pareto_k %&amp;gt;% 
-      as_tibble() %&amp;gt;%
-      mutate(i = 1:n()),
-    
-    # add loo_b3
-    loo_b3$diagnostics$pareto_k %&amp;gt;% 
-      as_tibble() %&amp;gt;%
-      mutate(i = 1:n()),
-    
-    # add loo_b4
-    loo_b4$diagnostics$pareto_k %&amp;gt;% 
-      as_tibble() %&amp;gt;%
-      mutate(i = 1:n()) 
-  ) %&amp;gt;%
-  rename(pareto_k = value) %&amp;gt;%
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# make a custom function to work with the loo objects in bulk
+get_pareto_k &amp;lt;- function(l) {
+  l$diagnostics$pareto_k %&amp;gt;% 
+    as_tibble() %&amp;gt;%
+    mutate(i = 1:n()) %&amp;gt;% 
+    rename(pareto_k = value)
+}
+
+# wrangle
+tibble(name = str_c(&amp;quot;loo_b&amp;quot;, 1:4)) %&amp;gt;% 
+  mutate(loo_object = map(name, get)) %&amp;gt;% 
+  mutate(pareto_k = map(loo_object, get_pareto_k)) %&amp;gt;% 
+  unnest(pareto_k) %&amp;gt;% 
   mutate(fit = rep(c(&amp;quot;fit b1&amp;quot;, &amp;quot;fit b2&amp;quot;, &amp;quot;fit b3&amp;quot;, &amp;quot;fit b4&amp;quot;), each = n() / 4)) %&amp;gt;%
+  
+  # plot
   ggplot(aes(x = i, y = pareto_k)) +
   geom_hline(yintercept = c(.5, .7),
              color = &amp;quot;white&amp;quot;) +
@@ -609,41 +602,26 @@ loo_b4 &amp;lt;- loo(b4)&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;lets-compare-a-few-bayesian-models.&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;Let’s compare a few Bayesian models.&lt;/h3&gt;
-&lt;p&gt;That’s enough with coefficients, &lt;code&gt;pareto_k&lt;/code&gt;, and the LOO. Let’s get a sense of the implications of the models by comparing a few in plots.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# These are the values of x we&amp;#39;d like model-implied summaries for
+&lt;p&gt;That’s enough with coefficients, &lt;code&gt;pareto_k&lt;/code&gt;, and the LOO. Let’s get a sense of the implications of the models by comparing a few in plots. Here we use convenience functions from &lt;a href=&#34;https://twitter.com/mjskay&#34;&gt;Matthew Kay&lt;/a&gt;’s &lt;a href=&#34;https://github.com/mjskay/tidybayes&#34;&gt;tidybayes&lt;/a&gt; package to streamline the data wrangling and plotting. [The method came from a &lt;a href=&#34;https://twitter.com/mjskay/status/1091926564101599232&#34;&gt;kind twitter suggesion from Kay&lt;/a&gt;.]&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidybayes)
+
+# These are the values of x we&amp;#39;d like model-implied summaries for
 nd &amp;lt;- tibble(x = seq(from = -4, to = 4, length.out = 50))
 
-# We get the model-implied summaries with a big `fitted()` object
-fitted_bs &amp;lt;- 
-  # `b0`
-  fitted(b0, newdata = nd) %&amp;gt;%
-  as_tibble() %&amp;gt;%
-  bind_rows(
-    # add `b1`
-    fitted(b1, newdata = nd) %&amp;gt;%
-      as_tibble(),
-    
-    # add `b3`
-    fitted(b4, newdata = nd) %&amp;gt;%
-      as_tibble()
-  ) %&amp;gt;% 
-  # we need a model index
-  mutate(model = rep(c(&amp;quot;b0&amp;quot;, &amp;quot;b1&amp;quot;, &amp;quot;b3&amp;quot;), each = 50)) %&amp;gt;% 
-  # and we&amp;#39;d like to put the x values in there, too
-  mutate(x = rep(nd %&amp;gt;% pull(), times = 3))
-
-# now we plot
-fitted_bs %&amp;gt;% 
+# here&amp;#39;s another way to arrange the models
+list(b0 = b0, b1 = b1, b3 = b3) %&amp;gt;% 
+  # with help from 1tidybayes::add_fitted_draws()`, here we use `fitted()` in bulk
+  map_dfr(add_fitted_draws, newdata = nd, .id = &amp;quot;model&amp;quot;) %&amp;gt;% 
+  
+  # plot
   ggplot(aes(x = x)) +
-  geom_ribbon(aes(ymin = Q2.5,
-                  ymax = Q97.5),
-              fill = &amp;quot;grey67&amp;quot;) +
-  geom_line(aes(y = Estimate),
-            color = &amp;quot;grey92&amp;quot;) +
+  stat_lineribbon(aes(y = .value),
+                  .width = .95,
+                  color = &amp;quot;grey92&amp;quot;, fill = &amp;quot;grey67&amp;quot;) +
   geom_point(data = d %&amp;gt;%
                bind_rows(o, o) %&amp;gt;%
                mutate(model = rep(c(&amp;quot;b0&amp;quot;, &amp;quot;b1&amp;quot;, &amp;quot;b3&amp;quot;), each = 100)), 
-             aes(x = x, y = y, color = y &amp;gt; 3),
+             aes(y = y, color = y &amp;gt; 3),
              size = 1, alpha = 3/4) +
   scale_color_viridis_d(option = &amp;quot;A&amp;quot;, end = 4/7) +
   coord_cartesian(xlim = -3:3, 
@@ -670,45 +648,63 @@ fitted_bs %&amp;gt;%
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] loo_2.0.0       brms_2.7.0      Rcpp_1.0.0      gridExtra_2.3  
-##  [5] broom_0.4.5     bindrcpp_0.2.2  forcats_0.3.0   stringr_1.3.1  
-##  [9] dplyr_0.7.6     purrr_0.2.5     readr_1.1.1     tidyr_0.8.1    
-## [13] tibble_1.4.2    ggplot2_3.1.0   tidyverse_1.2.1
+##  [1] tidybayes_1.0.3 loo_2.0.0       brms_2.7.0      Rcpp_1.0.0     
+##  [5] gridExtra_2.3   broom_0.4.5     bindrcpp_0.2.2  forcats_0.3.0  
+##  [9] stringr_1.3.1   dplyr_0.7.6     purrr_0.2.5     readr_1.1.1    
+## [13] tidyr_0.8.1     tibble_1.4.2    ggplot2_3.1.0   tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] colorspace_1.3-2     ggridges_0.5.0       rsconnect_0.8.8     
-##  [4] rprojroot_1.3-2      markdown_0.8         base64enc_0.1-3     
-##  [7] rstudioapi_0.7       rstan_2.18.2         DT_0.4              
-## [10] mvtnorm_1.0-8        lubridate_1.7.4      xml2_1.2.0          
-## [13] codetools_0.2-15     bridgesampling_0.4-0 mnormt_1.5-5        
-## [16] knitr_1.20           shinythemes_1.1.1    bayesplot_1.6.0     
-## [19] jsonlite_1.5         shiny_1.1.0          compiler_3.5.1      
-## [22] httr_1.3.1           backports_1.1.2      assertthat_0.2.0    
-## [25] Matrix_1.2-14        lazyeval_0.2.1       cli_1.0.1           
-## [28] later_0.7.3          prettyunits_1.0.2    htmltools_0.3.6     
-## [31] tools_3.5.1          igraph_1.2.1         coda_0.19-2         
-## [34] gtable_0.2.0         glue_1.3.0           reshape2_1.4.3      
-## [37] cellranger_1.1.0     nlme_3.1-137         blogdown_0.8        
-## [40] crosstalk_1.0.0      psych_1.8.4          xfun_0.3            
-## [43] ps_1.2.1             rvest_0.3.2          mime_0.5            
-## [46] miniUI_0.1.1.1       gtools_3.8.1         MASS_7.3-50         
-## [49] zoo_1.8-2            scales_1.0.0         colourpicker_1.0    
-## [52] hms_0.4.2            promises_1.0.1       Brobdingnag_1.2-5   
-## [55] parallel_3.5.1       inline_0.3.15        shinystan_2.5.0     
-## [58] yaml_2.1.19          StanHeaders_2.18.0-1 stringi_1.2.3       
-## [61] highr_0.7            dygraphs_1.1.1.5     pkgbuild_1.0.2      
-## [64] rlang_0.3.0.1        pkgconfig_2.0.1      matrixStats_0.54.0  
-## [67] evaluate_0.10.1      lattice_0.20-35      bindr_0.1.1         
-## [70] rstantools_1.5.0     htmlwidgets_1.2      labeling_0.3        
-## [73] tidyselect_0.2.4     processx_3.2.1       plyr_1.8.4          
-## [76] magrittr_1.5         bookdown_0.7         R6_2.3.0            
-## [79] pillar_1.2.3         haven_1.1.2          foreign_0.8-70      
-## [82] withr_2.1.2          xts_0.10-2           abind_1.4-5         
-## [85] modelr_0.1.2         crayon_1.3.4         utf8_1.1.4          
-## [88] rmarkdown_1.10       grid_3.5.1           readxl_1.1.0        
-## [91] callr_3.1.0          threejs_0.3.1        digest_0.6.18       
-## [94] xtable_1.8-2         httpuv_1.4.4.2       stats4_3.5.1        
-## [97] munsell_0.5.0        viridisLite_0.3.0    shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##   [1] colorspace_1.3-2          ggridges_0.5.0           
+##   [3] rsconnect_0.8.8           rprojroot_1.3-2          
+##   [5] ggstance_0.3              markdown_0.8             
+##   [7] base64enc_0.1-3           rstudioapi_0.7           
+##   [9] rstan_2.18.2              svUnit_0.7-12            
+##  [11] DT_0.4                    mvtnorm_1.0-8            
+##  [13] lubridate_1.7.4           xml2_1.2.0               
+##  [15] bridgesampling_0.4-0      mnormt_1.5-5             
+##  [17] knitr_1.20                shinythemes_1.1.1        
+##  [19] bayesplot_1.6.0           jsonlite_1.5             
+##  [21] shiny_1.1.0               compiler_3.5.1           
+##  [23] httr_1.3.1                backports_1.1.2          
+##  [25] assertthat_0.2.0          Matrix_1.2-14            
+##  [27] lazyeval_0.2.1            cli_1.0.1                
+##  [29] later_0.7.3               prettyunits_1.0.2        
+##  [31] htmltools_0.3.6           tools_3.5.1              
+##  [33] igraph_1.2.1              coda_0.19-2              
+##  [35] gtable_0.2.0              glue_1.3.0               
+##  [37] reshape2_1.4.3            cellranger_1.1.0         
+##  [39] nlme_3.1-137              blogdown_0.8             
+##  [41] crosstalk_1.0.0           psych_1.8.4              
+##  [43] xfun_0.3                  ps_1.2.1                 
+##  [45] rvest_0.3.2               mime_0.5                 
+##  [47] miniUI_0.1.1.1            gtools_3.8.1             
+##  [49] MASS_7.3-50               zoo_1.8-2                
+##  [51] scales_1.0.0              colourpicker_1.0         
+##  [53] hms_0.4.2                 promises_1.0.1           
+##  [55] Brobdingnag_1.2-5         parallel_3.5.1           
+##  [57] inline_0.3.15             shinystan_2.5.0          
+##  [59] yaml_2.1.19               StanHeaders_2.18.0-1     
+##  [61] stringi_1.2.3             highr_0.7                
+##  [63] dygraphs_1.1.1.5          pkgbuild_1.0.2           
+##  [65] rlang_0.3.0.1             pkgconfig_2.0.1          
+##  [67] matrixStats_0.54.0        evaluate_0.10.1          
+##  [69] lattice_0.20-35           bindr_0.1.1              
+##  [71] rstantools_1.5.0          htmlwidgets_1.2          
+##  [73] labeling_0.3              tidyselect_0.2.4         
+##  [75] processx_3.2.1            plyr_1.8.4               
+##  [77] magrittr_1.5              bookdown_0.7             
+##  [79] R6_2.3.0                  pillar_1.2.3             
+##  [81] haven_1.1.2               foreign_0.8-70           
+##  [83] withr_2.1.2               xts_0.10-2               
+##  [85] abind_1.4-5               modelr_0.1.2             
+##  [87] crayon_1.3.4              arrayhelpers_1.0-20160527
+##  [89] utf8_1.1.4                rmarkdown_1.10           
+##  [91] grid_3.5.1                readxl_1.1.0             
+##  [93] callr_3.1.0               threejs_0.3.1            
+##  [95] digest_0.6.18             xtable_1.8-2             
+##  [97] httpuv_1.4.4.2            stats4_3.5.1             
+##  [99] munsell_0.5.0             viridisLite_0.3.0        
+## [101] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 </description>
@@ -1660,8 +1656,8 @@ m &amp;lt;- brm(response ~ (1|condition),
 &lt;pre&gt;&lt;code&gt;## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 3.7e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.37 seconds.
+## Chain 1: Gradient evaluation took 3.5e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.35 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -1678,15 +1674,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.518522 seconds (Warm-up)
-## Chain 1:                0.548634 seconds (Sampling)
-## Chain 1:                1.06716 seconds (Total)
+## Chain 1:  Elapsed Time: 0.513875 seconds (Warm-up)
+## Chain 1:                0.523116 seconds (Sampling)
+## Chain 1:                1.03699 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 1.5e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.15 seconds.
+## Chain 2: Gradient evaluation took 1.2e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -1703,15 +1699,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.578159 seconds (Warm-up)
-## Chain 2:                0.627117 seconds (Sampling)
-## Chain 2:                1.20528 seconds (Total)
+## Chain 2:  Elapsed Time: 0.552765 seconds (Warm-up)
+## Chain 2:                0.587623 seconds (Sampling)
+## Chain 2:                1.14039 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 1.4e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.14 seconds.
+## Chain 3: Gradient evaluation took 1.1e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -1728,15 +1724,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.669057 seconds (Warm-up)
-## Chain 3:                0.54083 seconds (Sampling)
-## Chain 3:                1.20989 seconds (Total)
+## Chain 3:  Elapsed Time: 0.651804 seconds (Warm-up)
+## Chain 3:                0.515688 seconds (Sampling)
+## Chain 3:                1.16749 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
 ## Chain 4: 
-## Chain 4: Gradient evaluation took 1.4e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.14 seconds.
+## Chain 4: Gradient evaluation took 2e-05 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.2 seconds.
 ## Chain 4: Adjust your expectations accordingly!
 ## Chain 4: 
 ## Chain 4: 
@@ -1753,9 +1749,9 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.550004 seconds (Warm-up)
-## Chain 4:                0.647642 seconds (Sampling)
-## Chain 4:                1.19765 seconds (Total)
+## Chain 4:  Elapsed Time: 0.534419 seconds (Warm-up)
+## Chain 4:                0.620839 seconds (Sampling)
+## Chain 4:                1.15526 seconds (Total)
 ## Chain 4:&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
   spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%

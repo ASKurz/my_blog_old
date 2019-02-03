@@ -1,5 +1,5 @@
 ---
-title: Robust Linear Regression with the Robust Student’s $t$-Distribution
+title: Robust Linear Regression with Student’s $t$-Distribution
 author: A. Solomon Kurz
 date: '2019-02-02'
 slug: robust-linear-regression-with-the-robust-student-s-t-distribution
@@ -16,6 +16,8 @@ header:
   image: ''
 ---
 
+[edited Feb 3, 2018]
+ 
 The purpose of this post is to demonstrate the advantages of the Student's $t$-distribution for regression with outliers, particularly within a [Bayesian framework](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists).
 
 ## I make assumptions
@@ -429,16 +431,11 @@ Now we've got all those models, we can gather their results into a sole tibble.
 
 ```{r}
 b_estimates <-
-  tidy(b0) %>%
-  bind_rows(tidy(b1),
-            tidy(b1.1),
-            tidy(b1.2),
-            tidy(b2),
-            tidy(b3),
-            tidy(b4)) %>%
+  tibble(model = c("b0", "b1", "b1.1", "b1.2", "b2", "b3", "b4")) %>% 
+  mutate(fit   = map(model, get)) %>% 
+  mutate(tidy  = map(fit, tidy)) %>% 
+  unnest(tidy) %>% 
   filter(term %in% c("b_Intercept", "b_x")) %>%
-  mutate(model = rep(c("b0", "b1", "b1.1", "b1.2", "b2", "b3", "b4"), each = 2)) %>%
-  select(model, everything()) %>%
   arrange(term)
 ```
 
@@ -485,27 +482,22 @@ loo_b4 <- loo(b4)
 With a little data wrangling, we can compare our models by how they look in our custom `pareto_k` diagnostic plots.
 
 ```{r, fig.width = 8, fig.height = 5}
-loo_b1$diagnostics$pareto_k %>% 
-  as_tibble() %>%
-  mutate(i = 1:n()) %>%
-  bind_rows(
-    # add loo_b2
-    loo_b2$diagnostics$pareto_k %>% 
-      as_tibble() %>%
-      mutate(i = 1:n()),
-    
-    # add loo_b3
-    loo_b3$diagnostics$pareto_k %>% 
-      as_tibble() %>%
-      mutate(i = 1:n()),
-    
-    # add loo_b4
-    loo_b4$diagnostics$pareto_k %>% 
-      as_tibble() %>%
-      mutate(i = 1:n()) 
-  ) %>%
-  rename(pareto_k = value) %>%
+# make a custom function to work with the loo objects in bulk
+get_pareto_k <- function(l) {
+  l$diagnostics$pareto_k %>% 
+    as_tibble() %>%
+    mutate(i = 1:n()) %>% 
+    rename(pareto_k = value)
+}
+
+# wrangle
+tibble(name = str_c("loo_b", 1:4)) %>% 
+  mutate(loo_object = map(name, get)) %>% 
+  mutate(pareto_k = map(loo_object, get_pareto_k)) %>% 
+  unnest(pareto_k) %>% 
   mutate(fit = rep(c("fit b1", "fit b2", "fit b3", "fit b4"), each = n() / 4)) %>%
+  
+  # plot
   ggplot(aes(x = i, y = pareto_k)) +
   geom_hline(yintercept = c(.5, .7),
              color = "white") +
@@ -535,43 +527,28 @@ If you’re not a fan of scientific notation, just tack on `round(digits = 2)`. 
 
 ### Let's compare a few Bayesian models.
 
-That's enough with coefficients, `pareto_k`, and the LOO. Let's get a sense of the implications of the models by comparing a few in plots.
+That's enough with coefficients, `pareto_k`, and the LOO. Let's get a sense of the implications of the models by comparing a few in plots. Here we use convenience functions from [Matthew Kay](https://twitter.com/mjskay)'s [tidybayes](https://github.com/mjskay/tidybayes) package to streamline the data wrangling and plotting. [The method came from a [kind twitter suggesion from Kay](https://twitter.com/mjskay/status/1091926564101599232).]
 
-```{r, fig.width = 8, fig.height = 3}
+```{r, fig.width = 8, fig.height = 3, warning = F, message = F}
+library(tidybayes)
+
 # These are the values of x we'd like model-implied summaries for
 nd <- tibble(x = seq(from = -4, to = 4, length.out = 50))
 
-# We get the model-implied summaries with a big `fitted()` object
-fitted_bs <- 
-  # `b0`
-  fitted(b0, newdata = nd) %>%
-  as_tibble() %>%
-  bind_rows(
-    # add `b1`
-    fitted(b1, newdata = nd) %>%
-      as_tibble(),
-    
-    # add `b3`
-    fitted(b4, newdata = nd) %>%
-      as_tibble()
-  ) %>% 
-  # we need a model index
-  mutate(model = rep(c("b0", "b1", "b3"), each = 50)) %>% 
-  # and we'd like to put the x values in there, too
-  mutate(x = rep(nd %>% pull(), times = 3))
-
-# now we plot
-fitted_bs %>% 
+# here's another way to arrange the models
+list(b0 = b0, b1 = b1, b3 = b3) %>% 
+  # with help from 1tidybayes::add_fitted_draws()`, here we use `fitted()` in bulk
+  map_dfr(add_fitted_draws, newdata = nd, .id = "model") %>% 
+  
+  # plot
   ggplot(aes(x = x)) +
-  geom_ribbon(aes(ymin = Q2.5,
-                  ymax = Q97.5),
-              fill = "grey67") +
-  geom_line(aes(y = Estimate),
-            color = "grey92") +
+  stat_lineribbon(aes(y = .value),
+                  .width = .95,
+                  color = "grey92", fill = "grey67") +
   geom_point(data = d %>%
                bind_rows(o, o) %>%
                mutate(model = rep(c("b0", "b1", "b3"), each = 100)), 
-             aes(x = x, y = y, color = y > 3),
+             aes(y = y, color = y > 3),
              size = 1, alpha = 3/4) +
   scale_color_viridis_d(option = "A", end = 4/7) +
   coord_cartesian(xlim = -3:3, 
