@@ -179,18 +179,19 @@ head(o)</code></pre>
 </div>
 <div id="frequentist-ols-models" class="section level2">
 <h2>Frequentist <a href="https://en.wikipedia.org/wiki/Ordinary_least_squares">OLS</a> models</h2>
-<p>To get a quick sense of what we’ve done, we’ll first fit two models with OLS regression via the <code>lm()</code> function. The first model, <code>fit0</code>, is of the multivariate normal data, <code>d</code>. The second model, <code>fit1</code>, is on the otherwise identical data with the two odd and influential values, <code>o</code>. Here is our model code.</p>
-<pre class="r"><code>fit0 &lt;- lm(data = d, y ~ 1 + x)
-fit1 &lt;- lm(data = o, y ~ 1 + x)</code></pre>
+<p>To get a quick sense of what we’ve done, we’ll first fit two models with OLS regression via the <code>lm()</code> function. The first model, <code>ols0</code>, is of the multivariate normal data, <code>d</code>. The second model, <code>ols1</code>, is on the otherwise identical data with the two odd and influential values, <code>o</code>. Here is our model code.</p>
+<pre class="r"><code>ols0 &lt;- lm(data = d, y ~ 1 + x)
+ols1 &lt;- lm(data = o, y ~ 1 + x)</code></pre>
 <p>We’ll use the <a href="https://cran.r-project.org/web/packages/broom/index.html">broom package</a> to assist with model summaries and other things.</p>
 <p>Here are the parameter estimates for the first model.</p>
 <pre class="r"><code>library(broom)
-tidy(fit0) %&gt;% mutate_if(is.double, round, digits = 2)</code></pre>
+
+tidy(ols0) %&gt;% mutate_if(is.double, round, digits = 2)</code></pre>
 <pre><code>##          term estimate std.error statistic p.value
 ## 1 (Intercept)    -0.01      0.09     -0.08    0.94
 ## 2           x     0.45      0.10      4.55    0.00</code></pre>
 <p>And now the parameters for the second model, the one based on the <code>o</code> outlier data.</p>
-<pre class="r"><code>tidy(fit1) %&gt;% mutate_if(is.double, round, digits = 2)</code></pre>
+<pre class="r"><code>tidy(ols1) %&gt;% mutate_if(is.double, round, digits = 2)</code></pre>
 <pre><code>##          term estimate std.error statistic p.value
 ## 1 (Intercept)     0.12      0.11      1.12    0.26
 ## 2           x     0.15      0.13      1.21    0.23</code></pre>
@@ -225,8 +226,8 @@ grid.arrange(p1, p2, ncol = 2)</code></pre>
 <p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-12-1.png" width="648" /></p>
 <p>The two outliers were quite influential on the slope. It went from a nice clear diagonal to almost horizontal. You’ll also note how the 95% intervals (i.e., the bowtie shapes) were a bit wider when based on the <code>o</code> data.</p>
 <p>One of the popular ways to quantify outlier status is with Mahalanobis’ distance. However, the Mahalanobis distance is primarilly valid for multivariate normal data. Though the data in this example are indeed multivariate normal–or at least they were before we injected two outlying values into them–I am going to resist relying on Mahalanobis’ distance. There are other more general approaches that will be of greater use when you need to explore other variants of the generalized linear model. The <code>broom::augment()</code> function will give us access to one.</p>
-<pre class="r"><code>aug0 &lt;- augment(fit0)
-aug1 &lt;- augment(fit1)
+<pre class="r"><code>aug0 &lt;- augment(ols0)
+aug1 &lt;- augment(ols1)
 
 glimpse(aug1)</code></pre>
 <pre><code>## Observations: 100
@@ -261,7 +262,7 @@ glimpse(aug1)</code></pre>
         axis.title.x = element_text(face = &quot;italic&quot;, family = &quot;Times&quot;)) +
     facet_wrap(~fit)</code></pre>
 <p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-14-1.png" width="768" /></p>
-<p>For the model of the well-behaved data, <code>fit0</code>, we have <span class="math inline">\(D_i\)</span> values all hovering near zero. However, the plot for <code>fit1</code> shows one <span class="math inline">\(D_i\)</span> value well above the 0.5 level and another not quite that high but deviant relative to the rest. Our two outlier values look quite influential for the results of <code>fit1</code>.</p>
+<p>For the model of the well-behaved data, <code>ols0</code>, we have <span class="math inline">\(D_i\)</span> values all hovering near zero. However, the plot for <code>ols1</code> shows one <span class="math inline">\(D_i\)</span> value well above the 0.5 level and another not quite that high but deviant relative to the rest. Our two outlier values look quite influential for the results of <code>ols1</code>.</p>
 </div>
 <div id="switch-to-a-bayesian-framework" class="section level2">
 <h2>Switch to a Bayesian framework</h2>
@@ -269,13 +270,14 @@ glimpse(aug1)</code></pre>
 <pre class="r"><code>library(brms)</code></pre>
 <div id="stick-with-gauss." class="section level3">
 <h3>Stick with Gauss.</h3>
-<p>For our first two Bayesian models, <code>b0</code> and <code>b1</code>, we’ll use the conventional Gaussian likelihood (i.e., <code>family = gaussian</code> in the <code>brm()</code> function). Like with <code>fit01</code>, above, the first model is based on the nice <code>d</code> data. The second, <code>b1</code>, is based on the more-difficult <code>o</code> data.</p>
+<p>For our first two Bayesian models, <code>b0</code> and <code>b1</code>, we’ll use the conventional Gaussian likelihood (i.e., <code>family = gaussian</code> in the <code>brm()</code> function). Like with <code>ols0</code>, above, the first model is based on the nice <code>d</code> data. The second, <code>b1</code>, is based on the more-difficult <code>o</code> data.</p>
 <pre class="r"><code>b0 &lt;- 
   brm(data = d, family = gaussian,
       y ~ 1 + x,
       prior = c(prior(normal(0, 10), class = Intercept),
                 prior(normal(0, 10), class = b),
-                prior(cauchy(0, 1),  class = sigma)))
+                prior(cauchy(0, 1),  class = sigma)),
+      seed = 1)
 b1 &lt;- 
   update(b0, 
          newdata = o)</code></pre>
@@ -283,13 +285,13 @@ b1 &lt;-
 <pre class="r"><code>tidy(b0) %&gt;% slice(1:3) %&gt;% mutate_if(is.double, round, digits = 2)</code></pre>
 <pre><code>##          term estimate std.error lower upper
 ## 1 b_Intercept    -0.01      0.09 -0.15  0.13
-## 2         b_x     0.45      0.10  0.28  0.61
-## 3       sigma     0.87      0.06  0.77  0.97</code></pre>
+## 2         b_x     0.44      0.10  0.29  0.61
+## 3       sigma     0.87      0.07  0.77  0.98</code></pre>
 <pre class="r"><code>tidy(b1) %&gt;% slice(1:3) %&gt;% mutate_if(is.double, round, digits = 2)</code></pre>
 <pre><code>##          term estimate std.error lower upper
-## 1 b_Intercept     0.12      0.11 -0.06  0.30
-## 2         b_x     0.15      0.12 -0.06  0.36
-## 3       sigma     1.10      0.08  0.98  1.24</code></pre>
+## 1 b_Intercept     0.12      0.11 -0.05  0.30
+## 2         b_x     0.15      0.13 -0.05  0.36
+## 3       sigma     1.10      0.08  0.99  1.24</code></pre>
 <p>These should look familiar. They’re very much like the results from the OLS models. Hopefully this isn’t surprising. Our priors were quite weak, so there’s no reason to suspect the results would differ much.</p>
 <div id="the-loo-and-other-goodies-help-with-diagnostics." class="section level4">
 <h4>The LOO and other goodies help with diagnostics.</h4>
@@ -326,7 +328,7 @@ loo_b1 &lt;- loo(b1)</code></pre>
 ##  - attr(*, &quot;dims&quot;)= int [1:2] 4000 100
 ##  - attr(*, &quot;class&quot;)= chr [1:3] &quot;ic&quot; &quot;psis_loo&quot; &quot;loo&quot;
 ##  - attr(*, &quot;yhash&quot;)= chr &quot;5cdc17bb2cb41f3e3f0a617f418fff3fbb8e1ebf&quot;</code></pre>
-<p>For a detailed explanation of all those elements, see the <a href="https://cran.r-project.org/web/packages/loo/loo.pdf">reference manual</a>. For our purposes, we’ll focus on <code>pareto_k</code>. Here’s a glimpse of what it contains for the <code>b1</code> model.</p>
+<p>For a detailed explanation of all those elements, see the <a href="https://cran.r-project.org/web/packages/loo/loo.pdf">reference manual</a>. For our purposes, we’ll focus on the <code>pareto_k</code>. Here’s a glimpse of what it contains for the <code>b1</code> model.</p>
 <pre class="r"><code>loo_b1$diagnostics$pareto_k %&gt;% as_tibble()</code></pre>
 <pre><code>## # A tibble: 100 x 1
 ##      value
@@ -344,6 +346,7 @@ loo_b1 &lt;- loo(b1)</code></pre>
 ## # ... with 90 more rows</code></pre>
 <p>We’ve got us a numeric vector of as many values as our data had observations–100 in this case. The <code>pareto_k</code> values can be used to examine overly-influential cases. See, for example <a href="https://stackoverflow.com/questions/39578834/linear-model-diagnostics-for-bayesian-models-using-rstan/39595436">this discussion on stackoverflow.com</a> in which several members of the <a href="http://mc-stan.org">Stan team</a> weighed in. The issue is also discussed in <a href="https://arxiv.org/abs/1507.04544">this paper</a>, in the <a href="https://cran.r-project.org/web/packages/loo/loo.pdf">loo reference manual</a>, and in <a href="https://www.youtube.com/watch?v=FUROJM3u5HQ&amp;feature=youtu.be&amp;a=">this presentation by Aki Vehtari</a>. If we explicitly open the <a href="https://cran.r-project.org/web/packages/loo/index.html">loo package</a>, we can use a few convenience functions to leverage <code>pareto_k</code> for diagnostic purposes. The <code>pareto_k_table()</code> function will categorize the <code>pareto_k</code> values and give us a sense of how many values are in problematic ranges.</p>
 <pre class="r"><code>library(loo)
+
 pareto_k_table(loo_b1)</code></pre>
 <pre><code>## Pareto k diagnostic values:
 ##                          Count Pct.    Min. n_eff
@@ -416,7 +419,8 @@ b1.2 &lt;-
       prior = c(prior(normal(0, 10), class = Intercept),
                 prior(normal(0, 10), class = b),
                 prior(gamma(2, 0.1), class = nu),
-                prior(cauchy(0, 1),  class = sigma)))</code></pre>
+                prior(cauchy(0, 1),  class = sigma)),
+      seed = 1)</code></pre>
 <p>For the next model, we’ll switch out that weak gamma(2, 0.1) for a stronger gamma(4, 1). In some disciplines, the gamma distribution is something of an exotic bird. So before fitting the model, it might be useful to take a peek at what these gamma priors looks like. In the plot, below, the orange density in the background is the default gamma(2, 0.1) and the purple density in the foreground is the stronger gamma(4, 1).</p>
 <pre class="r"><code># data
 tibble(x = seq(from = 0, to = 60, by = .1)) %&gt;% 
@@ -442,14 +446,16 @@ tibble(x = seq(from = 0, to = 60, by = .1)) %&gt;%
          prior = c(prior(normal(0, 10), class = Intercept),
                    prior(normal(0, 10), class = b),
                    prior(gamma(4, 1),   class = nu),
-                   prior(cauchy(0, 1),  class = sigma)))</code></pre>
+                   prior(cauchy(0, 1),  class = sigma)),
+         seed = 1)</code></pre>
 <p>For our final model, we’ll fix the <span class="math inline">\(\nu\)</span> parameter in a <code>bf()</code> statement.</p>
 <pre class="r"><code>b4 &lt;-
   brm(data = o, family = student,
       bf(y ~ 1 + x, nu = 4),
       prior = c(prior(normal(0, 100), class = Intercept),
                 prior(normal(0, 10),  class = b),
-                prior(cauchy(0, 1),   class = sigma)))</code></pre>
+                prior(cauchy(0, 1),   class = sigma)),
+         seed = 1)</code></pre>
 <p>Now we’ve got all those models, we can gather their results into a sole tibble.</p>
 <pre class="r"><code>b_estimates &lt;-
   tidy(b0) %&gt;%
@@ -468,19 +474,19 @@ tibble(x = seq(from = 0, to = 60, by = .1)) %&gt;%
   mutate_if(is.double, round, digits = 2)  # This is just to round the numbers</code></pre>
 <pre><code>##    model        term estimate std.error lower upper
 ## 1     b0 b_Intercept    -0.01      0.09 -0.15  0.13
-## 2     b1 b_Intercept     0.12      0.11 -0.06  0.30
+## 2     b1 b_Intercept     0.12      0.11 -0.05  0.30
 ## 3   b1.1 b_Intercept     0.07      0.10 -0.09  0.23
 ## 4   b1.2 b_Intercept     0.02      0.09 -0.12  0.16
 ## 5     b2 b_Intercept     0.04      0.09 -0.11  0.20
 ## 6     b3 b_Intercept     0.04      0.09 -0.11  0.19
 ## 7     b4 b_Intercept     0.04      0.09 -0.11  0.19
-## 8     b0         b_x     0.45      0.10  0.28  0.61
-## 9     b1         b_x     0.15      0.12 -0.06  0.36
+## 8     b0         b_x     0.44      0.10  0.29  0.61
+## 9     b1         b_x     0.15      0.13 -0.05  0.36
 ## 10  b1.1         b_x     0.28      0.12  0.09  0.47
 ## 11  b1.2         b_x     0.40      0.10  0.23  0.56
-## 12    b2         b_x     0.35      0.11  0.17  0.52
-## 13    b3         b_x     0.36      0.11  0.19  0.53
-## 14    b4         b_x     0.36      0.10  0.19  0.53</code></pre>
+## 12    b2         b_x     0.35      0.11  0.17  0.53
+## 13    b3         b_x     0.36      0.10  0.19  0.53
+## 14    b4         b_x     0.37      0.10  0.20  0.54</code></pre>
 <p>The models differ by their intercepts, slopes, sigmas, and <span class="math inline">\(\nu\)</span>s. For the sake of this post, we’ll focus on the slopes. Here we compare the different Bayesian models’ slopes by their posterior means and 95% intervals in a coefficient plot.</p>
 <pre class="r"><code>b_estimates %&gt;%
   filter(term == &quot;b_x&quot;) %&gt;% # b_Intercept b_x
@@ -499,7 +505,7 @@ tibble(x = seq(from = 0, to = 60, by = .1)) %&gt;%
         axis.ticks.y = element_blank(),
         axis.text.y  = element_text(hjust = 0))</code></pre>
 <p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-27-1.png" width="576" /></p>
-<p>You might think of the <code>b0</code> slope as the “true” slope. That’s the one estimated from the well-behaved multivariate normal data, <code>d</code>. That estimate’s just where we’d want it to be. The <code>b1</code> slope is a disaster–way lower than the others. The slopes for <code>b1.1</code> and <code>b1.2</code> get better, but at the expense of deleting data. All three of our Student’s <span class="math inline">\(t\)</span> models produced slopes that were pretty close to the <code>b0</code> slope. They weren’t perfect, but, all in all, Students <span class="math inline">\(t\)</span>-distribution did pretty okay.</p>
+<p>You might think of the <code>b0</code> slope as the “true” slope. That’s the one estimated from the well-behaved multivariate normal data, <code>d</code>. That estimate’s just where we’d want it to be. The <code>b1</code> slope is a disaster–way lower than the others. The slopes for <code>b1.1</code> and <code>b1.2</code> get better, but at the expense of deleting data. All three of our Student’s <span class="math inline">\(t\)</span> models produced slopes that were pretty close to the <code>b0</code> slope. They weren’t perfect, but, all in all, Student’s <span class="math inline">\(t\)</span>-distribution did pretty okay.</p>
 </div>
 <div id="we-need-more-loo-and-more-pareto_k." class="section level3">
 <h3>We need more LOO and more <code>pareto_k</code>.</h3>
@@ -538,7 +544,7 @@ loo_b4 &lt;- loo(b4)</code></pre>
         axis.title.x = element_text(face = &quot;italic&quot;, family = &quot;Times&quot;)) +
     facet_wrap(~fit)</code></pre>
 <p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-28-1.png" width="768" /></p>
-<p>Oh man, those Student’s <span class="math inline">\(t\)</span> models worked sweet! In a succession from <code>b2</code> through <code>b4</code>, each model looked better by <code>pareto_k</code>. All were way better than the typical Gaussian model, <code>b1</code>. While we’re at it, we might compare those for with their LOO values.</p>
+<p>Oh man, those Student’s <span class="math inline">\(t\)</span> models worked sweet! In a succession from <code>b2</code> through <code>b4</code>, each model looked better by <code>pareto_k</code>. All were way better than the typical Gaussian model, <code>b1</code>. While we’re at it, we might compare those by their LOO values.</p>
 <pre class="r"><code>compare_ic(loo_b1, loo_b2, loo_b3, loo_b4)</code></pre>
 <pre><code>##          LOOIC    SE
 ## b1      311.26 31.09
@@ -552,12 +558,18 @@ loo_b4 &lt;- loo(b4)</code></pre>
 ## b2 - b4   4.02  3.95
 ## b3 - b4   1.69  0.92</code></pre>
 <p>In terms of the LOO, <code>b2</code> through <code>b4</code> were about the same, but all looked better than <code>b1</code>. In fairness, though, the standard errors for the difference scores were a bit on the wide side. If you’re new to using information criteria to compare models, you might sit down and soak in <a href="https://www.youtube.com/watch?v=t0pRuy1_190&amp;list=PLDcUM9US4XdM9_N6XUUFrhghGJ4K25bFc&amp;index=8">this lecture on the topic</a> and <a href="https://cran.r-project.org/web/packages/loo/vignettes/loo-example.html">this vignette</a> on the LOO in particular. For a more technical introduction, you might check out the references in the loo package’s <a href="https://cran.r-project.org/web/packages/loo/loo.pdf">reference manual</a>.</p>
+<p>For one final LOO-related comparison, we can use the <code>brms::model_weights()</code> function to see how much relative weight we might put on each of those four models if we were to use a model averaging approach. Here we use the default method, which is model averaging via posterior predictive stacking.</p>
+<pre class="r"><code>model_weights(b1, b2, b3, b4)</code></pre>
+<pre><code>##           b1           b2           b3           b4 
+## 6.956356e-07 4.480928e-09 4.036950e-06 9.999953e-01</code></pre>
+<p>If you’re not a fan of scientific notation, just tack on <code>round(digits = 2)</code>. The stacking method suggests that we should place virtually all the weight on <code>b4</code>, the model in which we fixed our Student-<span class="math inline">\(t\)</span> <span class="math inline">\(\nu\)</span> parameter at 4. To learn more about model stacking, check out Yao, Vehtari, Simpson, and Gelman’s (2018) paper, <a href="https://projecteuclid.org/euclid.ba/1516093227"><em>Using stacking to average Bayesian predictive distributions</em></a>.</p>
 </div>
 <div id="lets-compare-a-few-bayesian-models." class="section level3">
 <h3>Let’s compare a few Bayesian models.</h3>
 <p>That’s enough with coefficients, <code>pareto_k</code>, and the LOO. Let’s get a sense of the implications of the models by comparing a few in plots.</p>
 <pre class="r"><code># These are the values of x we&#39;d like model-implied summaries for
 nd &lt;- tibble(x = seq(from = -4, to = 4, length.out = 50))
+
 # We get the model-implied summaries with a big `fitted()` object
 fitted_bs &lt;- 
   # `b0`
@@ -569,14 +581,15 @@ fitted_bs &lt;-
       as_tibble(),
     
     # add `b3`
-    fitted(b3, newdata = nd) %&gt;%
+    fitted(b4, newdata = nd) %&gt;%
       as_tibble()
   ) %&gt;% 
   # we need a model index
   mutate(model = rep(c(&quot;b0&quot;, &quot;b1&quot;, &quot;b3&quot;), each = 50)) %&gt;% 
   # and we&#39;d like to put the x values in there, too
   mutate(x = rep(nd %&gt;% pull(), times = 3))
-# The plot
+
+# now we plot
 fitted_bs %&gt;% 
   ggplot(aes(x = x)) +
   geom_ribbon(aes(ymin = Q2.5,
@@ -596,7 +609,7 @@ fitted_bs %&gt;%
   theme(panel.grid      = element_blank(),
         legend.position = &quot;none&quot;) +
   facet_wrap(~model)</code></pre>
-<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-30-1.png" width="768" /></p>
+<p><img src="/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-31-1.png" width="768" /></p>
 <p>For each subplot, the gray band is the 95% interval band and the overlapping light gray line is the posterior mean. Model <code>b0</code>, recall, is our baseline comparison model. This is of the well-behaved no-outlier data, <code>d</code>, using the good old Gaussian likelihood. Model <code>b1</code> is of the outlier data, <code>o</code>, but still using the non-robust Gaussian likelihood. Model <code>b3</code> uses a robust Student’s <span class="math inline">\(t\)</span> likelihood with <span class="math inline">\(\nu\)</span> estimated with the fairly narrow gamma(4, 1) prior. For my money, <code>b3</code> did a pretty good job.</p>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 3.5.1 (2018-07-02)

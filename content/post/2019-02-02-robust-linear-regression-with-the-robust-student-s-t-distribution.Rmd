@@ -144,11 +144,11 @@ With the code, above, we replaced the first two values of our first variable, `y
 
 ## Frequentist [OLS](https://en.wikipedia.org/wiki/Ordinary_least_squares) models
 
-To get a quick sense of what we've done, we'll first fit two models with OLS regression via the `lm()` function. The first model, `fit0`, is of the multivariate normal data, `d`. The second model, `fit1`, is on the otherwise identical data with the two odd and influential values, `o`. Here is our model code.
+To get a quick sense of what we've done, we'll first fit two models with OLS regression via the `lm()` function. The first model, `ols0`, is of the multivariate normal data, `d`. The second model, `ols1`, is on the otherwise identical data with the two odd and influential values, `o`. Here is our model code.
 
 ```{r}
-fit0 <- lm(data = d, y ~ 1 + x)
-fit1 <- lm(data = o, y ~ 1 + x)
+ols0 <- lm(data = d, y ~ 1 + x)
+ols1 <- lm(data = o, y ~ 1 + x)
 ```
 
 We'll use the [broom package](https://cran.r-project.org/web/packages/broom/index.html) to assist with model summaries and other things.
@@ -157,18 +157,19 @@ Here are the parameter estimates for the first model.
 
 ```{r, message = F, warning = F}
 library(broom)
-tidy(fit0) %>% mutate_if(is.double, round, digits = 2)
+
+tidy(ols0) %>% mutate_if(is.double, round, digits = 2)
 ```
 
 And now the parameters for the second model, the one based on the `o` outlier data.
 
 ```{r}
-tidy(fit1) %>% mutate_if(is.double, round, digits = 2)
+tidy(ols1) %>% mutate_if(is.double, round, digits = 2)
 ```
 
 Just two odd and influential values dramatically changed the model parameters, particularly the slope. Let's plot the data and the models to get a visual sense of what happened.
 
-```{r, fig.width = 6.75, fig.height = 3, message = F, warning = F}
+```{r, fig.width = 6.75, fig.height = 3.25, message = F, warning = F}
 # The well-behaived data
 p1 <-
   ggplot(data = d, aes(x = x, y = y)) +
@@ -203,8 +204,8 @@ The two outliers were quite influential on the slope. It went from a nice clear 
 One of the popular ways to quantify outlier status is with Mahalanobis' distance. However, the Mahalanobis distance is primarilly valid for multivariate normal data. Though the data in this example are indeed multivariate normal--or at least they were before we injected two outlying values into them--I am going to resist relying on Mahalanobis' distance. There are other more general approaches that will be of greater use when you need to explore other variants of the generalized linear model. The `broom::augment()` function will give us access to one.
 
 ```{r}
-aug0 <- augment(fit0)
-aug1 <- augment(fit1)
+aug0 <- augment(ols0)
+aug1 <- augment(ols1)
 
 glimpse(aug1)
 ```
@@ -233,7 +234,7 @@ aug0 %>%  # The well-behaived data
     facet_wrap(~fit)
 ```
 
-For the model of the well-behaved data, `fit0`, we have $D_i$ values all hovering near zero. However, the plot for `fit1` shows one $D_i$ value well above the 0.5 level and another not quite that high but deviant relative to the rest. Our two outlier values look quite influential for the results of `fit1`.
+For the model of the well-behaved data, `ols0`, we have $D_i$ values all hovering near zero. However, the plot for `ols1` shows one $D_i$ value well above the 0.5 level and another not quite that high but deviant relative to the rest. Our two outlier values look quite influential for the results of `ols1`.
 
 ## Switch to a Bayesian framework
 
@@ -245,7 +246,7 @@ library(brms)
 
 ### Stick with Gauss.
 
-For our first two Bayesian models, `b0` and `b1`, we'll use the conventional Gaussian likelihood (i.e., `family = gaussian` in the `brm()` function). Like with `fit01`, above, the first model is based on the nice `d` data. The second, `b1`, is based on the more-difficult `o` data.
+For our first two Bayesian models, `b0` and `b1`, we'll use the conventional Gaussian likelihood (i.e., `family = gaussian` in the `brm()` function). Like with `ols0`, above, the first model is based on the nice `d` data. The second, `b1`, is based on the more-difficult `o` data.
 
 ```{r b0_b1, message = F, results = 'hide', cache = T}
 b0 <- 
@@ -253,7 +254,8 @@ b0 <-
       y ~ 1 + x,
       prior = c(prior(normal(0, 10), class = Intercept),
                 prior(normal(0, 10), class = b),
-                prior(cauchy(0, 1),  class = sigma)))
+                prior(cauchy(0, 1),  class = sigma)),
+      seed = 1)
 b1 <- 
   update(b0, 
          newdata = o)
@@ -283,7 +285,7 @@ We'll use `str()` to get a sense of what's all in there, using `loo_b1` as an ex
 str(loo_b1)
 ```
 
-For a detailed explanation of all those elements, see the [reference manual](https://cran.r-project.org/web/packages/loo/loo.pdf). For our purposes, we'll focus on `pareto_k`. Here's a glimpse of what it contains for the `b1` model.
+For a detailed explanation of all those elements, see the [reference manual](https://cran.r-project.org/web/packages/loo/loo.pdf). For our purposes, we'll focus on the `pareto_k`. Here's a glimpse of what it contains for the `b1` model.
 
 ```{r}
 loo_b1$diagnostics$pareto_k %>% as_tibble()
@@ -293,6 +295,7 @@ We've got us a numeric vector of as many values as our data had observations--10
 
 ```{r, warning = F, message = F}
 library(loo)
+
 pareto_k_table(loo_b1)
 ```
 
@@ -372,7 +375,8 @@ b2 <-
       prior = c(prior(normal(0, 10), class = Intercept),
                 prior(normal(0, 10), class = b),
                 prior(gamma(2, 0.1), class = nu),
-                prior(cauchy(0, 1),  class = sigma)))
+                prior(cauchy(0, 1),  class = sigma)),
+      seed = 1)
 ```
 
 For the next model, we'll switch out that weak gamma(2, 0.1) for a stronger gamma(4, 1). In some disciplines, the gamma distribution is something of an exotic bird. So before fitting the model, it might be useful to take a peek at what these gamma priors looks like. In the plot, below, the orange density in the background is the default gamma(2, 0.1) and the purple density in the foreground is the stronger gamma(4, 1).
@@ -405,7 +409,8 @@ b3 <-
          prior = c(prior(normal(0, 10), class = Intercept),
                    prior(normal(0, 10), class = b),
                    prior(gamma(4, 1),   class = nu),
-                   prior(cauchy(0, 1),  class = sigma)))
+                   prior(cauchy(0, 1),  class = sigma)),
+         seed = 1)
 ```
 
 For our final model, we'll fix the $\nu$ parameter in a `bf()` statement.
@@ -416,7 +421,8 @@ b4 <-
       bf(y ~ 1 + x, nu = 4),
       prior = c(prior(normal(0, 100), class = Intercept),
                 prior(normal(0, 10),  class = b),
-                prior(cauchy(0, 1),   class = sigma)))
+                prior(cauchy(0, 1),   class = sigma)),
+         seed = 1)
 ```
 
 Now we've got all those models, we can gather their results into a sole tibble.
@@ -464,7 +470,7 @@ b_estimates %>%
         axis.text.y  = element_text(hjust = 0))
 ```
 
-You might think of the `b0` slope as the "true" slope. That's the one estimated from the well-behaved multivariate normal data, `d`. That estimate's just where we'd want it to be. The `b1` slope is a disaster--way lower than the others. The slopes for `b1.1` and `b1.2` get better, but at the expense of deleting data. All three of our Student's $t$ models produced slopes that were pretty close to the `b0` slope. They weren't perfect, but, all in all, Students $t$-distribution did pretty okay.
+You might think of the `b0` slope as the "true" slope. That's the one estimated from the well-behaved multivariate normal data, `d`. That estimate's just where we'd want it to be. The `b1` slope is a disaster--way lower than the others. The slopes for `b1.1` and `b1.2` get better, but at the expense of deleting data. All three of our Student's $t$ models produced slopes that were pretty close to the `b0` slope. They weren't perfect, but, all in all, Student's $t$-distribution did pretty okay.
 
 ### We need more LOO and more `pareto_k`.
 
@@ -510,7 +516,7 @@ loo_b1$diagnostics$pareto_k %>%
     facet_wrap(~fit)
 ```
 
-Oh man, those Student's $t$ models worked sweet! In a succession from `b2` through `b4`, each model looked better by `pareto_k`. All were way better than the typical Gaussian model, `b1`. While we're at it, we might compare those for with their LOO values.
+Oh man, those Student's $t$ models worked sweet! In a succession from `b2` through `b4`, each model looked better by `pareto_k`. All were way better than the typical Gaussian model, `b1`. While we're at it, we might compare those by their LOO values.
 
 ```{r}
 compare_ic(loo_b1, loo_b2, loo_b3, loo_b4)
@@ -519,6 +525,14 @@ compare_ic(loo_b1, loo_b2, loo_b3, loo_b4)
 In terms of the LOO, `b2` through `b4` were about the same, but all looked better than `b1`. In fairness, though, the standard errors for the difference scores were a bit on the wide side.
 If you're new to using information criteria to compare models, you might sit down and soak in [this lecture on the topic](https://www.youtube.com/watch?v=t0pRuy1_190&list=PLDcUM9US4XdM9_N6XUUFrhghGJ4K25bFc&index=8) and [this vignette](https://cran.r-project.org/web/packages/loo/vignettes/loo-example.html) on the LOO in particular. For a more technical introduction, you might check out the references in the loo package's [reference manual](https://cran.r-project.org/web/packages/loo/loo.pdf).
 
+For one final LOO-related comparison, we can use the `brms::model_weights()` function to see how much relative weight we might put on each of those four models if we were to use a model averaging approach. Here we use the default method, which is model averaging via posterior predictive stacking.
+
+```{r, warning = F, message = F}
+model_weights(b1, b2, b3, b4)
+```
+
+If you’re not a fan of scientific notation, just tack on `round(digits = 2)`. The stacking method suggests that we should place virtually all the weight on `b4`, the model in which we fixed our Student-$t$ $\nu$ parameter at 4. To learn more about model stacking, check out Yao, Vehtari, Simpson, and Gelman’s (2018) paper, [*Using stacking to average Bayesian predictive distributions*](https://projecteuclid.org/euclid.ba/1516093227).
+
 ### Let's compare a few Bayesian models.
 
 That's enough with coefficients, `pareto_k`, and the LOO. Let's get a sense of the implications of the models by comparing a few in plots.
@@ -526,6 +540,7 @@ That's enough with coefficients, `pareto_k`, and the LOO. Let's get a sense of t
 ```{r, fig.width = 8, fig.height = 3}
 # These are the values of x we'd like model-implied summaries for
 nd <- tibble(x = seq(from = -4, to = 4, length.out = 50))
+
 # We get the model-implied summaries with a big `fitted()` object
 fitted_bs <- 
   # `b0`
@@ -537,14 +552,15 @@ fitted_bs <-
       as_tibble(),
     
     # add `b3`
-    fitted(b3, newdata = nd) %>%
+    fitted(b4, newdata = nd) %>%
       as_tibble()
   ) %>% 
   # we need a model index
   mutate(model = rep(c("b0", "b1", "b3"), each = 50)) %>% 
   # and we'd like to put the x values in there, too
   mutate(x = rep(nd %>% pull(), times = 3))
-# The plot
+
+# now we plot
 fitted_bs %>% 
   ggplot(aes(x = x)) +
   geom_ribbon(aes(ymin = Q2.5,
