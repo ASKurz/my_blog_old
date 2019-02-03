@@ -33,6 +33,11 @@ weight = 5
   course = "BA in Psychology"
   institution = "University of Washington"
   year = 2010
+  
+[[education.courses]]
+  course = "Diploma"
+  institution = "Enumclaw High School"
+  year = 1998  
  
 +++
 
