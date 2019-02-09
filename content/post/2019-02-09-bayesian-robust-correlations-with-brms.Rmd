@@ -146,7 +146,7 @@ I’m not going to spend a lot of time walking through the syntax in the main br
 One doesn’t always think about bivariate correlations within the regression paradigm. But they work just fine. Within brms, you can use the conventional Gaussian likelihood (i.e., `family = gaussian`), use the `cbind()` syntax to set up a [multivariate model](https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html), and fit that model without predictors. For each variable specified in `cbind()`, you’ll estimate an intercept (i.e., mean, $\mu$) and sigma (i.e., $\sigma$, often called a residual variance). Since there are no predictors in the model, the residual variance is just the variance and the brms default for such models is to allow the residual variances to covary. But since variances are parameterized in the standard deviation metric in brms, the residual variances and their covariance are *SD*s and their correlation, respectively. 
 Here’s what it looks like in practice.
 
-```{r, message = F, results = 'hide'}
+```{r f0, cache = T, message = F, results = 'hide'}
 f0 <- 
   brm(data = x.clean, 
       family = gaussian,
@@ -169,7 +169,7 @@ print(f0)
 
 Way down there in the last line in the 'Family Specific Parameters' section we have `rescor(x,y)`, which is our correlation. And indeed, our Gaussian intercept-only multivariate model did a great job recovering the correlation we used to simulate the `x.clean` data with. Look at what happened when we try this approach with `x.noisy`.
 
-```{r, message = F, results = 'hide'}
+```{r f1, cache = T, message = F, results = 'hide'}
 f1 <-
   update(f0,
          newdata = x.noisy,
@@ -203,7 +203,7 @@ So gamma(2, 0.1) should gently push the $\nu$ posterior toward low values, but i
 
 Following the Stan team's recommendation, the brms default and Baez-Ortega's blog, here's our robust Student's $t$ model for the `x.noisy` data.
 
-```{r, message = F, results = 'hide'}
+```{r f2, cache = T, message = F, results = 'hide'}
 f2 <- 
   brm(data = x.noisy, 
       family = student,
@@ -225,7 +225,7 @@ Whoa, look at that correlation, `rescore(x,y)`! It’s right about what we’d h
 
 While we’re at it, we may as well see what happens when we fit a Student’s $t$ model when we have perfectly multivariate normal data. Here it is with the `x.clean` data.
 
-```{r, message = F, results = 'hide'}
+```{r f3, cache = T, message = F, results = 'hide'}
 f3 <- 
   update(f2,
          newdata = x.clean, 
