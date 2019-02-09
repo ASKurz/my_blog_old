@@ -1656,8 +1656,8 @@ m &amp;lt;- brm(response ~ (1|condition),
 &lt;pre&gt;&lt;code&gt;## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 3.5e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.35 seconds.
+## Chain 1: Gradient evaluation took 3.6e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.36 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -1674,15 +1674,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.513875 seconds (Warm-up)
-## Chain 1:                0.523116 seconds (Sampling)
-## Chain 1:                1.03699 seconds (Total)
+## Chain 1:  Elapsed Time: 0.503551 seconds (Warm-up)
+## Chain 1:                0.530202 seconds (Sampling)
+## Chain 1:                1.03375 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 1.2e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
+## Chain 2: Gradient evaluation took 1.4e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.14 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -1699,15 +1699,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.552765 seconds (Warm-up)
-## Chain 2:                0.587623 seconds (Sampling)
-## Chain 2:                1.14039 seconds (Total)
+## Chain 2:  Elapsed Time: 0.552212 seconds (Warm-up)
+## Chain 2:                0.594545 seconds (Sampling)
+## Chain 2:                1.14676 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 1.1e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds.
+## Chain 3: Gradient evaluation took 1e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -1724,15 +1724,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.651804 seconds (Warm-up)
-## Chain 3:                0.515688 seconds (Sampling)
-## Chain 3:                1.16749 seconds (Total)
+## Chain 3:  Elapsed Time: 0.669433 seconds (Warm-up)
+## Chain 3:                0.539148 seconds (Sampling)
+## Chain 3:                1.20858 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
 ## Chain 4: 
-## Chain 4: Gradient evaluation took 2e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.2 seconds.
+## Chain 4: Gradient evaluation took 2.1e-05 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.21 seconds.
 ## Chain 4: Adjust your expectations accordingly!
 ## Chain 4: 
 ## Chain 4: 
@@ -1749,9 +1749,9 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.534419 seconds (Warm-up)
-## Chain 4:                0.620839 seconds (Sampling)
-## Chain 4:                1.15526 seconds (Total)
+## Chain 4:  Elapsed Time: 0.587888 seconds (Warm-up)
+## Chain 4:                0.614705 seconds (Sampling)
+## Chain 4:                1.20259 seconds (Total)
 ## Chain 4:&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
   spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%
