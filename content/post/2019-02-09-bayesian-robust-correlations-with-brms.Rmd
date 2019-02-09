@@ -14,7 +14,6 @@ tags:
 header:
   caption: ''
   image: ''
-draft: true
 ---
 
 In this post, we'll show how Student's $t$-distribution can produce better correlation estimates when you data have outliers. As is often the case, we'll do so as Bayesians.
