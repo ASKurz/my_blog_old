@@ -1,0 +1,341 @@
+---
+title: Bayesian robust correlations with brms (and why you should love Student’s $t$)
+author: A. Solomon Kurz
+date: '2019-02-09'
+slug: bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - outlier
+  - R
+  - robust
+  - tutorial
+header:
+  caption: ''
+  image: ''
+---
+
+In this post, we'll show how Student's $t$-distribution can produce better correlation estimates when you data have outliers. As is often the case, we'll do so as Bayesians.
+
+This post is a direct consequence of Adrian Baez-Ortega's great blog, "[Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)](https://baezortega.github.io/2018/05/28/robust-correlation/)". Baez-Ortega worked out the approach and code for use with [Stan](http://mc-stan.org), directly. Since I'm a fan of the [brms](https://github.com/paul-buerkner/brms) package, it seemed only right that we might extend Baez-Ortega's method to brms. To pay respects where they're due, the synthetic data, priors, and other model settings are largely the same as those Baez-Ortega used in his blog.
+
+## I make assumptions
+
+For this project, I’m presuming you are vaguely familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is [R](https://www.r-bloggers.com/why-use-r-five-reasons/), with a heavy use of the [tidyverse](http://style.tidyverse.org)--which you might learn a lot about [here, especially chapter 5](http://r4ds.had.co.nzhttp://r4ds.had.co.nz)--, and, of course, Bürkner's [brms](https://github.com/paul-buerkner/brms).
+
+If you’d like a warmup, consider checking out my related post, [Robust Linear Regression with Student's $t$-Distribution](https://solomonkurz.netlify.com/post/robust-linear-regression-with-the-robust-student-s-t-distribution/).
+
+## What's the deal?
+
+Pearson's correlations are designed to quantify the linear relationship between two normally distributed variables. The normal distribution and its multivariate generalization, the multivariate normal distribution, are sensitive to outliers. When you have well-behaved synthetic data, this isn't an issue. But if you work with wild and rough real-world data, this can be a problem. One can have data for which the vast majority of cases are well-characterized by a nice liner relationship, but have a few odd cases for which that relationship does not hold. And if those odd cases happen to be overly influential--sometimes called leverage points--the resulting Pearson's correlation coefficient might look off.
+
+The normal distribution is a special case of Student's $t$-distribution with the $\nu$ parameter (i.e., *nu*, degree of freedom) set to infinity. However, when $\nu$ is small, Student's $t$-distribution is more robust to multivariate outliers. It's less influenced by them. I'm not going to cover why in any detail. For that you've got [Baez-Ortega's blog](https://baezortega.github.io/2018/05/28/robust-correlation/), an even earlier blog from [Rasmus Bååth](http://www.sumsar.net/blog/2013/08/bayesian-estimation-of-correlation/), and textbook treatments on the topic by [Gelman & Hill (2007, chapter 6)](http://www.stat.columbia.edu/~gelman/arm/) and [Kruschke (2014, chapter 16)](https://sites.google.com/site/doingbayesiandataanalysis/). Here we'll get a quick sense of how vulnerable Pearson's correlations--with their reliance on the Gaussian--are to outliers, we'll demonstrate how fitting correlations within the Bayesian paradigm using the conventional Gaussian likelihood is similarly vulnerable to distortion, and then demonstrate how Student's $t$-distribution can save the day. And importantly, we'll do the bulk of this with the brms package.
+
+## We need data
+
+To start off, we'll make a multivariate normal simulated data set using the same steps Baez-Ortega's used.
+
+```{r, message = F, warning = F}
+library(mvtnorm)
+library(tidyverse)
+
+sigma <- c(20, 40)  # the variances
+rho   <- -0.95      # the desired correlation
+
+# here's the variance/covariance matrix
+cov.mat <- 
+  matrix(c(sigma[1] ^ 2,
+           sigma[1] * sigma[2] * rho,
+           sigma[1] * sigma[2] * rho,
+           sigma[2] ^ 2),
+         nrow = 2, byrow = T)
+
+# after setting our seed, we're ready to simulate with `rmvnorm()`
+set.seed(210191)
+x.clean <- 
+  rmvnorm(n = 40, sigma = cov.mat) %>% 
+  as_tibble() %>% 
+  rename(x = V1,
+         y = V2)
+```
+
+Here we make our second data set, `x.noisy`, which is identical to our well-behaved `x.clean` data, but with the first three cases transformed to outlier values.
+
+```{r}
+x.noisy <- x.clean
+
+x.noisy[1:3,] <-
+  matrix(c(-40, -60,
+           20, 100,
+           40, 40),
+         nrow = 3, byrow = T)
+```
+
+Finally, we'll add an `outlier` index to the data sets, which will help us with plotting.
+
+```{r}
+x.clean <-
+  x.clean %>% 
+  mutate(outlier = factor(0))
+
+x.noisy <- 
+  x.noisy %>% 
+  mutate(outlier = c(rep(1, 3), rep(0, 37)) %>% as.factor(.))
+```
+
+The plot below shows what the `x.clean` data look like. I'm a fan of [FiveThirtyEight](http://fivethirtyeight.com), so we'll use a few convenience functions from the handy [ggthemes package](https://github.com/jrnold/ggthemes) to give our plots a FiveThirtyEight-like feel. 
+
+```{r, fig.width = 3.25, fig.height = 3, warning = F, message = F}
+library(ggthemes)
+
+x.clean %>% 
+  ggplot(aes(x = x, y = y, color = outlier)) +
+  geom_point() +
+  scale_color_fivethirtyeight() +
+  coord_cartesian(xlim = -50:50,
+                  ylim = -100:100) +
+  theme_fivethirtyeight() +
+  theme(legend.position = "none")
+```
+
+And here are the `x.noisy` data.
+
+```{r, fig.width = 3.25, fig.height = 3}
+x.noisy %>% 
+  ggplot(aes(x = x, y = y, color = outlier)) +
+  geom_point() +
+  scale_color_fivethirtyeight() +
+  coord_cartesian(xlim = -50:50,
+                  ylim = -100:100) +
+  theme_fivethirtyeight() +
+  theme(legend.position = "none")
+```
+
+The three outliers are in red. Even in their presence, the old interocular trauma test suggests there is a pronounced overall trend in the data. I would like a correlation procedure that's capable of capturing that overall trend. Let's examine some candidates.
+
+## How does old Pearson hold up?
+
+A quick way to get a Pearson's correlation coefficient in R is with the `cor()` function, which does a nice job recovering the correlation we simulated the `x.clean` data with:
+
+```{r}
+cor(x.clean$x, x.clean$y)
+```
+
+However, things fall apart if you use `cor()` on the `x.noisy` data.
+
+```{r}
+cor(x.noisy$x, x.noisy$y)
+```
+
+So even though most of the `x.noisy` data continue to show a clear strong correlation, three outlier values reduce the Pearson's correlation a third of the way toward zero Let's see what happens when we go Bayesian.
+
+## Bayesian correlations in brms
+
+[Bürkner](https://twitter.com/paulbuerkner)'s brms is a general purpose interface for fitting all manner of Bayesian regression models with [Stan](https://mc-stan.org) as the engine under the hood. It has popular [lme4](https://cran.r-project.org/web/packages/lme4/index.html)-like syntax and offers a variety of convenience functions for post processing. Let's load it up.
+
+```{r, message = F, results = 'hide'}
+library(brms)
+```
+
+### First with the Gaussian likelihood.
+
+I’m not going to spend a lot of time walking through the syntax in the main brms function, `brm()`. You can learn all about that [here](https://github.com/paul-buerkner/brms) or with my project [*Statistical Rethinking with brms, ggplot2, and the tidyverse*](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse#statistical-rethinking-with-brms-ggplot2-and-the-tidyverse). But our particular use of `brm()` requires we make a few fine points.
+
+One doesn’t always think about bivariate correlations within the regression paradigm. But they work just fine. Within brms, you can use the conventional Gaussian likelihood (i.e., `family = gaussian`), use the `cbind()` syntax to set up a [multivariate model](https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html), and fit that model without predictors. For each variable specified in `cbind()`, you’ll estimate an intercept (i.e., mean, $\mu$) and sigma (i.e., $\sigma$, often called a residual variance). Since there are no predictors in the model, the residual variance is just the variance and the brms default for such models is to allow the residual variances to covary. But since variances are parameterized in the standard deviation metric in brms, the residual variances and their covariance are *SD*s and their correlation, respectively. 
+Here’s what it looks like in practice.
+
+```{r f0, cache = T, message = F, results = 'hide'}
+f0 <- 
+  brm(data = x.clean, 
+      family = gaussian,
+      cbind(x, y) ~ 1,
+      prior = c(prior(normal(0, 100), class = Intercept),
+                prior(normal(0, 100), class = sigma, resp = x),
+                prior(normal(0, 100), class = sigma, resp = y),
+                prior(lkj(1), class = rescor)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+```
+
+In a typical Bayesian workflow, you’d examine the quality of the chains with trace plots. The easy way to do that in brms is with `plot()`. E.g., to get the trace plots for our first model, you’d code `plot(f0)`. Happily, the trace plots look fine for all models in this post. For the sake of space, I’ll leave their inspection as an exercises for interested readers.
+
+Our priors and such mirror those in Baez-Ortega's blog. Here are the results.
+
+```{r}
+print(f0)
+```
+
+Way down there in the last line in the 'Family Specific Parameters' section we have `rescor(x,y)`, which is our correlation. And indeed, our Gaussian intercept-only multivariate model did a great job recovering the correlation we used to simulate the `x.clean` data with. Look at what happened when we try this approach with `x.noisy`.
+
+```{r f1, cache = T, message = F, results = 'hide'}
+f1 <-
+  update(f0,
+         newdata = x.noisy,
+         iter = 2000, warmup = 500, chains = 4, cores = 4, seed = 210191)
+```
+
+```{r}
+print(f1)
+```
+
+And the correlation estimate is -.6. As it turns out, `data = x.noisy` + `family = gaussian` in `brm()` failed us just like Pearson's correlation failed us. Time to leave failure behind.
+
+### Now with Student's $t$-distribution.
+
+Before we jump into using `family = student`, we should talk a bit about $\nu$. This is our new parameter which is silently fixed to infinity when we use the Gaussian likelihood. The $\nu$ parameter is bound at zero but, as discussed in Baez-Ortega's blog, is somewhat nonsensical for values below 1. As it turns out, $\nu$ is constrained to be equal to or greater than 1 in brms. So nothing for us to worry about, there. The [Stan team currently recommends the gamma(2, 0.1) prior for $\nu$](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations), which is also the current brms default. This is what that distribution looks like.
+
+```{r, fig.width = 10, fig.height = 2.5}
+tibble(x = seq(from = 0, to = 120, by = .5)) %>% 
+  ggplot(aes(x = x, fill = factor(0))) +
+  geom_ribbon(aes(ymin = 0, 
+                  ymax = dgamma(x, 2, 0.1))) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_fill_fivethirtyeight() +
+  coord_cartesian(xlim = 0:100) +
+  ggtitle("gamma(2, 0.1)") +
+  theme_fivethirtyeight() +
+  theme(legend.position = "none")
+```
+
+So gamma(2, 0.1) should gently push the $\nu$ posterior toward low values, but it’s slowly-sloping right tail will allow higher values to emerge.
+
+Following the Stan team's recommendation, the brms default and Baez-Ortega's blog, here's our robust Student's $t$ model for the `x.noisy` data.
+
+```{r f2, cache = T, message = F, results = 'hide'}
+f2 <- 
+  brm(data = x.noisy, 
+      family = student,
+      cbind(x, y) ~ 1,
+      prior = c(prior(gamma(2, .1), class = nu),
+                prior(normal(0, 100), class = Intercept),
+                prior(normal(0, 100), class = sigma, resp = x),
+                prior(normal(0, 100), class = sigma, resp = y),
+                prior(lkj(1), class = rescor)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+```
+
+```{r}
+print(f2)
+```
+
+Whoa, look at that correlation, `rescore(x,y)`! It’s right about what we’d hope for. Sure, it's not a perfect -.95, but that's way way way better than `r posterior_summary(f1)["rescor__x__y", 1] %>% round(2)`.
+
+While we’re at it, we may as well see what happens when we fit a Student’s $t$ model when we have perfectly multivariate normal data. Here it is with the `x.clean` data.
+
+```{r f3, cache = T, message = F, results = 'hide'}
+f3 <- 
+  update(f2,
+         newdata = x.clean, 
+         iter = 2000, warmup = 500, chains = 4, cores = 4, seed = 210191)
+```
+
+```{r}
+print(f3)
+```
+
+So when you don't need Student's $t$, it yields the right answer anyways. That's a nice feature.
+
+We should probably compare the posteriors of the correlations across the four models. First we’ll need to put the posterior samples into data frames.
+
+```{r}
+posts <-
+  tibble(model = str_c("f", 0:3)) %>% 
+  mutate(fit  = map(model, get)) %>% 
+  mutate(post = map(fit, posterior_samples)) %>% 
+  unnest(post)
+
+head(posts)
+```
+
+With the posterior draws in hand, we just need to wrangle a bit before showing the correlation posteriors in a coefficient plot. To make things easier, we'll do so with a couple convenience functions from the [tidybayes](https://github.com/mjskay/tidybayes) package.
+
+```{r, fig.width = 10, fig.height = 1.75, warning = F, message = F}
+library(tidybayes)
+
+posts %>% 
+  group_by(model) %>% 
+  median_qi(rescor__x__y, .width = c(.5, .95)) %>% 
+  mutate(key = recode(model, 
+                      f0 = "Gaussian likelihood with clean data",
+                      f1 = "Gaussian likelihood with noisy data",
+                      f2 = "Student likelihood with noisy data",
+                      f3 = "Student likelihood with clean data"),
+         clean = ifelse(model %in% c("f0", "f3"), "0", "1")) %>%
+  
+  ggplot(aes(x = rescor__x__y, y = key, color = clean)) +
+  geom_pointintervalh() +
+  scale_color_fivethirtyeight() +
+  coord_cartesian(xlim = -1:0) +
+  labs(subtitle = expression(paste("The posterior for ", rho, " depends on the likelihood. Why not go robust and use Student's ", italic(t), "?"))) +
+  theme_fivethirtyeight() +
+  theme(axis.text.y     = element_text(hjust = 0),
+        legend.position = "none")
+```
+
+From out `tidybayes::median_qi()` code, the dots are the posterior medians, the thick inner lines the 50% intervals, and the thinner outer lines the 95% intervals. The posteriors for the `x.noisy` data are in red and those for the `x.clean` data are in blue. If the data are clean multivariate normal Gaussian or if they’re dirty but fit with robust Student’s $t$, everything is pretty much alright. But whoa, if you fit a correlation with a combination of `family = gaussian` and noisy outlier-laden data, man that's just a mess.
+
+Don’t make a mess of your data. Use robust Student’s $t$. 
+
+## Information criteria can help us, too
+
+In a Bayesian workflow, one often compares competing models with information criteria. Within the Stan/brms world, the rising star among the information criteria has been the [LOO](https://github.com/stan-dev/loo). For introductions to the topic, see [either](https://cran.r-project.org/web/packages/loo/vignettes/loo2-example.html) of [these](https://cran.r-project.org/web/packages/loo/vignettes/loo2-weights.html) vignettes by [Vehtari](https://twitter.com/avehtari) and [Gabry](http://iserp.columbia.edu/people/jonah-gabry) or [this lecture](https://www.youtube.com/watch?v=gjrsYDJbRh0) by [McElreath](https://twitter.com/rlmcelreath). In this post, we’re not going to use the LOO to compare models in the typical way. But we will make use of one of its handy side effects.
+
+In brms, you can get a model’s LOO with the `loo()` function and, as with other operations in R, you can save that output as a named object. Here we’ll compute the LOO for each of our four models.
+
+```{r, warning = F}
+l_f0 <- loo(f0)
+l_f1 <- loo(f1)
+l_f2 <- loo(f2)
+l_f3 <- loo(f3)
+```
+
+To get typical `loo()` summary output, you just `print()` one of the objects like so.
+
+```{r}
+print(l_f0)
+```
+
+For a lot of projects, the main event is the summary info at the top. We'll focus on the bottom half, the ‘Pareto k diagnostic values’. Each case in the data gets its own $k$ value and those $k$ values can be used to examine overly-influential cases in a given model. See, for example [this discussion on stackoverflow.com](https://stackoverflow.com/questions/39578834/linear-model-diagnostics-for-bayesian-models-using-rstan/39595436) in which several members of the [Stan team](http://mc-stan.org) weighed in. The issue is also discussed in [this paper](https://arxiv.org/abs/1507.04544), in the [loo reference manual](https://cran.r-project.org/web/packages/loo/loo.pdf), and in [this presentation by Aki Vehtari](https://www.youtube.com/watch?v=FUROJM3u5HQ&feature=youtu.be&a=). The 'Pareto k' table in the `loo()` summary output give us a quick sense of how many cases have $k$ values in problematic ranges, conveniently labeled "bad" and "very bad." In the case of our `x.clean` data modeled with the conventional Gaussian likelihood (i.e., `family = gaussian`), everything’s alright. Here’s what happens when we look at the summary for `f1`, the model from when we fit the `x.noisy` data with Gauss.
+
+```{r}
+l_f1
+```
+
+`family = gaussian` + data with influential outliers = "bad" $k$ values. If you want to extract the $k$ values for each case, you might subset the loo object like this.
+
+```{r}
+l_f1$diagnostics$pareto_k
+```
+
+Below we take that insight to put the $k$ values from each of the four models into a tibble, do a little indexing, and give ourselves a high-level perspective with a plot.
+
+```{r, fig.width = 8, fig.height = 4}
+tibble(k = c(l_f0$diagnostics$pareto_k,
+             l_f1$diagnostics$pareto_k,
+             l_f2$diagnostics$pareto_k,
+             l_f3$diagnostics$pareto_k),
+       likelihood = rep(c("Gaussian likelihood", "Student's t likelihood"), each = 80),
+       data       = rep(c("clean data", "noisy data", "noisy data", "clean data"), each = 40),
+       case       = rep(1:40, times = 4)) %>% 
+  mutate(bad_or_verybad = ifelse(k < .7, 0, 1) %>% as.character()) %>% 
+  
+  ggplot(aes(x = case, y = k, color = bad_or_verybad)) +
+  geom_point() +
+  scale_y_continuous(breaks = c(0, .5, .7, 1)) +
+  scale_color_fivethirtyeight() +
+  coord_cartesian(ylim = c(-0.2, 1.2)) +
+  theme_fivethirtyeight() +
+  theme(axis.text.y     = element_text(hjust = 0),
+        legend.position = "none") +
+  facet_grid(data~likelihood)
+```
+
+On the y-axis we have our $k$ values and on the x-axis we have our cases, rows 1 through 40 in the data. The grid columns are arranged by the likelihood (i.e., the default Gaussian or our robust Student's $t$) and the rows are arranged by whether the data were `x.clean` or `x.noisy`. If $k$ values hit the 0.7 threshold, we colored them red. The take home message is that when using the Student's $t$-distribution to fit our correlations, those three "outlier" values weren't even considered outliers. They weren’t particularly influential on the results because a low-$\nu$ Student's $t$-distribution expects a few oddball cases. No big deal.
+
+If you prefer models that are tough enough to handle your oddball data, consider Student’s $t$.
+
+```{r}
+sessionInfo()
+```
