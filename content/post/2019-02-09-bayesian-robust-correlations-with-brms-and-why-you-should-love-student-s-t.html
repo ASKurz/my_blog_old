@@ -1,7 +1,7 @@
 ---
 title: Bayesian robust correlations with brms (and why you should love Student’s $t$)
 author: A. Solomon Kurz
-date: '2019-02-09'
+date: '2019-03-09'
 slug: bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t
 categories: []
 tags:
@@ -19,7 +19,7 @@ header:
 
 
 <p>In this post, we’ll show how Student’s <span class="math inline">\(t\)</span>-distribution can produce better correlation estimates when you data have outliers. As is often the case, we’ll do so as Bayesians.</p>
-<p>This post is a direct consequence of Adrian Baez-Ortega’s great blog, “<a href="https://baezortega.github.io/2018/05/28/robust-correlation/">Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)</a>”. Baez-Ortega worked out the approach and code for use with <a href="http://mc-stan.org">Stan</a>, directly. Since I’m a fan of the <a href="https://github.com/paul-buerkner/brms">brms</a> package, it seemed only right that we might extend Baez-Ortega’s method to brms. To pay respects where they’re due, the synthetic data, priors, and other model settings are largely the same as those Baez-Ortega used in his blog.</p>
+<p>This post is a direct consequence of Adrian Baez-Ortega’s great blog, “<a href="https://baezortega.github.io/2018/05/28/robust-correlation/">Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)</a>”. Baez-Ortega worked out the approach and code for direct use with <a href="http://mc-stan.org">Stan</a> computational environment. That solution is great because Stan is free, open source, and very flexible. However, Stan’s interface might be prohibitively technical for non-statistician users. Happily, the <a href="https://github.com/paul-buerkner/brms">brms</a> package allows users to use the computational power of Stan through a simpler interface. In this post, we show how to extend Baez-Ortega’s method to brms. To pay respects where they’re due, the synthetic data, priors, and other model settings are largely the same as those Baez-Ortega used in his blog.</p>
 <div id="i-make-assumptions" class="section level2">
 <h2>I make assumptions</h2>
 <p>For this project, I’m presuming you are vaguely familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is <a href="https://www.r-bloggers.com/why-use-r-five-reasons/">R</a>, with a heavy use of the <a href="http://style.tidyverse.org">tidyverse</a>–which you might learn a lot about <a href="http://r4ds.had.co.nzhttp://r4ds.had.co.nz">here, especially chapter 5</a>–, and, of course, Bürkner’s <a href="https://github.com/paul-buerkner/brms">brms</a>.</p>
@@ -27,8 +27,8 @@ header:
 </div>
 <div id="whats-the-deal" class="section level2">
 <h2>What’s the deal?</h2>
-<p>Pearson’s correlations are designed to quantify the linear relationship between two normally distributed variables. The normal distribution and its multivariate generalization, the multivariate normal distribution, are sensitive to outliers. When you have well-behaved synthetic data, this isn’t an issue. But if you work with wild and rough real-world data, this can be a problem. One can have data for which the vast majority of cases are well-characterized by a nice liner relationship, but have a few odd cases for which that relationship does not hold. And if those odd cases happen to be overly influential–sometimes called leverage points–the resulting Pearson’s correlation coefficient might look off.</p>
-<p>The normal distribution is a special case of Student’s <span class="math inline">\(t\)</span>-distribution with the <span class="math inline">\(\nu\)</span> parameter (i.e., <em>nu</em>, degree of freedom) set to infinity. However, when <span class="math inline">\(\nu\)</span> is small, Student’s <span class="math inline">\(t\)</span>-distribution is more robust to multivariate outliers. It’s less influenced by them. I’m not going to cover why in any detail. For that you’ve got <a href="https://baezortega.github.io/2018/05/28/robust-correlation/">Baez-Ortega’s blog</a>, an even earlier blog from <a href="http://www.sumsar.net/blog/2013/08/bayesian-estimation-of-correlation/">Rasmus Bååth</a>, and textbook treatments on the topic by <a href="http://www.stat.columbia.edu/~gelman/arm/">Gelman &amp; Hill (2007, chapter 6)</a> and <a href="https://sites.google.com/site/doingbayesiandataanalysis/">Kruschke (2014, chapter 16)</a>. Here we’ll get a quick sense of how vulnerable Pearson’s correlations–with their reliance on the Gaussian–are to outliers, we’ll demonstrate how fitting correlations within the Bayesian paradigm using the conventional Gaussian likelihood is similarly vulnerable to distortion, and then demonstrate how Student’s <span class="math inline">\(t\)</span>-distribution can save the day. And importantly, we’ll do the bulk of this with the brms package.</p>
+<p>Pearson’s correlations are designed to quantify the linear relationship between two normally distributed variables. The normal distribution and its multivariate generalization, the multivariate normal distribution, are sensitive to outliers. When you have well-behaved synthetic data, this isn’t an issue. But if you work real-world data, this can be a problem. One can have data for which the vast majority of cases are well-characterized by a nice liner relationship, but have a few odd cases for which that relationship does not hold. And if those odd cases happen to be overly influential–sometimes called leverage points–the resulting Pearson’s correlation coefficient might look off.</p>
+<p>Recall that the normal distribution is a special case of Student’s <span class="math inline">\(t\)</span>-distribution with the <span class="math inline">\(\nu\)</span> parameter (i.e., <em>nu</em>, degree of freedom) set to infinity. As it turns out, when <span class="math inline">\(\nu\)</span> is small, Student’s <span class="math inline">\(t\)</span>-distribution is more robust to multivariate outliers. It’s less influenced by them. I’m not going to cover why in any detail. For that you’ve got <a href="https://baezortega.github.io/2018/05/28/robust-correlation/">Baez-Ortega’s blog</a>, an even earlier blog from <a href="http://www.sumsar.net/blog/2013/08/bayesian-estimation-of-correlation/">Rasmus Bååth</a>, and textbook treatments on the topic by <a href="http://www.stat.columbia.edu/~gelman/arm/">Gelman &amp; Hill (2007, chapter 6)</a> and <a href="https://sites.google.com/site/doingbayesiandataanalysis/">Kruschke (2014, chapter 16)</a>. Here we’ll get a quick sense of how vulnerable Pearson’s correlations–with their reliance on the Gaussian–are to outliers, we’ll demonstrate how fitting correlations within the Bayesian paradigm using the conventional Gaussian likelihood is similarly vulnerable to distortion, and then see how Student’s <span class="math inline">\(t\)</span>-distribution can save the day. And importantly, we’ll do the bulk of this with the brms package.</p>
 </div>
 <div id="we-need-data" class="section level2">
 <h2>We need data</h2>
@@ -37,7 +37,7 @@ header:
 library(tidyverse)
 
 sigma &lt;- c(20, 40)  # the variances
-rho   &lt;- -0.95      # the desired correlation
+rho   &lt;- -.95       # the desired correlation
 
 # here&#39;s the variance/covariance matrix
 cov.mat &lt;- 
@@ -324,7 +324,7 @@ posts %&gt;%
         legend.position = &quot;none&quot;)</code></pre>
 <p><img src="/post/2019-02-09-bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t_files/figure-html/unnamed-chunk-15-1.png" width="960" /></p>
 <p>From out <code>tidybayes::median_qi()</code> code, the dots are the posterior medians, the thick inner lines the 50% intervals, and the thinner outer lines the 95% intervals. The posteriors for the <code>x.noisy</code> data are in red and those for the <code>x.clean</code> data are in blue. If the data are clean multivariate normal Gaussian or if they’re dirty but fit with robust Student’s <span class="math inline">\(t\)</span>, everything is pretty much alright. But whoa, if you fit a correlation with a combination of <code>family = gaussian</code> and noisy outlier-laden data, man that’s just a mess.</p>
-<p>Don’t make a mess of your data. Try the robust Student’s <span class="math inline">\(t\)</span>.</p>
+<p>Don’t let a few overly-influential outliers make a mess of your analyses. Try the robust Student’s <span class="math inline">\(t\)</span>.</p>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 3.5.1 (2018-07-02)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)

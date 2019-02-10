@@ -11,397 +11,6 @@
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
-      <title>Bayesian robust correlations with brms (and why you should love Student’s $t$)</title>
-      <link>/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/</link>
-      <pubDate>Sat, 09 Feb 2019 00:00:00 +0000</pubDate>
-      
-      <guid>/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/</guid>
-      <description>&lt;p&gt;In this post, we’ll show how Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution can produce better correlation estimates when you data have outliers. As is often the case, we’ll do so as Bayesians.&lt;/p&gt;
-&lt;p&gt;This post is a direct consequence of Adrian Baez-Ortega’s great blog, “&lt;a href=&#34;https://baezortega.github.io/2018/05/28/robust-correlation/&#34;&gt;Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)&lt;/a&gt;”. Baez-Ortega worked out the approach and code for use with &lt;a href=&#34;http://mc-stan.org&#34;&gt;Stan&lt;/a&gt;, directly. Since I’m a fan of the &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;brms&lt;/a&gt; package, it seemed only right that we might extend Baez-Ortega’s method to brms. To pay respects where they’re due, the synthetic data, priors, and other model settings are largely the same as those Baez-Ortega used in his blog.&lt;/p&gt;
-&lt;div id=&#34;i-make-assumptions&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;I make assumptions&lt;/h2&gt;
-&lt;p&gt;For this project, I’m presuming you are vaguely familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is &lt;a href=&#34;https://www.r-bloggers.com/why-use-r-five-reasons/&#34;&gt;R&lt;/a&gt;, with a heavy use of the &lt;a href=&#34;http://style.tidyverse.org&#34;&gt;tidyverse&lt;/a&gt;–which you might learn a lot about &lt;a href=&#34;http://r4ds.had.co.nzhttp://r4ds.had.co.nz&#34;&gt;here, especially chapter 5&lt;/a&gt;–, and, of course, Bürkner’s &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;brms&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;If you’d like a warmup, consider checking out my related post, &lt;a href=&#34;https://solomonkurz.netlify.com/post/robust-linear-regression-with-the-robust-student-s-t-distribution/&#34;&gt;Robust Linear Regression with Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-Distribution&lt;/a&gt;.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;whats-the-deal&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;What’s the deal?&lt;/h2&gt;
-&lt;p&gt;Pearson’s correlations are designed to quantify the linear relationship between two normally distributed variables. The normal distribution and its multivariate generalization, the multivariate normal distribution, are sensitive to outliers. When you have well-behaved synthetic data, this isn’t an issue. But if you work with wild and rough real-world data, this can be a problem. One can have data for which the vast majority of cases are well-characterized by a nice liner relationship, but have a few odd cases for which that relationship does not hold. And if those odd cases happen to be overly influential–sometimes called leverage points–the resulting Pearson’s correlation coefficient might look off.&lt;/p&gt;
-&lt;p&gt;The normal distribution is a special case of Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution with the &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt; parameter (i.e., &lt;em&gt;nu&lt;/em&gt;, degree of freedom) set to infinity. However, when &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt; is small, Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution is more robust to multivariate outliers. It’s less influenced by them. I’m not going to cover why in any detail. For that you’ve got &lt;a href=&#34;https://baezortega.github.io/2018/05/28/robust-correlation/&#34;&gt;Baez-Ortega’s blog&lt;/a&gt;, an even earlier blog from &lt;a href=&#34;http://www.sumsar.net/blog/2013/08/bayesian-estimation-of-correlation/&#34;&gt;Rasmus Bååth&lt;/a&gt;, and textbook treatments on the topic by &lt;a href=&#34;http://www.stat.columbia.edu/~gelman/arm/&#34;&gt;Gelman &amp;amp; Hill (2007, chapter 6)&lt;/a&gt; and &lt;a href=&#34;https://sites.google.com/site/doingbayesiandataanalysis/&#34;&gt;Kruschke (2014, chapter 16)&lt;/a&gt;. Here we’ll get a quick sense of how vulnerable Pearson’s correlations–with their reliance on the Gaussian–are to outliers, we’ll demonstrate how fitting correlations within the Bayesian paradigm using the conventional Gaussian likelihood is similarly vulnerable to distortion, and then demonstrate how Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution can save the day. And importantly, we’ll do the bulk of this with the brms package.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;we-need-data&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;We need data&lt;/h2&gt;
-&lt;p&gt;To start off, we’ll make a multivariate normal simulated data set using the same steps Baez-Ortega’s used.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(mvtnorm)
-library(tidyverse)
-
-sigma &amp;lt;- c(20, 40)  # the variances
-rho   &amp;lt;- -0.95      # the desired correlation
-
-# here&amp;#39;s the variance/covariance matrix
-cov.mat &amp;lt;- 
-  matrix(c(sigma[1] ^ 2,
-           sigma[1] * sigma[2] * rho,
-           sigma[1] * sigma[2] * rho,
-           sigma[2] ^ 2),
-         nrow = 2, byrow = T)
-
-# after setting our seed, we&amp;#39;re ready to simulate with `rmvnorm()`
-set.seed(210191)
-x.clean &amp;lt;- 
-  rmvnorm(n = 40, sigma = cov.mat) %&amp;gt;% 
-  as_tibble() %&amp;gt;% 
-  rename(x = V1,
-         y = V2)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Here we make our second data set, &lt;code&gt;x.noisy&lt;/code&gt;, which is identical to our well-behaved &lt;code&gt;x.clean&lt;/code&gt; data, but with the first three cases transformed to outlier values.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;x.noisy &amp;lt;- x.clean
-
-x.noisy[1:3,] &amp;lt;-
-  matrix(c(-40, -60,
-           20, 100,
-           40, 40),
-         nrow = 3, byrow = T)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Finally, we’ll add an &lt;code&gt;outlier&lt;/code&gt; index to the data sets, which will help us with plotting.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;x.clean &amp;lt;-
-  x.clean %&amp;gt;% 
-  mutate(outlier = factor(0))
-
-x.noisy &amp;lt;- 
-  x.noisy %&amp;gt;% 
-  mutate(outlier = c(rep(1, 3), rep(0, 37)) %&amp;gt;% as.factor(.))&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;The plot below shows what the &lt;code&gt;x.clean&lt;/code&gt; data look like. I’m a fan of &lt;a href=&#34;http://fivethirtyeight.com&#34;&gt;FiveThirtyEight&lt;/a&gt;, so we’ll use a few convenience functions from the handy &lt;a href=&#34;https://github.com/jrnold/ggthemes&#34;&gt;ggthemes package&lt;/a&gt; to give our plots a FiveThirtyEight-like feel.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(ggthemes)
-
-x.clean %&amp;gt;% 
-  ggplot(aes(x = x, y = y, color = outlier, fill = outlier)) +
-  geom_point() +
-  stat_ellipse(geom = &amp;quot;polygon&amp;quot;, alpha = .15, size = .15, level = .5) +
-  stat_ellipse(geom = &amp;quot;polygon&amp;quot;, alpha = .15, size = .15, level = .95) +
-  scale_color_fivethirtyeight() +
-  scale_fill_fivethirtyeight() +
-  coord_cartesian(xlim = -50:50,
-                  ylim = -100:100) +
-  theme_fivethirtyeight() +
-  theme(legend.position = &amp;quot;none&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-02-09-bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t_files/figure-html/unnamed-chunk-4-1.png&#34; width=&#34;312&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;And here are the &lt;code&gt;x.noisy&lt;/code&gt; data.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;x.noisy %&amp;gt;% 
-  ggplot(aes(x = x, y = y, color = outlier, fill = outlier)) +
-  geom_point() +
-  stat_ellipse(geom = &amp;quot;polygon&amp;quot;, alpha = .15, size = .15, level = .5) +
-  stat_ellipse(geom = &amp;quot;polygon&amp;quot;, alpha = .15, size = .15, level = .95) +
-  scale_color_fivethirtyeight() +
-  scale_fill_fivethirtyeight() +
-  coord_cartesian(xlim = -50:50,
-                  ylim = -100:100) +
-  theme_fivethirtyeight() +
-  theme(legend.position = &amp;quot;none&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-02-09-bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t_files/figure-html/unnamed-chunk-5-1.png&#34; width=&#34;312&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;The three outliers are in red. Even in their presence, the old interocular trauma test suggests there is a pronounced overall trend in the data. I would like a correlation procedure that’s capable of capturing that overall trend. Let’s examine some candidates.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;how-does-old-pearson-hold-up&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;How does old Pearson hold up?&lt;/h2&gt;
-&lt;p&gt;A quick way to get a Pearson’s correlation coefficient in R is with the &lt;code&gt;cor()&lt;/code&gt; function, which does a nice job recovering the correlation we simulated the &lt;code&gt;x.clean&lt;/code&gt; data with:&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;cor(x.clean$x, x.clean$y)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## [1] -0.959702&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;However, things fall apart if you use &lt;code&gt;cor()&lt;/code&gt; on the &lt;code&gt;x.noisy&lt;/code&gt; data.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;cor(x.noisy$x, x.noisy$y)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## [1] -0.6365649&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;So even though most of the &lt;code&gt;x.noisy&lt;/code&gt; data continue to show a clear strong correlation, three outlier values reduce the Pearson’s correlation a third of the way toward zero Let’s see what happens when we go Bayesian.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;bayesian-correlations-in-brms&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Bayesian correlations in brms&lt;/h2&gt;
-&lt;p&gt;&lt;a href=&#34;https://twitter.com/paulbuerkner&#34;&gt;Bürkner&lt;/a&gt;’s brms is a general purpose interface for fitting all manner of Bayesian regression models with &lt;a href=&#34;https://mc-stan.org&#34;&gt;Stan&lt;/a&gt; as the engine under the hood. It has popular &lt;a href=&#34;https://cran.r-project.org/web/packages/lme4/index.html&#34;&gt;lme4&lt;/a&gt;-like syntax and offers a variety of convenience functions for post processing. Let’s load it up.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)&lt;/code&gt;&lt;/pre&gt;
-&lt;div id=&#34;first-with-the-gaussian-likelihood.&#34; class=&#34;section level3&#34;&gt;
-&lt;h3&gt;First with the Gaussian likelihood.&lt;/h3&gt;
-&lt;p&gt;I’m not going to spend a lot of time walking through the syntax in the main brms function, &lt;code&gt;brm()&lt;/code&gt;. You can learn all about that &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;here&lt;/a&gt; or with my project &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse#statistical-rethinking-with-brms-ggplot2-and-the-tidyverse&#34;&gt;&lt;em&gt;Statistical Rethinking with brms, ggplot2, and the tidyverse&lt;/em&gt;&lt;/a&gt;. But our particular use of &lt;code&gt;brm()&lt;/code&gt; requires we make a few fine points.&lt;/p&gt;
-&lt;p&gt;One doesn’t always think about bivariate correlations within the regression paradigm. But they work just fine. Within brms, you can use the conventional Gaussian likelihood (i.e., &lt;code&gt;family = gaussian&lt;/code&gt;), use the &lt;code&gt;cbind()&lt;/code&gt; syntax to set up a &lt;a href=&#34;https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html&#34;&gt;multivariate model&lt;/a&gt;, and fit that model without predictors. For each variable specified in &lt;code&gt;cbind()&lt;/code&gt;, you’ll estimate an intercept (i.e., mean, &lt;span class=&#34;math inline&#34;&gt;\(\mu\)&lt;/span&gt;) and sigma (i.e., &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt;, often called a residual variance). Since there are no predictors in the model, the residual variance is just the variance and the brms default for multivariate models is to allow the residual variances to covary. But since variances are parameterized in the standard deviation metric in brms, the residual variances and their covariance are &lt;em&gt;SD&lt;/em&gt;s and their correlation, respectively. Here’s what it looks like in practice.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;f0 &amp;lt;- 
-  brm(data = x.clean, 
-      family = gaussian,
-      cbind(x, y) ~ 1,
-      prior = c(prior(normal(0, 100), class = Intercept),
-                prior(normal(0, 100), class = sigma, resp = x),
-                prior(normal(0, 100), class = sigma, resp = y),
-                prior(lkj(1), class = rescor)),
-      iter = 2000, warmup = 500, chains = 4, cores = 4, 
-      seed = 210191)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;In a typical Bayesian workflow, you’d examine the quality of the chains with trace plots. The easy way to do that in brms is with &lt;code&gt;plot()&lt;/code&gt;. E.g., to get the trace plots for our first model, you’d code &lt;code&gt;plot(f0)&lt;/code&gt;. Happily, the trace plots look fine for all models in this post. For the sake of space, I’ll leave their inspection as an exercises for interested readers.&lt;/p&gt;
-&lt;p&gt;Our priors and such mirror those in Baez-Ortega’s blog. Here are the results.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(f0)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##  Family: MV(gaussian, gaussian) 
-##   Links: mu = identity; sigma = identity
-##          mu = identity; sigma = identity 
-## Formula: x ~ 1 
-##          y ~ 1 
-##    Data: x.clean (Number of observations: 40) 
-## Samples: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
-##          total post-warmup samples = 6000
-## 
-## Population-Level Effects: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## x_Intercept    -2.83      3.33    -9.33     3.69       2995 1.00
-## y_Intercept     3.55      6.65    -9.45    16.60       2972 1.00
-## 
-## Family Specific Parameters: 
-##         Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_x    21.47      2.47    17.29    26.99       2453 1.00
-## sigma_y    42.93      4.86    34.55    53.51       2418 1.00
-## 
-## Residual Correlations: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(x,y)    -0.95      0.02    -0.98    -0.92       2636 1.00
-## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
-## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Way down there in the last line in the ‘Family Specific Parameters’ section we have &lt;code&gt;rescor(x,y)&lt;/code&gt;, which is our correlation. And indeed, our Gaussian intercept-only multivariate model did a great job recovering the correlation we used to simulate the &lt;code&gt;x.clean&lt;/code&gt; data with. Look at what happens when we try this approach with &lt;code&gt;x.noisy&lt;/code&gt;.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;f1 &amp;lt;-
-  update(f0,
-         newdata = x.noisy,
-         iter = 2000, warmup = 500, chains = 4, cores = 4, seed = 210191)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(f1)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##  Family: MV(gaussian, gaussian) 
-##   Links: mu = identity; sigma = identity
-##          mu = identity; sigma = identity 
-## Formula: x ~ 1 
-##          y ~ 1 
-##    Data: x.noisy (Number of observations: 40) 
-## Samples: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
-##          total post-warmup samples = 6000
-## 
-## Population-Level Effects: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## x_Intercept    -2.95      3.75   -10.39     4.57       4477 1.00
-## y_Intercept     6.52      7.45    -8.31    20.98       4692 1.00
-## 
-## Family Specific Parameters: 
-##         Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_x    23.65      2.76    18.97    29.83       4312 1.00
-## sigma_y    47.20      5.42    37.94    59.03       4332 1.00
-## 
-## Residual Correlations: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(x,y)    -0.61      0.10    -0.78    -0.39       4480 1.00
-## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
-## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;And the correlation estimate is -.6. As it turns out, &lt;code&gt;data = x.noisy&lt;/code&gt; + &lt;code&gt;family = gaussian&lt;/code&gt; in &lt;code&gt;brm()&lt;/code&gt; failed us just like Pearson’s correlation failed us. Time to leave failure behind.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;now-with-students-t-distribution.&#34; class=&#34;section level3&#34;&gt;
-&lt;h3&gt;Now with Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution.&lt;/h3&gt;
-&lt;p&gt;Before we jump into using &lt;code&gt;family = student&lt;/code&gt;, we should talk a bit about &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt;. This is our new parameter which is silently fixed to infinity when we use the Gaussian likelihood. The &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt; parameter is bound at zero but, as discussed in Baez-Ortega’s blog, is somewhat nonsensical for values below 1. As it turns out, &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt; is constrained to be equal to or greater than 1 in brms. So nothing for us to worry about, there. The &lt;a href=&#34;https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations&#34;&gt;Stan team currently recommends the gamma(2, 0.1) prior for &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt;&lt;/a&gt;, which is also the current brms default. This is what that distribution looks like.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;tibble(x = seq(from = 1, to = 120, by = .5)) %&amp;gt;% 
-  ggplot(aes(x = x, fill = factor(0))) +
-  geom_ribbon(aes(ymin = 0, 
-                  ymax = dgamma(x, 2, 0.1))) +
-  scale_y_continuous(NULL, breaks = NULL) +
-  scale_fill_fivethirtyeight() +
-  coord_cartesian(xlim = 0:100) +
-  ggtitle(&amp;quot;gamma(2, 0.1)&amp;quot;) +
-  theme_fivethirtyeight() +
-  theme(legend.position = &amp;quot;none&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-02-09-bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t_files/figure-html/unnamed-chunk-11-1.png&#34; width=&#34;960&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;So gamma(2, 0.1) should gently push the &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt; posterior toward low values, but it’s slowly-sloping right tail will allow higher values to emerge.&lt;/p&gt;
-&lt;p&gt;Following the Stan team’s recommendation, the brms default and Baez-Ortega’s blog, here’s our robust Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt; model for the &lt;code&gt;x.noisy&lt;/code&gt; data.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;f2 &amp;lt;- 
-  brm(data = x.noisy, 
-      family = student,
-      cbind(x, y) ~ 1,
-      prior = c(prior(gamma(2, .1), class = nu),
-                prior(normal(0, 100), class = Intercept),
-                prior(normal(0, 100), class = sigma, resp = x),
-                prior(normal(0, 100), class = sigma, resp = y),
-                prior(lkj(1), class = rescor)),
-      iter = 2000, warmup = 500, chains = 4, cores = 4, 
-      seed = 210191)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(f2)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##  Family: MV(student, student) 
-##   Links: mu = identity; sigma = identity; nu = identity
-##          mu = identity; sigma = identity; nu = identity 
-## Formula: x ~ 1 
-##          y ~ 1 
-##    Data: x.noisy (Number of observations: 40) 
-## Samples: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
-##          total post-warmup samples = 6000
-## 
-## Population-Level Effects: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## x_Intercept    -2.11      3.61    -9.22     4.96       2936 1.00
-## y_Intercept     1.93      7.12   -11.74    16.03       2949 1.00
-## 
-## Family Specific Parameters: 
-##         Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_x    18.26      2.92    13.06    24.48       3188 1.00
-## sigma_y    36.31      5.79    26.08    48.60       3206 1.00
-## nu          2.65      1.00     1.36     5.13       3905 1.00
-## 
-## Residual Correlations: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(x,y)    -0.93      0.03    -0.97    -0.84       3484 1.00
-## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
-## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Whoa, look at that correlation, &lt;code&gt;rescore(x,y)&lt;/code&gt;! It’s right about what we’d hope for. Sure, it’s not a perfect -.95, but that’s way way way better than -0.61.&lt;/p&gt;
-&lt;p&gt;While we’re at it, we may as well see what happens when we fit a Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt; model when we have perfectly multivariate normal data. Here it is with the &lt;code&gt;x.clean&lt;/code&gt; data.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;f3 &amp;lt;- 
-  update(f2,
-         newdata = x.clean, 
-         iter = 2000, warmup = 500, chains = 4, cores = 4, seed = 210191)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(f3)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##  Family: MV(student, student) 
-##   Links: mu = identity; sigma = identity; nu = identity
-##          mu = identity; sigma = identity; nu = identity 
-## Formula: x ~ 1 
-##          y ~ 1 
-##    Data: x.clean (Number of observations: 40) 
-## Samples: 4 chains, each with iter = 2000; warmup = 500; thin = 1;
-##          total post-warmup samples = 6000
-## 
-## Population-Level Effects: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## x_Intercept    -2.37      3.50    -9.20     4.39       2909 1.00
-## y_Intercept     2.71      6.98   -10.90    16.48       3032 1.00
-## 
-## Family Specific Parameters: 
-##         Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_x    20.79      2.60    16.28    26.60       2388 1.00
-## sigma_y    41.34      5.17    32.33    52.62       2417 1.00
-## nu         22.42     13.78     5.70    57.53       4384 1.00
-## 
-## Residual Correlations: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(x,y)    -0.96      0.01    -0.98    -0.92       3045 1.00
-## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
-## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;So when you don’t need Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;, it yields the right answer anyways. That’s a nice feature.&lt;/p&gt;
-&lt;p&gt;We should probably compare the posteriors of the correlations across the four models. First we’ll collect the posterior samples into a tibble.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;posts &amp;lt;-
-  tibble(model = str_c(&amp;quot;f&amp;quot;, 0:3)) %&amp;gt;% 
-  mutate(fit  = map(model, get)) %&amp;gt;% 
-  mutate(post = map(fit, posterior_samples)) %&amp;gt;% 
-  unnest(post)
-
-head(posts)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 8
-##   model b_x_Intercept b_y_Intercept sigma_x sigma_y rescor__x__y  lp__
-##   &amp;lt;chr&amp;gt;         &amp;lt;dbl&amp;gt;         &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt;        &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
-## 1 f0             1.31        -5.60     18.2    37.8       -0.947 -353.
-## 2 f0            -7.41        10.6      25.2    50.5       -0.941 -357.
-## 3 f0            -4.51         5.65     23.3    49.4       -0.975 -354.
-## 4 f0            -2.65        -0.597    18.3    37.3       -0.929 -354.
-## 5 f0            -2.76        -1.50     18.4    37.5       -0.923 -355.
-## 6 f0            -9.84        15.2      26.3    45.1       -0.953 -358.
-## # ... with 1 more variable: nu &amp;lt;dbl&amp;gt;&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;With the posterior draws in hand, we just need to wrangle a bit before showing the correlation posteriors in a coefficient plot. To make things easier, we’ll do so with a couple convenience functions from the &lt;a href=&#34;https://github.com/mjskay/tidybayes&#34;&gt;tidybayes&lt;/a&gt; package.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidybayes)
-
-# wrangle
-posts %&amp;gt;% 
-  group_by(model) %&amp;gt;% 
-  median_qi(rescor__x__y, .width = c(.5, .95)) %&amp;gt;% 
-  mutate(key = recode(model, 
-                      f0 = &amp;quot;Gaussian likelihood with clean data&amp;quot;,
-                      f1 = &amp;quot;Gaussian likelihood with noisy data&amp;quot;,
-                      f2 = &amp;quot;Student likelihood with noisy data&amp;quot;,
-                      f3 = &amp;quot;Student likelihood with clean data&amp;quot;),
-         clean = ifelse(model %in% c(&amp;quot;f0&amp;quot;, &amp;quot;f3&amp;quot;), &amp;quot;0&amp;quot;, &amp;quot;1&amp;quot;)) %&amp;gt;%
-  
-  # plot
-  ggplot(aes(x = rescor__x__y, y = key, color = clean)) +
-  geom_pointintervalh() +
-  scale_color_fivethirtyeight() +
-  coord_cartesian(xlim = -1:0) +
-  labs(subtitle = expression(paste(&amp;quot;The posterior for &amp;quot;, rho, &amp;quot; depends on the likelihood. Why not go robust and use Student&amp;#39;s &amp;quot;, italic(t), &amp;quot;?&amp;quot;))) +
-  theme_fivethirtyeight() +
-  theme(axis.text.y     = element_text(hjust = 0),
-        legend.position = &amp;quot;none&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-02-09-bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t_files/figure-html/unnamed-chunk-15-1.png&#34; width=&#34;960&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;From out &lt;code&gt;tidybayes::median_qi()&lt;/code&gt; code, the dots are the posterior medians, the thick inner lines the 50% intervals, and the thinner outer lines the 95% intervals. The posteriors for the &lt;code&gt;x.noisy&lt;/code&gt; data are in red and those for the &lt;code&gt;x.clean&lt;/code&gt; data are in blue. If the data are clean multivariate normal Gaussian or if they’re dirty but fit with robust Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;, everything is pretty much alright. But whoa, if you fit a correlation with a combination of &lt;code&gt;family = gaussian&lt;/code&gt; and noisy outlier-laden data, man that’s just a mess.&lt;/p&gt;
-&lt;p&gt;Don’t make a mess of your data. Try the robust Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## R version 3.5.1 (2018-07-02)
-## Platform: x86_64-apple-darwin15.6.0 (64-bit)
-## Running under: macOS High Sierra 10.13.6
-## 
-## Matrix products: default
-## BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
-## 
-## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
-## 
-## attached base packages:
-## [1] stats     graphics  grDevices utils     datasets  methods   base     
-## 
-## other attached packages:
-##  [1] tidybayes_1.0.3 brms_2.7.0      Rcpp_1.0.0      ggthemes_4.0.1 
-##  [5] bindrcpp_0.2.2  forcats_0.3.0   stringr_1.3.1   dplyr_0.7.6    
-##  [9] purrr_0.2.5     readr_1.1.1     tidyr_0.8.1     tibble_1.4.2   
-## [13] ggplot2_3.1.0   tidyverse_1.2.1 mvtnorm_1.0-8  
-## 
-## loaded via a namespace (and not attached):
-##   [1] colorspace_1.3-2          ggridges_0.5.0           
-##   [3] rsconnect_0.8.8           rprojroot_1.3-2          
-##   [5] ggstance_0.3              markdown_0.8             
-##   [7] base64enc_0.1-3           rstudioapi_0.7           
-##   [9] rstan_2.18.2              svUnit_0.7-12            
-##  [11] DT_0.4                    lubridate_1.7.4          
-##  [13] xml2_1.2.0                bridgesampling_0.4-0     
-##  [15] mnormt_1.5-5              knitr_1.20               
-##  [17] shinythemes_1.1.1         bayesplot_1.6.0          
-##  [19] jsonlite_1.5              broom_0.4.5              
-##  [21] shiny_1.1.0               compiler_3.5.1           
-##  [23] httr_1.3.1                backports_1.1.2          
-##  [25] assertthat_0.2.0          Matrix_1.2-14            
-##  [27] lazyeval_0.2.1            cli_1.0.1                
-##  [29] later_0.7.3               htmltools_0.3.6          
-##  [31] prettyunits_1.0.2         tools_3.5.1              
-##  [33] igraph_1.2.1              coda_0.19-2              
-##  [35] gtable_0.2.0              glue_1.3.0               
-##  [37] reshape2_1.4.3            cellranger_1.1.0         
-##  [39] nlme_3.1-137              blogdown_0.8             
-##  [41] crosstalk_1.0.0           psych_1.8.4              
-##  [43] xfun_0.3                  ps_1.2.1                 
-##  [45] rvest_0.3.2               mime_0.5                 
-##  [47] miniUI_0.1.1.1            gtools_3.8.1             
-##  [49] MASS_7.3-50               zoo_1.8-2                
-##  [51] scales_1.0.0              colourpicker_1.0         
-##  [53] hms_0.4.2                 promises_1.0.1           
-##  [55] Brobdingnag_1.2-5         parallel_3.5.1           
-##  [57] inline_0.3.15             shinystan_2.5.0          
-##  [59] yaml_2.1.19               gridExtra_2.3            
-##  [61] StanHeaders_2.18.0-1      loo_2.0.0                
-##  [63] stringi_1.2.3             dygraphs_1.1.1.5         
-##  [65] pkgbuild_1.0.2            rlang_0.3.0.1            
-##  [67] pkgconfig_2.0.1           matrixStats_0.54.0       
-##  [69] evaluate_0.10.1           lattice_0.20-35          
-##  [71] bindr_0.1.1               rstantools_1.5.0         
-##  [73] htmlwidgets_1.2           labeling_0.3             
-##  [75] tidyselect_0.2.4          processx_3.2.1           
-##  [77] plyr_1.8.4                magrittr_1.5             
-##  [79] bookdown_0.7              R6_2.3.0                 
-##  [81] pillar_1.2.3              haven_1.1.2              
-##  [83] foreign_0.8-70            withr_2.1.2              
-##  [85] xts_0.10-2                abind_1.4-5              
-##  [87] modelr_0.1.2              crayon_1.3.4             
-##  [89] arrayhelpers_1.0-20160527 utf8_1.1.4               
-##  [91] rmarkdown_1.10            grid_3.5.1               
-##  [93] readxl_1.1.0              callr_3.1.0              
-##  [95] threejs_0.3.1             digest_0.6.18            
-##  [97] xtable_1.8-2              httpuv_1.4.4.2           
-##  [99] stats4_3.5.1              munsell_0.5.0            
-## [101] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-</description>
-    </item>
-    
-    <item>
       <title>&#34;How to Survive a Plague&#34;: Part 1/$n$ of a premature book report</title>
       <link>/post/how-to-survive-a-plague-part-1-n-of-a-premature-book-report/</link>
       <pubDate>Sat, 02 Feb 2019 00:00:00 +0000</pubDate>
@@ -2047,8 +1656,8 @@ m &amp;lt;- brm(response ~ (1|condition),
 &lt;pre&gt;&lt;code&gt;## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 3.1e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.31 seconds.
+## Chain 1: Gradient evaluation took 3.7e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.37 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -2065,15 +1674,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.532933 seconds (Warm-up)
-## Chain 1:                0.556761 seconds (Sampling)
-## Chain 1:                1.08969 seconds (Total)
+## Chain 1:  Elapsed Time: 0.532521 seconds (Warm-up)
+## Chain 1:                0.542197 seconds (Sampling)
+## Chain 1:                1.07472 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 1.5e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.15 seconds.
+## Chain 2: Gradient evaluation took 2.3e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.23 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -2090,15 +1699,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.59964 seconds (Warm-up)
-## Chain 2:                0.637706 seconds (Sampling)
-## Chain 2:                1.23735 seconds (Total)
+## Chain 2:  Elapsed Time: 0.559173 seconds (Warm-up)
+## Chain 2:                0.616486 seconds (Sampling)
+## Chain 2:                1.17566 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 1.1e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds.
+## Chain 3: Gradient evaluation took 1.3e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -2115,15 +1724,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.692937 seconds (Warm-up)
-## Chain 3:                0.536665 seconds (Sampling)
-## Chain 3:                1.2296 seconds (Total)
+## Chain 3:  Elapsed Time: 0.635547 seconds (Warm-up)
+## Chain 3:                0.506206 seconds (Sampling)
+## Chain 3:                1.14175 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
 ## Chain 4: 
-## Chain 4: Gradient evaluation took 1.9e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.19 seconds.
+## Chain 4: Gradient evaluation took 1.1e-05 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds.
 ## Chain 4: Adjust your expectations accordingly!
 ## Chain 4: 
 ## Chain 4: 
@@ -2140,9 +1749,9 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.579471 seconds (Warm-up)
-## Chain 4:                0.669474 seconds (Sampling)
-## Chain 4:                1.24894 seconds (Total)
+## Chain 4:  Elapsed Time: 0.537742 seconds (Warm-up)
+## Chain 4:                0.613852 seconds (Sampling)
+## Chain 4:                1.15159 seconds (Total)
 ## Chain 4:&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
   spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%
