@@ -279,7 +279,7 @@ x.clean %&amp;gt;%
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;So when you don’t need Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;, it yields the right answer anyways. That’s a nice feature.&lt;/p&gt;
-&lt;p&gt;We should probably compare the posteriors of the correlations across the four models. First we’ll need to put the posterior samples into data frames.&lt;/p&gt;
+&lt;p&gt;We should probably compare the posteriors of the correlations across the four models. First we’ll collect the posterior samples into a tibble.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;posts &amp;lt;-
   tibble(model = str_c(&amp;quot;f&amp;quot;, 0:3)) %&amp;gt;% 
   mutate(fit  = map(model, get)) %&amp;gt;% 
@@ -300,6 +300,7 @@ head(posts)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;With the posterior draws in hand, we just need to wrangle a bit before showing the correlation posteriors in a coefficient plot. To make things easier, we’ll do so with a couple convenience functions from the &lt;a href=&#34;https://github.com/mjskay/tidybayes&#34;&gt;tidybayes&lt;/a&gt; package.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidybayes)
 
+# wrangle
 posts %&amp;gt;% 
   group_by(model) %&amp;gt;% 
   median_qi(rescor__x__y, .width = c(.5, .95)) %&amp;gt;% 
@@ -310,6 +311,7 @@ posts %&amp;gt;%
                       f3 = &amp;quot;Student likelihood with clean data&amp;quot;),
          clean = ifelse(model %in% c(&amp;quot;f0&amp;quot;, &amp;quot;f3&amp;quot;), &amp;quot;0&amp;quot;, &amp;quot;1&amp;quot;)) %&amp;gt;%
   
+  # plot
   ggplot(aes(x = rescor__x__y, y = key, color = clean)) +
   geom_pointintervalh() +
   scale_color_fivethirtyeight() +
@@ -2045,8 +2047,8 @@ m &amp;lt;- brm(response ~ (1|condition),
 &lt;pre&gt;&lt;code&gt;## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 4.7e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.47 seconds.
+## Chain 1: Gradient evaluation took 3.1e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.31 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -2063,15 +2065,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.506265 seconds (Warm-up)
-## Chain 1:                0.545741 seconds (Sampling)
-## Chain 1:                1.05201 seconds (Total)
+## Chain 1:  Elapsed Time: 0.532933 seconds (Warm-up)
+## Chain 1:                0.556761 seconds (Sampling)
+## Chain 1:                1.08969 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 1.2e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
+## Chain 2: Gradient evaluation took 1.5e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.15 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -2088,9 +2090,9 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.574807 seconds (Warm-up)
-## Chain 2:                0.612333 seconds (Sampling)
-## Chain 2:                1.18714 seconds (Total)
+## Chain 2:  Elapsed Time: 0.59964 seconds (Warm-up)
+## Chain 2:                0.637706 seconds (Sampling)
+## Chain 2:                1.23735 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
@@ -2113,15 +2115,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.656064 seconds (Warm-up)
-## Chain 3:                0.519739 seconds (Sampling)
-## Chain 3:                1.1758 seconds (Total)
+## Chain 3:  Elapsed Time: 0.692937 seconds (Warm-up)
+## Chain 3:                0.536665 seconds (Sampling)
+## Chain 3:                1.2296 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
 ## Chain 4: 
-## Chain 4: Gradient evaluation took 1.2e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
+## Chain 4: Gradient evaluation took 1.9e-05 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.19 seconds.
 ## Chain 4: Adjust your expectations accordingly!
 ## Chain 4: 
 ## Chain 4: 
@@ -2138,9 +2140,9 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.547972 seconds (Warm-up)
-## Chain 4:                0.610795 seconds (Sampling)
-## Chain 4:                1.15877 seconds (Total)
+## Chain 4:  Elapsed Time: 0.579471 seconds (Warm-up)
+## Chain 4:                0.669474 seconds (Sampling)
+## Chain 4:                1.24894 seconds (Total)
 ## Chain 4:&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
   spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%

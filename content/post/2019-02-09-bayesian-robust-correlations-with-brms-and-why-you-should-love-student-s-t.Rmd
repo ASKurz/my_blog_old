@@ -243,7 +243,7 @@ print(f3)
 
 So when you don't need Student's $t$, it yields the right answer anyways. That's a nice feature.
 
-We should probably compare the posteriors of the correlations across the four models. First we’ll need to put the posterior samples into data frames.
+We should probably compare the posteriors of the correlations across the four models. First we’ll collect the posterior samples into a tibble.
 
 ```{r}
 posts <-
@@ -260,6 +260,7 @@ With the posterior draws in hand, we just need to wrangle a bit before showing t
 ```{r, fig.width = 10, fig.height = 1.75, warning = F, message = F}
 library(tidybayes)
 
+# wrangle
 posts %>% 
   group_by(model) %>% 
   median_qi(rescor__x__y, .width = c(.5, .95)) %>% 
@@ -270,6 +271,7 @@ posts %>%
                       f3 = "Student likelihood with clean data"),
          clean = ifelse(model %in% c("f0", "f3"), "0", "1")) %>%
   
+  # plot
   ggplot(aes(x = rescor__x__y, y = key, color = clean)) +
   geom_pointintervalh() +
   scale_color_fivethirtyeight() +

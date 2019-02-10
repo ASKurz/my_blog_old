@@ -584,7 +584,7 @@ x.clean %&gt;%
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p>So when you don’t need Student’s <span class="math inline">\(t\)</span>, it yields the right answer anyways. That’s a nice feature.</p>
-<p>We should probably compare the posteriors of the correlations across the four models. First we’ll need to put the posterior samples into data frames.</p>
+<p>We should probably compare the posteriors of the correlations across the four models. First we’ll collect the posterior samples into a tibble.</p>
 <pre class="r"><code>posts &lt;-
   tibble(model = str_c(&quot;f&quot;, 0:3)) %&gt;% 
   mutate(fit  = map(model, get)) %&gt;% 
@@ -605,6 +605,7 @@ head(posts)</code></pre>
 <p>With the posterior draws in hand, we just need to wrangle a bit before showing the correlation posteriors in a coefficient plot. To make things easier, we’ll do so with a couple convenience functions from the <a href="https://github.com/mjskay/tidybayes">tidybayes</a> package.</p>
 <pre class="r"><code>library(tidybayes)
 
+# wrangle
 posts %&gt;% 
   group_by(model) %&gt;% 
   median_qi(rescor__x__y, .width = c(.5, .95)) %&gt;% 
@@ -615,6 +616,7 @@ posts %&gt;%
                       f3 = &quot;Student likelihood with clean data&quot;),
          clean = ifelse(model %in% c(&quot;f0&quot;, &quot;f3&quot;), &quot;0&quot;, &quot;1&quot;)) %&gt;%
   
+  # plot
   ggplot(aes(x = rescor__x__y, y = key, color = clean)) +
   geom_pointintervalh() +
   scale_color_fivethirtyeight() +
