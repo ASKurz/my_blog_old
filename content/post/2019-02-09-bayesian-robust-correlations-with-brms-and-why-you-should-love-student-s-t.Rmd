@@ -18,7 +18,7 @@ header:
 
 In this post, we'll show how Student's $t$-distribution can produce better correlation estimates when you data have outliers. As is often the case, we'll do so as Bayesians.
 
-This post is a direct consequence of Adrian Baez-Ortega's great blog, "[Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)](https://baezortega.github.io/2018/05/28/robust-correlation/)". Baez-Ortega worked out the approach and code for direct use with [Stan](http://mc-stan.org) computational environment. That solution is great because Stan is free, open source, and very flexible. However, Stan's interface might be prohibitively technical for non-statistician users. Happily, the [brms](https://github.com/paul-buerkner/brms) package allows users to use the computational power of Stan through a simpler interface. In this post, we show how to extend Baez-Ortega's method to brms. To pay respects where they're due, the synthetic data, priors, and other model settings are largely the same as those Baez-Ortega used in his blog.
+This post is a direct consequence of Adrian Baez-Ortega's great blog, "[Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)](https://baezortega.github.io/2018/05/28/robust-correlation/)". Baez-Ortega worked out the approach and code for direct use with [Stan](http://mc-stan.org) computational environment. That solution is great because Stan is free, open source, and very flexible. However, Stan's interface might be prohibitively technical for non-statistician users. Happily, the [brms](https://github.com/paul-buerkner/brms) package allows users to access the computational power of Stan through a simpler interface. In this post, we show how to extend Baez-Ortega's method to brms. To pay respects where they're due, the synthetic data, priors, and other model settings are largely the same as those Baez-Ortega used in his blog.
 
 ## I make assumptions
 
@@ -134,7 +134,7 @@ However, things fall apart if you use `cor()` on the `x.noisy` data.
 cor(x.noisy$x, x.noisy$y)
 ```
 
-So even though most of the `x.noisy` data continue to show a clear strong correlation, three outlier values reduce the Pearson's correlation a third of the way toward zero Let's see what happens when we go Bayesian.
+So even though most of the `x.noisy` data continue to show a clear strong relation, three outlier values reduced the Pearson's correlation a third of the way toward zero. Let's see what happens when we go Bayesian.
 
 ## Bayesian correlations in brms
 
@@ -148,7 +148,8 @@ library(brms)
 
 I’m not going to spend a lot of time walking through the syntax in the main brms function, `brm()`. You can learn all about that [here](https://github.com/paul-buerkner/brms) or with my project [*Statistical Rethinking with brms, ggplot2, and the tidyverse*](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse#statistical-rethinking-with-brms-ggplot2-and-the-tidyverse). But our particular use of `brm()` requires we make a few fine points.
 
-One doesn’t always think about bivariate correlations within the regression paradigm. But they work just fine. Within brms, you can use the conventional Gaussian likelihood (i.e., `family = gaussian`), use the `cbind()` syntax to set up a [multivariate model](https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html), and fit that model without predictors. For each variable specified in `cbind()`, you’ll estimate an intercept (i.e., mean, $\mu$) and sigma (i.e., $\sigma$, often called a residual variance). Since there are no predictors in the model, the residual variance is just the variance and the brms default for multivariate models is to allow the residual variances to covary. But since variances are parameterized in the standard deviation metric in brms, the residual variances and their covariance are *SD*s and their correlation, respectively. 
+One doesn’t always think about bivariate correlations within the regression paradigm. But they work just fine. Within brms, you would typically specify the conventional Gaussian likelihood (i.e., `family = gaussian`), use the `cbind()` syntax to set up a [multivariate model](https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html), and fit that model without predictors. For each variable specified in `cbind()`, you’ll estimate an intercept (i.e., mean, $\mu$) and sigma (i.e., $\sigma$, often called a residual variance). Since there are no predictors in the model, the residual variance is just the variance and the brms default for multivariate models is to allow the residual variances to covary. But since variances are parameterized in the standard deviation metric in brms, the residual variances and their covariance are *SD*s and their correlation, respectively. 
+
 Here’s what it looks like in practice.
 
 ```{r f0, cache = T, message = F, results = 'hide'}
@@ -164,7 +165,7 @@ f0 <-
       seed = 210191)
 ```
 
-In a typical Bayesian workflow, you’d examine the quality of the chains with trace plots. The easy way to do that in brms is with `plot()`. E.g., to get the trace plots for our first model, you’d code `plot(f0)`. Happily, the trace plots look fine for all models in this post. For the sake of space, I’ll leave their inspection as an exercises for interested readers.
+In a typical Bayesian workflow, you’d examine the quality of the chains with trace plots. The easy way to do that in brms is with `plot()`. E.g., to get the trace plots for our first model, you’d code `plot(f0)`. Happily, the trace plots look fine for all models in this post. For the sake of space, I’ll leave their inspection as exercises for interested readers.
 
 Our priors and such mirror those in Baez-Ortega's blog. Here are the results.
 
@@ -185,7 +186,7 @@ f1 <-
 print(f1)
 ```
 
-And the correlation estimate is -.6. As it turns out, `data = x.noisy` + `family = gaussian` in `brm()` failed us just like Pearson's correlation failed us. Time to leave failure behind.
+And the correlation estimate is `r posterior_summary(f1)["rescor__x__y", 1] %>% weights::rd(., digits = 2)`. As it turns out, `data = x.noisy` + `family = gaussian` in `brm()` failed us just like Pearson's correlation failed us. Time to leave failure behind.
 
 ### Now with Student's $t$-distribution.
 
@@ -226,7 +227,7 @@ f2 <-
 print(f2)
 ```
 
-Whoa, look at that correlation, `rescore(x,y)`! It’s right about what we’d hope for. Sure, it's not a perfect -.95, but that's way way way better than `r posterior_summary(f1)["rescor__x__y", 1] %>% round(2)`.
+Whoa, look at that correlation, `rescore(x,y)`! It’s right about what we’d hope for. Sure, it's not a perfect -.95, but that's way better than `r posterior_summary(f1)["rescor__x__y", 1] %>% weights::rd(., digits = 2)`.
 
 While we’re at it, we may as well see what happens when we fit a Student’s $t$ model when we have perfectly multivariate normal data. Here it is with the `x.clean` data.
 
@@ -284,7 +285,7 @@ posts %>%
 
 From out `tidybayes::median_qi()` code, the dots are the posterior medians, the thick inner lines the 50% intervals, and the thinner outer lines the 95% intervals. The posteriors for the `x.noisy` data are in red and those for the `x.clean` data are in blue. If the data are clean multivariate normal Gaussian or if they’re dirty but fit with robust Student’s $t$, everything is pretty much alright. But whoa, if you fit a correlation with a combination of `family = gaussian` and noisy outlier-laden data, man that's just a mess.
 
-Don't let a few overly-influential outliers make a mess of your analyses. Try the robust Student’s $t$. 
+Don't let a few overly-influential outliers make a mess of your analyses. Try the robust Student’s $t$.
 
 ```{r}
 sessionInfo()
