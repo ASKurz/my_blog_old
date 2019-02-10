@@ -11,16 +11,16 @@
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
-      <title>Bayesian robust correlations with brms (and why you should love Student’s $t$)</title>
+      <title>Bayesian robust correlations with brms (and hy you should love Student’s $t$)</title>
       <link>/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/</link>
       <pubDate>Sun, 10 Feb 2019 00:00:00 +0000</pubDate>
       
       <guid>/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/</guid>
-      <description>&lt;p&gt;In this post, we’ll show how Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution can produce better correlation estimates when you data have outliers. As is often the case, we’ll do so as Bayesians.&lt;/p&gt;
+      <description>&lt;p&gt;In this post, we’ll show how Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution can produce better correlation estimates when your data have outliers. As is often the case, we’ll do so as Bayesians.&lt;/p&gt;
 &lt;p&gt;This post is a direct consequence of Adrian Baez-Ortega’s great blog, “&lt;a href=&#34;https://baezortega.github.io/2018/05/28/robust-correlation/&#34;&gt;Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)&lt;/a&gt;”. Baez-Ortega worked out the approach and code for direct use with &lt;a href=&#34;http://mc-stan.org&#34;&gt;Stan&lt;/a&gt; computational environment. That solution is great because Stan is free, open source, and very flexible. However, Stan’s interface might be prohibitively technical for non-statistician users. Happily, the &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;brms&lt;/a&gt; package allows users to access the computational power of Stan through a simpler interface. In this post, we show how to extend Baez-Ortega’s method to brms. To pay respects where they’re due, the synthetic data, priors, and other model settings are largely the same as those Baez-Ortega used in his blog.&lt;/p&gt;
 &lt;div id=&#34;i-make-assumptions&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;I make assumptions&lt;/h2&gt;
-&lt;p&gt;For this project, I’m presuming you are vaguely familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is &lt;a href=&#34;https://www.r-bloggers.com/why-use-r-five-reasons/&#34;&gt;R&lt;/a&gt;, with a heavy use of the &lt;a href=&#34;http://style.tidyverse.org&#34;&gt;tidyverse&lt;/a&gt;–which you might learn a lot about &lt;a href=&#34;http://r4ds.had.co.nzhttp://r4ds.had.co.nz&#34;&gt;here, especially chapter 5&lt;/a&gt;–, and, of course, Bürkner’s &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;brms&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;For this post, I’m presuming you are vaguely familiar with linear regression, know about the basic differences between frequentist and Bayesian approaches to fitting models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is &lt;a href=&#34;https://www.r-bloggers.com/why-use-r-five-reasons/&#34;&gt;R&lt;/a&gt;, with a heavy use of the &lt;a href=&#34;http://style.tidyverse.org&#34;&gt;tidyverse&lt;/a&gt;–which you might learn a lot about &lt;a href=&#34;http://r4ds.had.co.nzhttp://r4ds.had.co.nz&#34;&gt;here, especially chapter 5&lt;/a&gt;–, and, of course, Bürkner’s &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;brms&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;If you’d like a warmup, consider checking out my related post, &lt;a href=&#34;https://solomonkurz.netlify.com/post/robust-linear-regression-with-the-robust-student-s-t-distribution/&#34;&gt;Robust Linear Regression with Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-Distribution&lt;/a&gt;.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;whats-the-deal&#34; class=&#34;section level2&#34;&gt;
@@ -2059,8 +2059,8 @@ m &amp;lt;- brm(response ~ (1|condition),
 &lt;pre&gt;&lt;code&gt;## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 6.8e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.68 seconds.
+## Chain 1: Gradient evaluation took 3.7e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.37 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -2077,15 +2077,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.605131 seconds (Warm-up)
-## Chain 1:                0.647288 seconds (Sampling)
-## Chain 1:                1.25242 seconds (Total)
+## Chain 1:  Elapsed Time: 0.513796 seconds (Warm-up)
+## Chain 1:                0.543372 seconds (Sampling)
+## Chain 1:                1.05717 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 1.6e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
+## Chain 2: Gradient evaluation took 1.4e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.14 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -2102,15 +2102,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.629717 seconds (Warm-up)
-## Chain 2:                0.776925 seconds (Sampling)
-## Chain 2:                1.40664 seconds (Total)
+## Chain 2:  Elapsed Time: 0.561202 seconds (Warm-up)
+## Chain 2:                0.582657 seconds (Sampling)
+## Chain 2:                1.14386 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 2e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.2 seconds.
+## Chain 3: Gradient evaluation took 1.3e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -2127,15 +2127,15 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.856714 seconds (Warm-up)
-## Chain 3:                0.655474 seconds (Sampling)
-## Chain 3:                1.51219 seconds (Total)
+## Chain 3:  Elapsed Time: 0.641564 seconds (Warm-up)
+## Chain 3:                0.508837 seconds (Sampling)
+## Chain 3:                1.1504 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
 ## Chain 4: 
-## Chain 4: Gradient evaluation took 1.3e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
+## Chain 4: Gradient evaluation took 2.4e-05 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.24 seconds.
 ## Chain 4: Adjust your expectations accordingly!
 ## Chain 4: 
 ## Chain 4: 
@@ -2152,9 +2152,9 @@ m &amp;lt;- brm(response ~ (1|condition),
 ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.568618 seconds (Warm-up)
-## Chain 4:                0.662885 seconds (Sampling)
-## Chain 4:                1.2315 seconds (Total)
+## Chain 4:  Elapsed Time: 0.572642 seconds (Warm-up)
+## Chain 4:                0.610079 seconds (Sampling)
+## Chain 4:                1.18272 seconds (Total)
 ## Chain 4:&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
   spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%

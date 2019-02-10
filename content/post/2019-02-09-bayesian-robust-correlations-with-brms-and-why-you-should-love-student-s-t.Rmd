@@ -1,5 +1,5 @@
 ---
-title: Bayesian robust correlations with brms (and why you should love Student’s $t$)
+title: Bayesian robust correlations with brms (and hy you should love Student’s $t$)
 author: A. Solomon Kurz
 date: '2019-02-10'
 slug: bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t
@@ -16,13 +16,13 @@ header:
   image: ''
 ---
 
-In this post, we'll show how Student's $t$-distribution can produce better correlation estimates when you data have outliers. As is often the case, we'll do so as Bayesians.
+In this post, we'll show how Student's $t$-distribution can produce better correlation estimates when your data have outliers. As is often the case, we'll do so as Bayesians.
 
 This post is a direct consequence of Adrian Baez-Ortega's great blog, "[Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)](https://baezortega.github.io/2018/05/28/robust-correlation/)". Baez-Ortega worked out the approach and code for direct use with [Stan](http://mc-stan.org) computational environment. That solution is great because Stan is free, open source, and very flexible. However, Stan's interface might be prohibitively technical for non-statistician users. Happily, the [brms](https://github.com/paul-buerkner/brms) package allows users to access the computational power of Stan through a simpler interface. In this post, we show how to extend Baez-Ortega's method to brms. To pay respects where they're due, the synthetic data, priors, and other model settings are largely the same as those Baez-Ortega used in his blog.
 
 ## I make assumptions
 
-For this project, I’m presuming you are vaguely familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is [R](https://www.r-bloggers.com/why-use-r-five-reasons/), with a heavy use of the [tidyverse](http://style.tidyverse.org)--which you might learn a lot about [here, especially chapter 5](http://r4ds.had.co.nzhttp://r4ds.had.co.nz)--, and, of course, Bürkner's [brms](https://github.com/paul-buerkner/brms).
+For this post, I’m presuming you are vaguely familiar with linear regression, know about the basic differences between frequentist and Bayesian approaches to fitting models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is [R](https://www.r-bloggers.com/why-use-r-five-reasons/), with a heavy use of the [tidyverse](http://style.tidyverse.org)--which you might learn a lot about [here, especially chapter 5](http://r4ds.had.co.nzhttp://r4ds.had.co.nz)--, and, of course, Bürkner's [brms](https://github.com/paul-buerkner/brms).
 
 If you’d like a warmup, consider checking out my related post, [Robust Linear Regression with Student's $t$-Distribution](https://solomonkurz.netlify.com/post/robust-linear-regression-with-the-robust-student-s-t-distribution/).
 
