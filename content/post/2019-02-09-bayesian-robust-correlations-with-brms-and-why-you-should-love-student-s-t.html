@@ -1,5 +1,5 @@
 ---
-title: Bayesian robust correlations with brms (and hy you should love Student’s $t$)
+title: Bayesian robust correlations with brms (and why you should love Student’s $t$)
 author: A. Solomon Kurz
 date: '2019-02-10'
 slug: bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t
@@ -324,7 +324,7 @@ posts %&gt;%
   theme(axis.text.y     = element_text(hjust = 0),
         legend.position = &quot;none&quot;)</code></pre>
 <p><img src="/post/2019-02-09-bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t_files/figure-html/unnamed-chunk-15-1.png" width="960" /></p>
-<p>From out <code>tidybayes::median_qi()</code> code, the dots are the posterior medians, the thick inner lines the 50% intervals, and the thinner outer lines the 95% intervals. The posteriors for the <code>x.noisy</code> data are in red and those for the <code>x.clean</code> data are in blue. If the data are clean multivariate normal Gaussian or if they’re dirty but fit with robust Student’s <span class="math inline">\(t\)</span>, everything is pretty much alright. But whoa, if you fit a correlation with a combination of <code>family = gaussian</code> and noisy outlier-laden data, man that’s just a mess.</p>
+<p>From our <code>tidybayes::median_qi()</code> code, the dots are the posterior medians, the thick inner lines the 50% intervals, and the thinner outer lines the 95% intervals. The posteriors for the <code>x.noisy</code> data are in red and those for the <code>x.clean</code> data are in blue. If the data are clean multivariate normal Gaussian or if they’re dirty but fit with robust Student’s <span class="math inline">\(t\)</span>, everything is pretty much alright. But whoa, if you fit a correlation with a combination of <code>family = gaussian</code> and noisy outlier-laden data, man that’s just a mess.</p>
 <p>Don’t let a few overly-influential outliers make a mess of your analyses. Try the robust Student’s <span class="math inline">\(t\)</span>.</p>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 3.5.1 (2018-07-02)

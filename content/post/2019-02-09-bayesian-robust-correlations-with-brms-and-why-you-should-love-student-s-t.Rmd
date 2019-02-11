@@ -1,5 +1,5 @@
 ---
-title: Bayesian robust correlations with brms (and hy you should love Student’s $t$)
+title: Bayesian robust correlations with brms (and why you should love Student’s $t$)
 author: A. Solomon Kurz
 date: '2019-02-10'
 slug: bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t
@@ -283,7 +283,7 @@ posts %>%
         legend.position = "none")
 ```
 
-From out `tidybayes::median_qi()` code, the dots are the posterior medians, the thick inner lines the 50% intervals, and the thinner outer lines the 95% intervals. The posteriors for the `x.noisy` data are in red and those for the `x.clean` data are in blue. If the data are clean multivariate normal Gaussian or if they’re dirty but fit with robust Student’s $t$, everything is pretty much alright. But whoa, if you fit a correlation with a combination of `family = gaussian` and noisy outlier-laden data, man that's just a mess.
+From our `tidybayes::median_qi()` code, the dots are the posterior medians, the thick inner lines the 50% intervals, and the thinner outer lines the 95% intervals. The posteriors for the `x.noisy` data are in red and those for the `x.clean` data are in blue. If the data are clean multivariate normal Gaussian or if they’re dirty but fit with robust Student’s $t$, everything is pretty much alright. But whoa, if you fit a correlation with a combination of `family = gaussian` and noisy outlier-laden data, man that's just a mess.
 
 Don't let a few overly-influential outliers make a mess of your analyses. Try the robust Student’s $t$.
 
