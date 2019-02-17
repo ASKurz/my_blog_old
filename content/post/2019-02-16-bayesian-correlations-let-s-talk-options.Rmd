@@ -77,7 +77,9 @@ Do note the Pearson's correlation coefficients in the upper triangle.
 
 In order to exploit all the methods we'll cover in this post, we need to standardize our data. Here we do so by hand using the typical formula 
 
-$$z_{x_i} = \frac{x_i - \overline x}{\sigma_x}$$
+$$z_{x_i} = \frac{x_i - \overline x}{s_x}$$
+
+where $\overline x$ is the observed mean and $s_x$ is the observed standard deviation.
 
 ```{r}
 d <-
@@ -239,7 +241,7 @@ But anyway, you get the idea. If you want to estimate a correlation in brms usin
 If you don't recall the steps to fit correlations in brms with the multivariate syntax, here they are:
 
 * List the variables you'd like correlations for within `cbind()`.
-* Place the `cbind()` function within the left side of the model formula
+* Place the `cbind()` function within the left side of the model formula.
 * On the right side of the model formula, indicate you only want intercepts (i.e., `~ 1`).
 
 ```{r f7, cache = T, message = F, results = 'hide'}
@@ -262,7 +264,7 @@ Behold the summary.
 print(f7)
 ```
 
-Look at the bottom of the output. With a multivariate model, the correlations gets expressed in the `rescor(xs,ys)` rows. And since there are no predictors in the model, the residual correlations are just correlations. But notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.
+Look at the bottom of the output. With a multivariate model, the correlations get expressed in the 'Residual Correlations:' section. And since there are no predictors in the model, the residual correlations are just correlations. But notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.
 
 ```{r f8, cache = T, message = F, results = 'hide'}
 f8 <- 

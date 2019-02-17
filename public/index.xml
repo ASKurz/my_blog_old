@@ -64,7 +64,8 @@ d %&amp;gt;%
 &lt;p&gt;&lt;img src=&#34;/post/2019-02-16-bayesian-correlations-let-s-talk-options_files/figure-html/unnamed-chunk-3-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;Do note the Pearson’s correlation coefficients in the upper triangle.&lt;/p&gt;
 &lt;p&gt;In order to exploit all the methods we’ll cover in this post, we need to standardize our data. Here we do so by hand using the typical formula&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[z_{x_i} = \frac{x_i - \overline x}{\sigma_x}\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[z_{x_i} = \frac{x_i - \overline x}{s_x}\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(\overline x\)&lt;/span&gt; is the observed mean and &lt;span class=&#34;math inline&#34;&gt;\(s_x\)&lt;/span&gt; is the observed standard deviation.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d &amp;lt;-
   d %&amp;gt;% 
   mutate(x_s = (x - mean(x)) / sd(x),
@@ -239,7 +240,7 @@ fitted(f4,
 &lt;p&gt;If you don’t recall the steps to fit correlations in brms with the multivariate syntax, here they are:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;List the variables you’d like correlations for within &lt;code&gt;cbind()&lt;/code&gt;.&lt;/li&gt;
-&lt;li&gt;Place the &lt;code&gt;cbind()&lt;/code&gt; function within the left side of the model formula&lt;/li&gt;
+&lt;li&gt;Place the &lt;code&gt;cbind()&lt;/code&gt; function within the left side of the model formula.&lt;/li&gt;
 &lt;li&gt;On the right side of the model formula, indicate you only want intercepts (i.e., &lt;code&gt;~ 1&lt;/code&gt;).&lt;/li&gt;
 &lt;/ul&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;f7 &amp;lt;- 
@@ -287,7 +288,7 @@ fitted(f4,
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Look at the bottom of the output. With a multivariate model, the correlations gets expressed in the &lt;code&gt;rescor(xs,ys)&lt;/code&gt; rows. And since there are no predictors in the model, the residual correlations are just correlations. But notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.&lt;/p&gt;
+&lt;p&gt;Look at the bottom of the output. With a multivariate model, the correlations get expressed in the ‘Residual Correlations:’ section. And since there are no predictors in the model, the residual correlations are just correlations. But notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;f8 &amp;lt;- 
   brm(data = d, 
       family = gaussian,
@@ -2618,8 +2619,8 @@ ABC =
 &lt;pre&gt;&lt;code&gt;## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 3e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.3 seconds.
+## Chain 1: Gradient evaluation took 3.6e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.36 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -2636,9 +2637,9 @@ ABC =
 ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.499005 seconds (Warm-up)
-## Chain 1:                0.509408 seconds (Sampling)
-## Chain 1:                1.00841 seconds (Total)
+## Chain 1:  Elapsed Time: 0.511065 seconds (Warm-up)
+## Chain 1:                0.545236 seconds (Sampling)
+## Chain 1:                1.0563 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
@@ -2661,15 +2662,15 @@ ABC =
 ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.556281 seconds (Warm-up)
-## Chain 2:                0.597578 seconds (Sampling)
-## Chain 2:                1.15386 seconds (Total)
+## Chain 2:  Elapsed Time: 0.55328 seconds (Warm-up)
+## Chain 2:                0.620617 seconds (Sampling)
+## Chain 2:                1.1739 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 1.1e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.11 seconds.
+## Chain 3: Gradient evaluation took 1.3e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -2686,15 +2687,15 @@ ABC =
 ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.652378 seconds (Warm-up)
-## Chain 3:                0.507569 seconds (Sampling)
-## Chain 3:                1.15995 seconds (Total)
+## Chain 3:  Elapsed Time: 0.647751 seconds (Warm-up)
+## Chain 3:                0.516837 seconds (Sampling)
+## Chain 3:                1.16459 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
 ## Chain 4: 
-## Chain 4: Gradient evaluation took 1.3e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
+## Chain 4: Gradient evaluation took 1.4e-05 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.14 seconds.
 ## Chain 4: Adjust your expectations accordingly!
 ## Chain 4: 
 ## Chain 4: 
@@ -2711,9 +2712,9 @@ ABC =
 ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.51263 seconds (Warm-up)
-## Chain 4:                0.583211 seconds (Sampling)
-## Chain 4:                1.09584 seconds (Total)
+## Chain 4:  Elapsed Time: 0.530901 seconds (Warm-up)
+## Chain 4:                0.609262 seconds (Sampling)
+## Chain 4:                1.14016 seconds (Total)
 ## Chain 4:&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
   spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%

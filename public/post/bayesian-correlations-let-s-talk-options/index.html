@@ -369,7 +369,8 @@ d %&gt;%
 <p><img src="/post/2019-02-16-bayesian-correlations-let-s-talk-options_files/figure-html/unnamed-chunk-3-1.png" width="384" /></p>
 <p>Do note the Pearson’s correlation coefficients in the upper triangle.</p>
 <p>In order to exploit all the methods we’ll cover in this post, we need to standardize our data. Here we do so by hand using the typical formula</p>
-<p><span class="math display">\[z_{x_i} = \frac{x_i - \overline x}{\sigma_x}\]</span></p>
+<p><span class="math display">\[z_{x_i} = \frac{x_i - \overline x}{s_x}\]</span></p>
+<p>where <span class="math inline">\(\overline x\)</span> is the observed mean and <span class="math inline">\(s_x\)</span> is the observed standard deviation.</p>
 <pre class="r"><code>d &lt;-
   d %&gt;% 
   mutate(x_s = (x - mean(x)) / sd(x),
@@ -544,7 +545,7 @@ fitted(f4,
 <p>If you don’t recall the steps to fit correlations in brms with the multivariate syntax, here they are:</p>
 <ul>
 <li>List the variables you’d like correlations for within <code>cbind()</code>.</li>
-<li>Place the <code>cbind()</code> function within the left side of the model formula</li>
+<li>Place the <code>cbind()</code> function within the left side of the model formula.</li>
 <li>On the right side of the model formula, indicate you only want intercepts (i.e., <code>~ 1</code>).</li>
 </ul>
 <pre class="r"><code>f7 &lt;- 
@@ -592,7 +593,7 @@ fitted(f4,
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
-<p>Look at the bottom of the output. With a multivariate model, the correlations gets expressed in the <code>rescor(xs,ys)</code> rows. And since there are no predictors in the model, the residual correlations are just correlations. But notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.</p>
+<p>Look at the bottom of the output. With a multivariate model, the correlations get expressed in the ‘Residual Correlations:’ section. And since there are no predictors in the model, the residual correlations are just correlations. But notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.</p>
 <pre class="r"><code>f8 &lt;- 
   brm(data = d, 
       family = gaussian,
