@@ -236,7 +236,7 @@ fixef(f6) %>% round(3)
 
 But anyway, you get the idea. If you want to estimate a correlation in brms using simple univariate syntax, just (a) standardize the data and (b) fit a univariate model with or without an intercept. The slop will be in a correlation-like metric.
 
-### Let’s go multivariate.
+## Let’s go multivariate.
 
 If you don't recall the steps to fit correlations in brms with the multivariate syntax, here they are:
 
@@ -264,7 +264,7 @@ Behold the summary.
 print(f7)
 ```
 
-Look at the bottom of the output. With a multivariate model, the correlations get expressed in the 'Residual Correlations:' section. And since there are no predictors in the model, the residual correlations are just correlations. But notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.
+Look at the 'Residual Correlations:' section at the bottom of the output. Since there are no predictors in the model, the residual correlations are just correlations. Now notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.
 
 ```{r f8, cache = T, message = F, results = 'hide'}
 f8 <- 
@@ -312,9 +312,9 @@ Other than the `sigma ~ 0` syntax, the main thing to notice is we’ve wrapped t
 print(f9)
 ```
 
-The only thing left in the model is the correlations.
+The correlations are the only things left in the model.
 
-And just to be clear, the multivariate approach does not require standardized data. To demonstrate, here refit the last model, but with the unstandardized variables. Since we're no longer in the standardized metric, we'll be less certain with our priors.
+Just to be clear, the multivariate approach does not require standardized data. To demonstrate, here refit `f7`, but with the unstandardized variables. And, since we're no longer in the standardized metric, we'll be less certain with our priors.
 
 ```{r f10, cache = T, message = F, results = 'hide'}
 f10 <- 

@@ -235,8 +235,9 @@ fitted(f4,
 <pre><code>##     Estimate Est.Error  Q2.5 Q97.5
 ## y_s    0.316     0.137 0.052 0.583</code></pre>
 <p>But anyway, you get the idea. If you want to estimate a correlation in brms using simple univariate syntax, just (a) standardize the data and (b) fit a univariate model with or without an intercept. The slop will be in a correlation-like metric.</p>
-<div id="lets-go-multivariate." class="section level3">
-<h3>Let’s go multivariate.</h3>
+</div>
+<div id="lets-go-multivariate." class="section level2">
+<h2>Let’s go multivariate.</h2>
 <p>If you don’t recall the steps to fit correlations in brms with the multivariate syntax, here they are:</p>
 <ul>
 <li>List the variables you’d like correlations for within <code>cbind()</code>.</li>
@@ -288,7 +289,7 @@ fitted(f4,
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
-<p>Look at the bottom of the output. With a multivariate model, the correlations get expressed in the ‘Residual Correlations:’ section. And since there are no predictors in the model, the residual correlations are just correlations. But notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.</p>
+<p>Look at the ‘Residual Correlations:’ section at the bottom of the output. Since there are no predictors in the model, the residual correlations are just correlations. Now notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.</p>
 <pre class="r"><code>f8 &lt;- 
   brm(data = d, 
       family = gaussian,
@@ -365,8 +366,8 @@ fitted(f4,
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
-<p>The only thing left in the model is the correlations.</p>
-<p>And just to be clear, the multivariate approach does not require standardized data. To demonstrate, here refit the last model, but with the unstandardized variables. Since we’re no longer in the standardized metric, we’ll be less certain with our priors.</p>
+<p>The correlations are the only things left in the model.</p>
+<p>Just to be clear, the multivariate approach does not require standardized data. To demonstrate, here refit <code>f7</code>, but with the unstandardized variables. And, since we’re no longer in the standardized metric, we’ll be less certain with our priors.</p>
 <pre class="r"><code>f10 &lt;- 
   brm(data = d, 
       family = gaussian,
@@ -412,7 +413,6 @@ fitted(f4,
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
-</div>
 </div>
 <div id="its-time-to-compare-methods." class="section level2">
 <h2>It’s time to compare methods.</h2>
