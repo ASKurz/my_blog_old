@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Sun, 10 Feb 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 16 Feb 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/tutorial/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Bayesian Correlations: Let’s Talk Options.</title>
+      <link>/post/bayesian-correlations-let-s-talk-options/</link>
+      <pubDate>Sat, 16 Feb 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/bayesian-correlations-let-s-talk-options/</guid>
+      <description>tl;dr There’s more than one way to fit a Bayesian correlation in brms.
+ Here’s the deal. In the past post, we considered how we might estimate correlations when our data contain influential outlier values. Our big insight was that if we use variants of the Student’s \(t\)-distribution as our likelihood rather than the conventional normal distribution, our correlation estimates were less influenced by those outliers. And we mainly did that as Bayesians using the brms package.</description>
+    </item>
     
     <item>
       <title>Bayesian robust correlations with brms (and why you should love Student’s $t$)</title>

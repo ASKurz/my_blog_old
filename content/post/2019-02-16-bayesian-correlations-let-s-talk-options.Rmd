@@ -30,18 +30,20 @@ Shortly after uploading the post, it occurred to me we had more options and it m
 
 For this post, I’m presuming you are vaguely familiar with linear regression--both univariate and multivariate--, have a little background with Bayesian statistics, and have used Paul Bürkner's brms packge. As you might imagine, all code in is [R](https://www.r-bloggers.com/why-use-r-five-reasons/), with a heavy use of the [tidyverse](http://style.tidyverse.org).
 
-## d
+## We need data.
 
-First, we'll load two of our main packages.
+First, we'll load our main packages.
 
 ```{r, warning = F, message = F}
-library(tidyverse)
 library(mvtnorm)
 library(brms)
+library(tidyverse)
 ```
 
+Here we'll define our data.
+
 ```{r}
-m <- c(10, 15, 20)   # the means
+m <- c(10, 15, 20)  # the means
 s <- c(10, 20, 30)  # the sigmas
 r <- c(.9, .6, .3)  # the correlations
 
@@ -182,10 +184,12 @@ f4 <-
 
 f5 <-
   update(f4,
+         newdata = d,
          formula = z_s ~ 0 + x_s)
 
 f6 <-
   update(f4,
+         newdata = d,
          formula = z_s ~ 0 + y_s)
 ```
 
