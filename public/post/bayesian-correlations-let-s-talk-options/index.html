@@ -16,7 +16,7 @@
     
   
   <meta name="description" content="tl;dr There’s more than one way to fit a Bayesian correlation in brms.
- Here’s the deal. In the past post, we considered how we might estimate correlations when our data contain influential outlier values. Our big insight was that if we use variants of the Student’s \(t\)-distribution as our likelihood rather than the conventional normal distribution, our correlation estimates were less influenced by those outliers. And we mainly did that as Bayesians using the brms package.">
+ Here’s the deal. In the last post, we considered how we might estimate correlations when our data contain influential outlier values. Our big insight was that if we use variants of Student’s \(t\)-distribution as the likelihood rather than the conventional normal distribution, our correlation estimates were less influenced by those outliers. And we mainly did that as Bayesians using the brms package.">
 
   
   <link rel="alternate" hreflang="en-us" href="/post/bayesian-correlations-let-s-talk-options/">
@@ -96,7 +96,7 @@
   <meta property="og:url" content="/post/bayesian-correlations-let-s-talk-options/">
   <meta property="og:title" content="Bayesian Correlations: Let’s Talk Options. | A. Solomon Kurz">
   <meta property="og:description" content="tl;dr There’s more than one way to fit a Bayesian correlation in brms.
- Here’s the deal. In the past post, we considered how we might estimate correlations when our data contain influential outlier values. Our big insight was that if we use variants of the Student’s \(t\)-distribution as our likelihood rather than the conventional normal distribution, our correlation estimates were less influenced by those outliers. And we mainly did that as Bayesians using the brms package.">
+ Here’s the deal. In the last post, we considered how we might estimate correlations when our data contain influential outlier values. Our big insight was that if we use variants of Student’s \(t\)-distribution as the likelihood rather than the conventional normal distribution, our correlation estimates were less influenced by those outliers. And we mainly did that as Bayesians using the brms package.">
   
   
     
@@ -327,7 +327,7 @@
 </div>
 <div id="heres-the-deal." class="section level2">
 <h2>Here’s the deal.</h2>
-<p>In the past post, we considered how we might estimate correlations when our data contain influential outlier values. Our big insight was that if we use variants of the Student’s <span class="math inline">\(t\)</span>-distribution as our likelihood rather than the conventional normal distribution, our correlation estimates were less influenced by those outliers. And we mainly did that as Bayesians using the <a href="https://github.com/paul-buerkner/brms">brms package</a>. Click <a href="https://solomonkurz.netlify.com/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/">here</a> for a refresher.</p>
+<p>In the last post, we considered how we might estimate correlations when our data contain influential outlier values. Our big insight was that if we use variants of Student’s <span class="math inline">\(t\)</span>-distribution as the likelihood rather than the conventional normal distribution, our correlation estimates were less influenced by those outliers. And we mainly did that as Bayesians using the <a href="https://github.com/paul-buerkner/brms">brms package</a>. Click <a href="https://solomonkurz.netlify.com/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/">here</a> for a refresher.</p>
 <p>Since the brms package is designed to fit regression models, <a href="https://twitter.com/tjmahr/status/1094808459239981056">it can be surprising</a> when you discover it’s handy for correlations, too. In short, you can fit them using a few tricks based on the <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html">multivariate syntax</a>.</p>
 <p>Shortly after uploading the post, it occurred to me we had more options and it might be useful to walk through them a bit.</p>
 </div>
@@ -341,7 +341,7 @@
 <pre class="r"><code>library(mvtnorm)
 library(brms)
 library(tidyverse)</code></pre>
-<p>Here we’ll define our data.</p>
+<p>We’ll use the <a href="https://cran.r-project.org/web/packages/mvtnorm/index.html">mvtnorm package</a> to simulate three positively correlated variables.</p>
 <pre class="r"><code>m &lt;- c(10, 15, 20)  # the means
 s &lt;- c(10, 20, 30)  # the sigmas
 r &lt;- c(.9, .6, .3)  # the correlations
@@ -359,8 +359,6 @@ d &lt;-
   rmvnorm(n = 50, mean = m, sigma = v) %&gt;% 
   as_tibble() %&gt;% 
   set_names(&quot;x&quot;, &quot;y&quot;, &quot;z&quot;)</code></pre>
-<pre><code>## Warning: `as_tibble.matrix()` requires a matrix with column names or a `.name_repair` argument. Using compatibility `.name_repair`.
-## This warning is displayed once per session.</code></pre>
 <p>Our data look like so.</p>
 <pre class="r"><code>library(GGally)
 theme_set(theme_gray() +
@@ -371,7 +369,7 @@ d %&gt;%
 <p><img src="/post/2019-02-16-bayesian-correlations-let-s-talk-options_files/figure-html/unnamed-chunk-3-1.png" width="384" /></p>
 <p>Do note the Pearson’s correlation coefficients in the upper triangle.</p>
 <p>In order to exploit all the methods we’ll cover in this post, we need to standardize our data. Here we do so by hand using the typical formula</p>
-<p><span class="math display">\[z_x_i = \frac{P(x_i = \overline x)}{\sigma_x}\]</span></p>
+<p><span class="math display">\[z_{x_i} = \frac{P(x_i = \overline x)}{\sigma_x}\]</span></p>
 <pre class="r"><code>d &lt;-
   d %&gt;% 
   mutate(x_s = (x - mean(x)) / sd(x),
@@ -393,7 +391,7 @@ head(d)</code></pre>
 </div>
 <div id="univariate" class="section level2">
 <h2>Univariate</h2>
-<p>If you fit a simple univariate model with standardized data and a single predictor, the coefficient for the slope will be in a correlation metric. Since the data are all standardized, it’s easy to use <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations">regularizing priors</a>.</p>
+<p>If you fit a simple univariate model with standardized data and a single predictor, the coefficient for the slope will be in a correlation-like metric. Happily, since the data are all standardized, it’s easy to use <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations">regularizing priors</a>.</p>
 <pre class="r"><code>f1 &lt;- 
   brm(data = d, 
       family = gaussian,
@@ -424,7 +422,7 @@ head(d)</code></pre>
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
-<p>Notice how our <code>x_s</code> slope is the same as the Pearson’s correlation.</p>
+<p>The ‘Population-Level Effects’ has the summary information for our intercept and slope. Notice how our <code>x_s</code> slope is the same as the Pearson’s correlation.</p>
 <pre class="r"><code>cor(d$x, d$y)</code></pre>
 <pre><code>## [1] 0.9119708</code></pre>
 <p>Since this approach only yields one correlation at a time, we have to fit two more models to get the other two correlations. To do so with haste, we can use the <code>update()</code> syntax.</p>
@@ -466,7 +464,7 @@ fitted(f1,
   coord_cartesian(xlim = range(d$x_s),
                   ylim = range(d$y_s))</code></pre>
 <p><img src="/post/2019-02-16-bayesian-correlations-let-s-talk-options_files/figure-html/unnamed-chunk-8-1.png" width="336" /></p>
-<p>Notice how the data and their respective fitted lines pass through [0, 0]? This is a consequence of modeling standardized data. We should always expect the intercept of a model like this to be 0. Here are the intercept summaries for all three models.</p>
+<p>The blue line is the posterior mean and the surrounding gray ribbon depicts the 95% posterior interval. Notice how the data and their respective fitted lines pass through [0, 0]? This is a consequence of modeling standardized data. We should always expect the intercept of a model like this to be 0. Here are the intercept summaries for all three models.</p>
 <pre class="r"><code>fixef(f1)[&quot;Intercept&quot;, ] %&gt;% round(3)</code></pre>
 <pre><code>##  Estimate Est.Error      Q2.5     Q97.5 
 ##     0.001     0.061    -0.120     0.119</code></pre>
@@ -540,13 +538,14 @@ fitted(f4,
 <pre class="r"><code>fixef(f6) %&gt;% round(3)</code></pre>
 <pre><code>##     Estimate Est.Error  Q2.5 Q97.5
 ## y_s    0.316     0.137 0.052 0.583</code></pre>
-<p>But anyway, you get the idea. If you want to estimate a correlation in brms using simple univariate syntax, just (a) standardize the data and (b) fit a univariate model with or without an intercept. The slop will be in a correlation metric.</p>
+<p>But anyway, you get the idea. If you want to estimate a correlation in brms using simple univariate syntax, just (a) standardize the data and (b) fit a univariate model with or without an intercept. The slop will be in a correlation-like metric.</p>
 <div id="lets-go-multivariate." class="section level3">
 <h3>Let’s go multivariate.</h3>
-<p>If you don’t recall the steps to fit correlations in brms with the multivariate syntax, here are the steps:</p>
+<p>If you don’t recall the steps to fit correlations in brms with the multivariate syntax, here they are:</p>
 <ul>
 <li>List the variables you’d like correlations for within <code>cbind()</code>.</li>
-<li>Place the <code>cbind()</code> function within the criterion side of the model formula and on the right side of the formula, indicate you only want intercepts (i.e., <code>~ 1</code>).</li>
+<li>Place the <code>cbind()</code> function within the left side of the model formula</li>
+<li>On the right side of the model formula, indicate you only want intercepts (i.e., <code>~ 1</code>).</li>
 </ul>
 <pre class="r"><code>f7 &lt;- 
   brm(data = d, 
@@ -636,6 +635,7 @@ fitted(f4,
 <p>With brms, we can fix those <span class="math inline">\(\sigma\)</span>s to 1 with a trick of the nonlinear <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_distreg.html">distributional modeling syntax</a>. Recall when you model <span class="math inline">\(\sigma\)</span>, the brms default is to actually model it’s log. As is turns out, the log of 1 is zero.</p>
 <pre class="r"><code>log(1)</code></pre>
 <pre><code>## [1] 0</code></pre>
+<p>Here’s how to make use of that within <code>brm()</code>.</p>
 <pre class="r"><code>f9 &lt;-
   brm(data = d, 
       family = gaussian,
@@ -669,7 +669,8 @@ fitted(f4,
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
-<p>And just to be clear, the multivariate approach does not require standardized data. To demonstrate, here re-fit the last model, but with the unstandardized variables. Since we’re no longer in the standardized metric, we’ll be less certain with our priors.</p>
+<p>The only thing left in the model is the correlations.</p>
+<p>And just to be clear, the multivariate approach does not require standardized data. To demonstrate, here refit the last model, but with the unstandardized variables. Since we’re no longer in the standardized metric, we’ll be less certain with our priors.</p>
 <pre class="r"><code>f10 &lt;- 
   brm(data = d, 
       family = gaussian,
@@ -720,7 +721,7 @@ fitted(f4,
 <div id="its-time-to-compare-methods." class="section level2">
 <h2>It’s time to compare methods.</h2>
 <p>To recap, we’ve compared several ways to fit correlations in brms. Some of the methods were with univariate syntax, others were with the multivariate syntax. Some of the models had all free parameters, others included fixed intercepts and sigmas. Whereas all the univariate models required standardized data, the multivariate approach can work with unstandardized data, too.</p>
-<p>Not it might be of help to compare the results from each of the methods to get a sense of which ones you might prefer. Before we do so, we’ll define a couple custom functions to streamline the data wrangling.</p>
+<p>Now it might be of help to compare the results from each of the methods to get a sense of which ones you might prefer. Before we do so, we’ll define a couple custom functions to streamline the data wrangling.</p>
 <pre class="r"><code>get_rho &lt;- function(fit) {
   posterior_samples(fit) %&gt;% 
     select(starts_with(&quot;b_&quot;), -contains(&quot;Intercept&quot;)) %&gt;% 
@@ -782,8 +783,9 @@ tibble(name = str_c(&quot;f&quot;, 1:6)) %&gt;%
   facet_wrap(~label, ncol = 3)</code></pre>
 <p><img src="/post/2019-02-16-bayesian-correlations-let-s-talk-options_files/figure-html/unnamed-chunk-19-1.png" width="768" /></p>
 <p>To my eye, a few patterns emerged. First, the point estimates were about the same across methods. Second, fixing the intercepts didn’t seem to effect things, much. But, third, it appears that fixing the sigmas in the multivariate models did narrow the posteriors a bit.</p>
-<p>Fourth, and perhaps most importantly, notice how the posteriors for the multivariate models were more asymmetric when they approached 1. Hopefully this makes intuitive sense. Correlations are bound between -1 and 1. However, standardized regression coefficients are not so bound. Accordingly, notice how the posteriors from the univariate models stayed symmetric when approaching 1 and their right tails even crossed over 1. So while the univariate approach did a reasonable job capturing the correlation point estimates, their posteriors weren’t quite in a correlation metric. Alternately, the univariate approach did make it convenient to express the correlations with regression lines in scatter plots.</p>
-<p>Both univariate and multivariate approaches appear to have their strengths and weaknesses. Happy modeling.</p>
+<p>Fourth, and perhaps most importantly, notice how the posteriors for the multivariate models were more asymmetric when they approached 1. Hopefully this makes intuitive sense. Correlations are bound between -1 and 1. However, standardized regression coefficients are not so bound. Accordingly, notice how the posteriors from the univariate models stayed symmetric when approaching 1 and some of their right tails even crossed over 1. So while the univariate approach did a reasonable job capturing the correlation point estimates, their posteriors weren’t quite in a correlation metric. Alternately, the univariate approach did make it convenient to express the correlations with fitted regression lines in scatter plots.</p>
+<p>Both univariate and multivariate approaches appear to have their strengths and weaknesses. Choose which methods seems most appropriate for your correlation needs.</p>
+<p>Happy modeling.</p>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 3.5.1 (2018-07-02)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
