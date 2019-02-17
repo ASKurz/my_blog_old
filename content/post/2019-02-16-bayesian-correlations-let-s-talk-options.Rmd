@@ -77,7 +77,7 @@ Do note the Pearson's correlation coefficients in the upper triangle.
 
 In order to exploit all the methods we'll cover in this post, we need to standardize our data. Here we do so by hand using the typical formula 
 
-$$z_{x_i} = \frac{P(x_i = \overline x)}{\sigma_x}$$
+$$z_{x_i} = \frac{x_i - \overline x}{\sigma_x}$$
 
 ```{r}
 d <-
