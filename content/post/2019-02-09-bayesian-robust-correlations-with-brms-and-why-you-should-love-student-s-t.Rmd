@@ -290,3 +290,334 @@ Don't let a few overly-influential outliers make a mess of your analyses. Try th
 ```{r}
 sessionInfo()
 ```
+
+## Afterward: Why not explore more correlation options?
+
+Late last night, it occurred to me we had other options to get correlations in brms. In order to explore them, we need to standardize our data. Here are two ways to standardize your data, one with the `scale()` function and the other by manually using the formula 
+
+$$z_x_i = \frac{P(x_i = \overline x)}{\sigma_x}$$
+
+```{r}
+x.clean <-
+  x.clean %>% 
+  mutate(x_s = scale(x) %>% as.vector(),
+         y_s = scale(y) %>% as.vector())
+
+x.noisy <-
+  x.noisy %>% 
+  mutate(x_s = (x - mean(x)) / sd(x),
+         y_s = (y - mean(y)) / sd(y))
+```
+
+There are at least two broad ways to get correlations out of standardized data in brms. One way uses the typical univariate syntax. The other way is an extension of the multivariate `cbind()` approach we used, above. We'll cover both.
+
+### Start with univariate models.
+
+If you fit a simple univariate model with a single predictor, the coefficient for the slope will be in a correlation metric. Here we do so with our `x.clean` data and the conventional Gaussian likelihood, as well as with the `x.noisy` data and a small-$\nu$ Student-$t$ likelihood.
+
+Since the data are all standardized, it’s easier to use [regularizing priors](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations). 
+
+```{r f4, cache = T, message = F, results = 'hide'}
+f4 <- 
+  brm(data = x.clean, 
+      family = gaussian,
+      y_s ~ 1 + x_s,
+      prior = c(prior(normal(0, 1), class = Intercept),
+                prior(normal(0, 1), class = b),
+                prior(normal(0, 1), class = sigma)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+
+f5 <- 
+  brm(data = x.noisy, 
+      family = student,
+      y_s ~ 1 + x_s,
+      prior = c(prior(gamma(2, .1), class = nu),
+                prior(normal(0, 1), class = Intercept),
+                prior(normal(0, 1), class = b),
+                prior(normal(0, 1), class = sigma)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+```
+
+Here are the results from the `x.clean` data and the Gaussian likelihood.
+
+```{r}
+print(f4)
+```
+
+Notice how our `x_s` slope is the same as the correlation. In a completely standardized simple univariate model, the simple slope is the same as the bivariate correlation. It worked the same way for our Student-$t$ model.
+
+```{r}
+print(f5)
+```
+
+There's another thing I'd like to point out. Plotting the model results will help make the point.
+
+```{r, fig.width = 6.5, fig.height = 3.5, warning = F, message = F}
+# make a custom function to get the `fitted()` draws
+get_fitted <- function(fit) {
+  nd <- tibble(x_s = seq(from = -2.5, to = 2.5, length.out = 40))
+  
+  fitted(fit,
+         newdata = nd) %>% 
+    as_tibble() %>% 
+    bind_cols(nd %>% rename(x_s_nd = x_s))
+}
+
+# wrangle
+tibble(name = str_c("f", 4:5)) %>% 
+  mutate(fit = map(name, get)) %>% 
+  mutate(fitted = map(fit, get_fitted)) %>% 
+  unnest(fitted) %>% 
+  bind_cols(bind_rows(x.clean, x.noisy)) %>% 
+  mutate(strip = ifelse(name == "f4", "x.clean data with `family = gaussian`", "x.noisy data with `family = student`")) %>% 
+  
+  # plot
+  ggplot(aes(color = outlier, fill = outlier)) +
+  geom_point(aes(x = x_s, y = y_s)) +
+  geom_smooth(aes(x = x_s_nd, y = Estimate, ymin = Q2.5, ymax = Q97.5),
+              stat = "identity",
+              alpha = 1/4, size = 1/2) +
+  scale_color_fivethirtyeight() +
+  scale_fill_fivethirtyeight() +
+  coord_cartesian(xlim = -2:2,
+                  ylim = -2:2) +
+  theme_fivethirtyeight() +
+  theme(legend.position = "none") +
+  facet_wrap(~strip, ncol = 2)
+```
+
+Notice how with both models, the data and their respective fitted lines pass through [0, 0]? This is a consequence of modeling standardized data. We should always expect the intercept of a model like this to be 0. And if you look back up at the model summaries we returned by `print()`, you'll see this story told in the `Intercept` rows. So instead of estimating the intercept, why not just bake that into the models?
+
+```{r f6_f7, cache = T, message = F, results = 'hide'}
+f6 <- 
+  brm(data = x.clean, 
+      family = gaussian,
+      y_s ~ 0 + x_s,
+      prior = c(prior(normal(0, 1), class = b),
+                prior(normal(0, 1), class = sigma)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+
+f7 <- 
+  brm(data = x.noisy, 
+      family = student,
+      y_s ~ 0 + x_s,
+      prior = c(prior(gamma(2, .1), class = nu),
+                prior(normal(0, 1), class = b),
+                prior(normal(0, 1), class = sigma)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+```
+
+Look at the summaries.
+
+```{r}
+print(f6)
+print(f7)
+```
+
+Even though it may have seemed like we substantially changed the models by fixing the intercepts to 0, the summaries are essentially the same as when we estimated the intercepts. Here we’ll confirm the summaries with plots, like above.
+
+```{r, fig.width = 6.5, fig.height = 3.5, warning = F, message = F}
+# wrangle
+tibble(name = str_c("f", 6:7)) %>% 
+  mutate(fit = map(name, get)) %>% 
+  mutate(fitted = map(fit, get_fitted)) %>% 
+  unnest(fitted) %>% 
+  bind_cols(bind_rows(x.clean, x.noisy)) %>% 
+  mutate(strip = ifelse(name == "f6", "x.clean data with `family = gaussian`", "x.noisy data with `family = student`")) %>% 
+  
+  # plot
+  ggplot(aes(color = outlier, fill = outlier)) +
+  geom_point(aes(x = x_s, y = y_s)) +
+  geom_smooth(aes(x = x_s_nd, y = Estimate, ymin = Q2.5, ymax = Q97.5),
+              stat = "identity",
+              alpha = 1/4, size = 1/2) +
+  scale_color_fivethirtyeight() +
+  scale_fill_fivethirtyeight() +
+  coord_cartesian(xlim = -2:2,
+                  ylim = -2:2) +
+  theme_fivethirtyeight() +
+  theme(legend.position = "none") +
+  facet_wrap(~strip, ncol = 2)
+```
+
+It’s pretty subtle, but if anything we increased the precision of our estimates by fixing the intercepts at 0.
+
+### Let’s go multivariate, again.
+
+First, we’ll rehearse what we did, above, with models `f2`. Model `f2`, recall, was the intercepts-only multivariate model with the `x.clean` data and the conventional Gaussian likelihood. This time we’ll apply the model to the standardized data. As such, we’ll tighten up the priors.
+
+```{r f8, cache = T, message = F, results = 'hide'}
+f8 <- 
+  brm(data = x.clean, 
+      family = gaussian,
+      cbind(x_s, y_s) ~ 1,
+      prior = c(prior(normal(0, 1), class = Intercept),
+                prior(normal(1, 1), class = sigma, resp = xs),
+                prior(normal(1, 1), class = sigma, resp = ys),
+                prior(lkj(2), class = rescor)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+```
+
+Behold the summary.
+
+```{r}
+print(f8)
+```
+
+Like in the earlier multivariate models, the correlation gets expressed in the `rescor(xs,ys)` row. But notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.
+
+```{r f9, cache = T, message = F, results = 'hide'}
+f9 <-
+  brm(data = x.clean, 
+      family = gaussian,
+      cbind(x_s, y_s) ~ 0,
+      prior = c(prior(normal(1, 1), class = sigma, resp = xs),
+                prior(normal(1, 1), class = sigma, resp = ys),
+                prior(lkj(2), class = rescor)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+```
+
+Without the intercepts, the rest of the model is the same within simulation variance.
+
+```{r}
+print(f9)
+```
+
+If you wanna get silly, we can prune even further. Notice how the estimates for $\sigma$ are all hovering around 1 in `f8` and `f9`. Since we have no predictors, $\sigma$ is just an estimate of the population standard deviation. And since we’re working with standardized data, the population standard deviation has to be 1. Any other estimate would be nonsensical. So why not fix it to 1?
+
+With brms, we can fix those $\sigma$s to 1 with a trick of the nonlinear [distributional modeling syntax](https://cran.r-project.org/web/packages/brms/vignettes/brms_distreg.html). Recall when you model $\sigma$, the brms default is to actually model it’s log. As is turns out, the log of 1 is zero.
+
+```{r}
+log(1)
+```
+
+So if we fix the log of $\sigma$ to zero, it’s the same as fixing $\sigma$ to 1—the exact value we’d like with standardized data. Here’s how that looks like in a model.
+
+```{r f10, cache = T, message = F, results = 'hide'}
+f10 <-
+  brm(data = x.clean, 
+      family = gaussian,
+      bf(cbind(x_s, y_s) ~ 0,
+         sigma ~ 0),
+      prior = c(prior(lkj(2), class = rescor)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+```
+
+Other than the `sigma ~ 0` syntax, the main thing to notice is we’ve wrapped the entire model `formula` into the `bf()` function. Here are the results.
+
+```{r}
+print(f10)
+```
+
+Now the correlation, `rescor(xs,ys)`, is the only parameter left. 
+
+We should note, however, this method is a little more difficult when you want to generalize to the messy `x.noisy` data and the Student’s $t$-distribution. This is because, when you’re working with the $t$ distribution, $\sigma$ is no longer the same thing as the standard deviation. Well, okay, it is only in the special case for which $\nu$ is at infinity. Otherwise, $\simga$ is termed the *scale*. When $\nu$ is large, the scale is quite close to the standard deviation. But they diverge when $\nu$ shrinks to small numbers. So, unless you have experience with these models, it will be more challenging to set intelligent priors on $\sigma$.
+
+Let’s start with the full model. Here we use the same regularizing prior on the intercepts we did with `f8`. But we put more permissive priors on the $\sigma$s. 
+
+```{r f11, cache = T, message = F, results = 'hide'}
+f11 <- 
+  brm(data = x.noisy, 
+      family = student,
+      cbind(x_s, y_s) ~ 1,
+      prior = c(prior(gamma(2, .1), class = nu),
+                prior(normal(0, 1), class = Intercept),
+                prior(normal(1, 10), class = sigma, resp = xs),
+                prior(normal(1, 10), class = sigma, resp = ys),
+                prior(lkj(2), class = rescor)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+```
+
+```{r}
+print(f11)
+```
+
+The intercepts remain around 0. Let's fix them, like before.
+
+```{r f12, cache = T, message = F, results = 'hide'}
+f12 <- 
+  brm(data = x.noisy, 
+      family = student,
+      cbind(x_s, y_s) ~ 0,
+      prior = c(prior(gamma(2, .1), class = nu),
+                prior(normal(1, 10), class = sigma, resp = xs),
+                prior(normal(1, 10), class = sigma, resp = ys),
+                prior(lkj(2), class = rescor)),
+      iter = 2000, warmup = 500, chains = 4, cores = 4, 
+      seed = 210191)
+```
+
+
+```{r}
+print(f12)
+```
+
+Since the relation between $t$-distribution scale and standard deviation depend on $\nu$ and since we’re estimating $\nu$ with a relatively-wide prior, I wouldn’t recommend attempting to fix sigma in this model like we did with the Gaussian. It just seems incoherent. 
+
+```{r, fig.width = 8, fig.height = 4.5}
+tibble(name = str_c("f", 0:3)) %>% 
+  mutate(fit = map(name, get)) %>% 
+  mutate(post = map(fit, posterior_samples)) %>% 
+  unnest(post) %>% 
+  select(name, rescor__x__y) %>% 
+  rename(rho = rescor__x__y) %>% 
+  # collect the correlation posteriors from the univariate models
+  bind_rows(tibble(name = str_c("f", 4:7)) %>% 
+  mutate(fit = map(name, get)) %>% 
+  mutate(post = map(fit, posterior_samples)) %>% 
+  unnest(post) %>% 
+  select(name, b_x_s) %>% 
+  rename(rho = b_x_s))%>% 
+  # now bind those with the correlation posteriors from the multivariate models
+  bind_rows(
+    tibble(name = str_c("f", 8:12)) %>% 
+      mutate(fit = map(name, get)) %>% 
+      mutate(post = map(fit, posterior_samples)) %>% 
+      unnest(post) %>% 
+      select(name, rescor__xs__ys) %>% 
+      rename(rho = rescor__xs__ys)
+  ) %>% 
+  # wrangle a bit just to make the y axis easier to understand
+  mutate(name = factor(name, 
+                       levels = c(str_c("f", 0:12)),
+                       labels = c("f0.   unstandardized, multivariate, x.clean, Gaussian",
+                                  "f1.   unstandardized, multivariate, x.noisy, Gaussian",
+                                  "f2.   unstandardized, multivariate, x.noisy, Student",
+                                  "f3.   unstandardized, multivariate, x.clean, Gaussian",
+                                  "f4.   standardized, univariate, x.clean, Gaussian",
+                                  "f5.   standardized, univariate, x.noisy, Student",
+                                  "f6.   standardized, univariate, x.clean, Gaussian, fixed intercepts",
+                                  "f7.   standardized, univariate, x.noisy, Student, fixed intercepts",
+                                  "f8.   standardized, multivariate, x.clean, Gaussian",
+                                  "f9.   standardized, multivariate, x.clean, Gaussian, fixed intercepts",
+                                  "f10. standardized, multivariate, x.clean, Gaussian, fixed intercepts and slopes",
+                                  "f11. standardized, multivariate, x.noisy, Student",
+                                  "f12. standardized, multivariate, x.noisy, Student, fixed intercepts"))) %>% 
+
+  # plot
+  ggplot(aes(x = rho, y = name)) +
+  geom_halfeyeh(aes(fill = factor(0)), 
+                .width = .95, size = 5/4, relative_scale = 5/4) +
+  scale_fill_fivethirtyeight() +
+  ggtitle(expression(paste("Compare the ", rho, " posteriors."))) +
+  coord_cartesian(xlim = c(-1.05, -.5),
+                  ylim = c(1.25, 12.9)) +
+  theme(panel.grid.major.y = element_blank(),
+        axis.text.y = element_text(hjust = 0),
+        legend.position = "none")
+```
+
+
+
+
+
+
+
