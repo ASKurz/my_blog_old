@@ -329,7 +329,7 @@ fitted(f4,
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;If you wanna get silly, we can prune even further. Did you notice how the estimates for &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; are all hovering around 1? Since we have no predictors, &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; is just an estimate of the population standard deviation. And since we’re working with standardized data, the population standard deviation has to be 1. Any other estimate would be nonsensical. So why not fix it to 1?&lt;/p&gt;
-&lt;p&gt;With brms, we can fix those &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt;s to 1 with a trick of the nonlinear &lt;a href=&#34;https://cran.r-project.org/web/packages/brms/vignettes/brms_distreg.html&#34;&gt;distributional modeling syntax&lt;/a&gt;. Recall when you model &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt;, the brms default is to actually model it’s log. As is turns out, the log of 1 is zero.&lt;/p&gt;
+&lt;p&gt;With brms, we can fix those &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt;s to 1 with a trick of the nonlinear &lt;a href=&#34;https://cran.r-project.org/web/packages/brms/vignettes/brms_distreg.html&#34;&gt;distributional modeling syntax&lt;/a&gt;. Recall when you model &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt;, the brms default is to actually model its log. As is turns out, the log of 1 is zero.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;log(1)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## [1] 0&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Here’s how to make use of that within &lt;code&gt;brm()&lt;/code&gt;.&lt;/p&gt;
@@ -367,7 +367,7 @@ fitted(f4,
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;The correlations are the only things left in the model.&lt;/p&gt;
-&lt;p&gt;Just to be clear, the multivariate approach does not require standardized data. To demonstrate, here refit &lt;code&gt;f7&lt;/code&gt;, but with the unstandardized variables. And, since we’re no longer in the standardized metric, we’ll be less certain with our priors.&lt;/p&gt;
+&lt;p&gt;Just to be clear, the multivariate approach does not require standardized data. To demonstrate, here we refit &lt;code&gt;f7&lt;/code&gt;, but with the unstandardized variables. And, since we’re no longer in the standardized metric, we’ll be less certain with our priors.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;f10 &amp;lt;- 
   brm(data = d, 
       family = gaussian,
@@ -2619,8 +2619,8 @@ ABC =
 &lt;pre&gt;&lt;code&gt;## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 3.8e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.38 seconds.
+## Chain 1: Gradient evaluation took 4.3e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.43 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -2637,15 +2637,15 @@ ABC =
 ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.547705 seconds (Warm-up)
-## Chain 1:                0.549853 seconds (Sampling)
-## Chain 1:                1.09756 seconds (Total)
+## Chain 1:  Elapsed Time: 0.524348 seconds (Warm-up)
+## Chain 1:                0.531071 seconds (Sampling)
+## Chain 1:                1.05542 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 1.3e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
+## Chain 2: Gradient evaluation took 1.2e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -2662,15 +2662,15 @@ ABC =
 ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.55732 seconds (Warm-up)
-## Chain 2:                0.60378 seconds (Sampling)
-## Chain 2:                1.1611 seconds (Total)
+## Chain 2:  Elapsed Time: 0.562304 seconds (Warm-up)
+## Chain 2:                0.769204 seconds (Sampling)
+## Chain 2:                1.33151 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 1.3e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
+## Chain 3: Gradient evaluation took 2.7e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.27 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -2687,15 +2687,15 @@ ABC =
 ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.649337 seconds (Warm-up)
-## Chain 3:                0.508329 seconds (Sampling)
-## Chain 3:                1.15767 seconds (Total)
+## Chain 3:  Elapsed Time: 0.662163 seconds (Warm-up)
+## Chain 3:                0.553641 seconds (Sampling)
+## Chain 3:                1.2158 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
 ## Chain 4: 
-## Chain 4: Gradient evaluation took 1.4e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.14 seconds.
+## Chain 4: Gradient evaluation took 1.2e-05 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
 ## Chain 4: Adjust your expectations accordingly!
 ## Chain 4: 
 ## Chain 4: 
@@ -2712,9 +2712,9 @@ ABC =
 ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.530264 seconds (Warm-up)
-## Chain 4:                0.61834 seconds (Sampling)
-## Chain 4:                1.1486 seconds (Total)
+## Chain 4:  Elapsed Time: 0.556384 seconds (Warm-up)
+## Chain 4:                0.630627 seconds (Sampling)
+## Chain 4:                1.18701 seconds (Total)
 ## Chain 4:&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
   spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%

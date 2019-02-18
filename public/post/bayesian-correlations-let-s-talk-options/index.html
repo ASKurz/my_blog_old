@@ -634,7 +634,7 @@ fitted(f4,
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p>If you wanna get silly, we can prune even further. Did you notice how the estimates for <span class="math inline">\(\sigma\)</span> are all hovering around 1? Since we have no predictors, <span class="math inline">\(\sigma\)</span> is just an estimate of the population standard deviation. And since we’re working with standardized data, the population standard deviation has to be 1. Any other estimate would be nonsensical. So why not fix it to 1?</p>
-<p>With brms, we can fix those <span class="math inline">\(\sigma\)</span>s to 1 with a trick of the nonlinear <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_distreg.html">distributional modeling syntax</a>. Recall when you model <span class="math inline">\(\sigma\)</span>, the brms default is to actually model it’s log. As is turns out, the log of 1 is zero.</p>
+<p>With brms, we can fix those <span class="math inline">\(\sigma\)</span>s to 1 with a trick of the nonlinear <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_distreg.html">distributional modeling syntax</a>. Recall when you model <span class="math inline">\(\sigma\)</span>, the brms default is to actually model its log. As is turns out, the log of 1 is zero.</p>
 <pre class="r"><code>log(1)</code></pre>
 <pre><code>## [1] 0</code></pre>
 <p>Here’s how to make use of that within <code>brm()</code>.</p>
@@ -672,7 +672,7 @@ fitted(f4,
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p>The correlations are the only things left in the model.</p>
-<p>Just to be clear, the multivariate approach does not require standardized data. To demonstrate, here refit <code>f7</code>, but with the unstandardized variables. And, since we’re no longer in the standardized metric, we’ll be less certain with our priors.</p>
+<p>Just to be clear, the multivariate approach does not require standardized data. To demonstrate, here we refit <code>f7</code>, but with the unstandardized variables. And, since we’re no longer in the standardized metric, we’ll be less certain with our priors.</p>
 <pre class="r"><code>f10 &lt;- 
   brm(data = d, 
       family = gaussian,
