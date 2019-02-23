@@ -15,18 +15,25 @@ header:
   image: ''
 ---
 
+```{r set-options, echo = FALSE, cache = FALSE}
+options(width = 100)
+```
+
 ## [tl;dr](https://www.urbandictionary.com/define.php?term=tl%3Bdr)
 
-> Sometimes a mathematical result is strikingly contrary to generally held belief even though an obviously valid proof is given. [Charles Stein](https://en.wikipedia.org/wiki/Charles_M._Stein) of Stanford University discovered such a paradox in statistics in 1995. His result undermined a century and a half of work on estimation theory. (p. 119)
-The James-Stein estimator leads to better predictions than simple means. Though I don’t recommend you actually use the James-Stein estimator in applied research, understanding why it works might help clarify why it's time social scientists [default to multilevel models](http://elevanth.org/blog/2017/08/24/multilevel-regression-as-default/) for applied statistics.
+> Sometimes a mathematical result is strikingly contrary to generally held belief even though an obviously valid proof is given. [Charles Stein](https://en.wikipedia.org/wiki/Charles_M._Stein) of Stanford University discovered such a paradox in statistics in 1995. His result undermined a century and a half of work on estimation theory. (Efron & Morris, 1977, p. 119)
 
-## James-Stein can help us understand multilevel models
+The James-Stein estimator leads to better predictions than simple means. Though I don’t recommend you actually use the James-Stein estimator in applied research, understanding why it works might help clarify why it's time social scientists consider [defaulting to multilevel models](http://elevanth.org/blog/2017/08/24/multilevel-regression-as-default/) for their work-a-day projects.
 
-I recently noticed someone—I wish I could recall who—tweet about Efron and Morris’s classic paper, [*Stein’s Paradox in Statistics*](http://statweb.stanford.edu/~ckirby/brad/other/Article1977.pdf). At the time, I was vaguely aware of the paper but hadn’t taken the chance to read it. The tweet’s author mentioned how good a read it was. Now I’ve looked at it, I concur. I’m not a sports fan, but I really appreciated their primary example using batting averages from baseball players in 1970. It clarified why partial pooling leads to better estimates than taking simple averages. In this project, I’ll walk out their example in R and then link it to contemporary Bayesian multilevel models.
+## The James-Stein can help us understand multilevel models.
+
+I recently noticed someone—I wish I could recall who—tweet about Efron and Morris’s classic, [*Stein’s Paradox in Statistics*](http://statweb.stanford.edu/~ckirby/brad/other/Article1977.pdf). At the time, I was vaguely aware of the paper but hadn’t taken the chance to read it. The tweet’s author mentioned how good a read it was. Now I’ve looked at it, I concur. I’m not a sports fan, but I really appreciated their primary example using batting averages from baseball players in 1970. It clarified why partial pooling leads to better estimates than taking simple averages. 
+
+In this project, I’ll walk out Efron and Morris's baseball example in R and then link it to contemporary Bayesian multilevel models.
 
 ### I assume things.
 
-For this project, I’m presuming you are familiar with linear regression, vaguely familiar with the basic differences between frequentist and Bayesian approaches to fitting regression models, and have heard of multilevel models. All code in is [R](https://www.r-project.org/about.html), with a heavy use of the [tidyverse](https://www.tidyverse.org)—which you might learn a lot about [here](http://r4ds.had.co.nz), especially [chapter 5](http://r4ds.had.co.nz/transform.html)—, and the [brms package](https://github.com/paul-buerkner/brms) for Bayesian regression.
+For this project, I’m presuming you are familiar with logistic regression, vaguely familiar with the basic differences between frequentist and Bayesian approaches to fitting regression models, and have heard of multilevel models. All code in is [R](https://www.r-project.org/about.html), with a heavy use of the [tidyverse](https://www.tidyverse.org)—which you might learn a lot about [here](http://r4ds.had.co.nz), especially [chapter 5](http://r4ds.had.co.nz/transform.html)—, and the [brms package](https://github.com/paul-buerkner/brms) for Bayesian regression.
 
 ### Behold the `baseball` data.
 
@@ -57,7 +64,8 @@ glimpse(baseball)
 We have data from 18 players. The main columns are of the number of `hits` for their first 45 `times_at_bat`. I got the `player`, `hits`, and `times_at_bat` values directly from the paper. However, Efron and Morris didn't include the batting averages for the end of the season in the paper. Happily, I was able to find those values [online](http://statweb.stanford.edu/~ckirby/brad/LSI/chapter1.pdf). They're included in the `true_ba` column.
 
 > ...These were all the players who happened to have batted exactly 45 times the day the data were tabulated. A batting average is defined, of course, simply as the number of hits divided by the number of times at bat; it is always a number between 0 and 1. (p. 119)
-I like use a lot of plots to better understand what I'm doing. Before we start plotting, I should point out the color theme in this project comes from [here](https://teamcolorcodes.com/seattle-mariners-color-codes/).
+
+I like use a lot of plots to better understand what I'm doing. Before we start plotting, I should point out the color theme in this project comes from [here](https://teamcolorcodes.com/seattle-mariners-color-codes/). [Haters gonna hate.]
 
 ```{r}
 navy_blue <- "#0C2C56"
@@ -81,7 +89,7 @@ baseball %>%
                      breaks = 7:18)
 ```
 
-And this is the distribution of the end-of-the-season batting averages, `true_ba`.
+And here is the distribution of the end-of-the-season batting averages, `true_ba`.
 
 ```{r, message = F, warning = F, fig.width = 4, fig.height = 3}
 library(tidybayes)
@@ -98,7 +106,7 @@ baseball %>%
 
 ### James-Stein will help us achieve our goal.
 
-For each of the 18 players in the data, our goal is to the best job possible to use the batting average data for their first 45 times at bat (i.e., `hits` and `times_at_bat`) to predict their batting averages at the end of the season (i.e., `true_ba`). Before Stein, the conventional reasoning was their initial batting averages (i.e., `hits / times_at_bat`) are the best way to do this. It turns out that would be naïve. To see why, let
+For each of the 18 players in the data, our goal is to the best job possible to use the data for their first 45 times at bat (i.e., `hits` and `times_at_bat`) to predict their batting averages at the end of the season (i.e., `true_ba`). Before Charles Stein, the conventional reasoning was their initial batting averages (i.e., `hits / times_at_bat`) are the best way to do this. It turns out that would be naïve. To see why, let
 
 * `y` (i.e., $y$) = the batting average for the first 45 times at bat
 * `y_bar` (i.e., $\overline y$) = the grand mean for the first 45 times at bat
@@ -127,6 +135,7 @@ And in the paper, $c = .212$. Let's get some of those values into the `baseball`
 ```
 
 > Which set of values, $y$ or $z$, is the better indicator of batting ability for the 18 players in our example? In order to answer that question in a precise way one would have to know the “true batting ability” of each player. This true average we shall designate $\theta$ (the Greek letter theta). Actually it is an unknowable quantity, an abstraction representing the probability that a player will get a hit on any given time at bat. Although $\theta$ is unobservable, we have a good approximation to it: the subsequent performance of the batters. It is sufficient to consider just the remainder of the 1970 season, which includes about nine times as much data as the preliminary averages were based on. (p. 119)
+
 Now we have both $y$ and $z$ in the data, let's compare their distributions.
 
 ```{r, fig.width = 5, fig.height = 2}
@@ -230,11 +239,11 @@ baseball %>%
 
 The James-Stein estimator works because of its shrinkage. The shrinkage factor is $c$. In the first parts of the paper, Efron and Morris just told us $c = .212$. A little later in the paper, they gave the actual formula for $c$. If you let $k$ be the number of means (i.e., the number of clusters), then:
 
-<img src="pictures/shrink_factor.png"/>
+$$c = 1 - \frac{(k - 3)\sigma^2}{\sum (y - \overline y)^2}$$
 
 The difficulty of that formula is we don't know the value for $\sigma^2$. It's not the simple variance of $y$ (i.e., `var(y)`). An [answer to this stackexchange question](https://stats.stackexchange.com/questions/5727/james-stein-estimator-how-did-efron-and-morris-calculate-sigma2-in-shrinkag) appears to have uncovered the method Efron and Morris used in the paper. I'll reproduce it in detail:
 
-$$c = 1 - \frac{(k - 3)\sigma^2}{\sum (y - \overline y)^2}$$
+![](/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/answer.PNG){width=33%}
 
 Following along, we can compute `sigma_squared` like so:
 
@@ -251,21 +260,23 @@ baseball %>%
   summarise(c_by_hand = 1 - ((n() - 3) * sigma_squared / sum(squared_deviation)))
 ```
 
-## Let’s go Bayesian
+## Let’s go Bayesian.
 
 This has been fun. But I don't recommend you actually use the James-Stein estimator in your research.
 
 > The James-Stein estimator is not the only one that is known to be better than the sample averages…
 >
-> The search for new estimators continues. Recent efforts [in the 1970s, that is] have been concentrated on achieving results like those obtained with Stein’s method for problems involving distributions other than the normal distribution. Several lines of work, including Stein’s and Robbins’ and more formal Bayesian methods seem to be converging on a powerful general theory of parameter estimation. (p. 127)
+> The search for new estimators continues. Recent efforts [in the 1970s, that is] have been concentrated on achieving results like those obtained with Stein’s method for problems involving distributions other than the normal distribution. Several lines of work, including Stein’s and Robbins’ and more formal *Bayesian methods* seem to be converging on a powerful general theory of parameter estimation. (p. 127, *emphasis* added)
 
-I use Bayesian multilevel models a lot in my research. The James-Stein estimator is not Bayesian, but it is a precursor to the kind of analyses we now do with Bayesian multilevel models, which pool cluster-level means toward a grand mean. To get a sense of this, let’s fit a couple models. First, let’s load the brms package.
+The James-Stein estimator is not Bayesian, but it is a precursor to the kind of analyses we now do with Bayesian multilevel models, which pool cluster-level means toward a grand mean. To get a sense of this, let’s fit a couple models. First, let’s load the brms package.
 
 ```{r, message = F, warning = F}
 library(brms)
 ```
 
-I typically work with the linear regression paradigm. If we were to analyze the `baseball` with linear regression, we’d use an aggregated binomial model—which you can learn more about [here](https://www.youtube.com/watch?v=DyrUkqK9Tj4&t=1581s&frags=pl%2Cwn) or [here](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md). If we wanted a model that corresponded to the $y$ estimates, above, we’d use `hits` as the criterion and allow each player to get his own *separate* estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing $\text{Normal} (0, 2)$ on the intercepts. See [this wiki](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) for more on weakly-regularizing priors. Here’s the model code.
+I typically work with the linear regression paradigm. If we were to analyze the `baseball` data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about [here](https://www.youtube.com/watch?v=DyrUkqK9Tj4&t=1581s&frags=pl%2Cwn) or [here](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md. If we wanted a model that corresponded to the $y$ estimates, above, we’d use `hits` as the criterion and allow each player to get his own *separate* estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing $\text{Normal} (0, 1.5)$ on the intercepts. See [this wiki](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) for more on weakly-regularizing priors. 
+
+Here’s the code to fit the model in brms.
 
 ```{r fit_y, cache = T, message = F, warning = F, results = "hide"}
 fit_y <-
@@ -285,9 +296,9 @@ $$
 \end{eqnarray}
 $$
 
-where $p_i$ is the probability of player $i$, $\alpha_\text{player}$ is a vector of $\text{player}$-specific intercepts from within the logistic regression model, and each of those intercepts are given a $\text{Normal} (0. 1.5)$ prior on the log-odds scale. (If this is all new and confusing, spend some time reviewing Bayesian logistic regression. I'll recommended some sources at the end.)
+where $p_i$ is the probability of player $i$, $\alpha_\text{player}$ is a vector of $\text{player}$-specific intercepts from within the logistic regression model, and each of those intercepts are given a $\text{Normal} (0, 1.5)$ prior on the log-odds scale. (If this is all new and confusing, don’t worry. I'll recommended some resources at the end of this post.)
 
-For our analogue to the James-Stein estimate $z$, we’ll fit the multilevel version of the last model. While each player still gets his own estimate, those estimates are now partially-pooled toward the grand mean.
+For our analogue to the James-Stein estimate $z$, we’ll fit the multilevel version of that last model. While each player still gets his own estimate, those estimates are now partially-pooled toward the grand mean.
 
 ```{r fit_z, cache = T, message = F, warning = F, results = "hide"}
 fit_z <-
@@ -334,13 +345,13 @@ baseball %>%
   select(y)
 ```
 
-Here is the corresponding estimate from the multilevel model, `fit_z`:
+It's a little off, but in the right ballpark. Here is the corresponding estimate from the multilevel model, `fit_z`:
 
 ```{r}
 coef(fit_z)$player["E Rodriguez", 1, ] %>% inv_logit_scaled()
 ```
 
-And indeed that’s pretty close to the `z` value from the `baseball` data.
+And indeed that’s pretty close to the `z` value from the `baseball` data, too.
 
 ```{r}
 baseball %>% 
@@ -423,6 +434,7 @@ In both panels, the end-of-the-season batting averages (i.e., $\theta$) are the 
 We might also compare the models by their prediction errors. Here we’ll subtract the end-of-the-season batting averages from the model estimates. But unlike with `y` and `z` estimates, above, our `fit_y` and `fit_z` models yielded entire posterior distributions. Therefore, we’ll express our prediction errors in terms of error distributions, rather than single values. 
 
 ```{r, fig.width = 8, fig.height = 3.5}
+# save the `fit_y` plot
 p3 <-
   f_y %>% 
   # the error distribution is just the model-implied values minus the true end-of-season values
@@ -441,6 +453,7 @@ p3 <-
         axis.ticks.y  = element_blank(),
         plot.subtitle = element_text(hjust = .5))
 
+# save the `fit_z` plot
 p4 <-
   f_z %>%   
   mutate(error = mu - true_ba)  %>% 
@@ -462,7 +475,7 @@ p4 <-
 grid.arrange(p3, p4, ncol = 2)
 ```
 
-[For consistency, I’ve ordered the players the same as in the previous plots.] In both panels, we see the prediction error distribution for each player in green and then summarize those distributions in terms of their means and percentile-based 95% intervals. Since these are error distributions, we prefer them to be as close to zero as possible. Although neither model made perfect predictions, the overall errors in the multilevel model were clearly smaller. Much like with the James-Stein estimator, the partial pooling of the multilevel model made for better end-of-the-season estimates.
+For consistency, I’ve ordered the players the same as in the previous plots. In both panels, we see the prediction error distribution for each player in green and then summarize those distributions in terms of their means and percentile-based 95% intervals. Since these are error distributions, we prefer them to be as close to zero as possible. Although neither model made perfect predictions, the overall errors in the multilevel model were clearly smaller. Much like with the James-Stein estimator, the partial pooling of the multilevel model made for better end-of-the-season estimates.
 
 > The paradoxical [consequence of Bayesian multilevel models] is that [they can contradict] this elementary law of statistical theory. If we have [two] or more baseball players, and if we are interested in predicting future batting averages for each of them, then [the Bayesian multilevel model can be better] than simply extrapolating from [the] separate averages. (p. 119)
 ## Next steps
@@ -473,9 +486,9 @@ If you’re new to logistic regression, multilevel models or Bayesian statistics
 * [*Doing Bayesian Data Analysis*](https://sites.google.com/site/doingbayesiandataanalysis/)
 * [*Data Analysis Using Regression and Multilevel/Hierarchical Models*](http://www.stat.columbia.edu/~gelman/arm/)
 
-And if you choose *Statistical Rethinking*, do check out [these great lectures](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists) on the text or [my project translating the code in the text to brms and the tidyverse](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse).
+And if you choose *Statistical Rethinking*, do check out [these great lectures](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists) on the text or [my project translating the code in the text to brms and the tidyverse](https://bookdown.org/connect/#/apps/1850/access).
 
-Also, check out the provocative preprint by Davis-Stober, Dana and Rouder, [*When are sample means meaningful? The role of modern estimation in psychological science*](https://osf.io/2ukxj/).
+Also, don't miss the provocative preprint by Davis-Stober, Dana and Rouder, [*When are sample means meaningful? The role of modern estimation in psychological science*](https://osf.io/2ukxj/).
 
 ## Reference
 

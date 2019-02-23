@@ -18,7 +18,8 @@
       <pubDate>Sat, 23 Feb 2019 00:00:00 +0000</pubDate>
       
       <guid>/post/stein-s-paradox-and-what-partial-pooling-can-do-for-you/</guid>
-      <description>tl;dr  Sometimes a mathematical result is strikingly contrary to generally held belief even though an obviously valid proof is given. Charles Stein of Stanford University discovered such a paradox in statistics in 1995. His result undermined a century and a half of work on estimation theory. (p. 119) The James-Stein estimator leads to better predictions than simple means. Though I don’t recommend you actually use the James-Stein estimator in applied research, understanding why it works might help clarify why it’s time social scientists default to multilevel models for applied statistics.</description>
+      <description>tl;dr  Sometimes a mathematical result is strikingly contrary to generally held belief even though an obviously valid proof is given. Charles Stein of Stanford University discovered such a paradox in statistics in 1995. His result undermined a century and a half of work on estimation theory. (Efron &amp;amp; Morris, 1977, p. 119)
+ The James-Stein estimator leads to better predictions than simple means. Though I don’t recommend you actually use the James-Stein estimator in applied research, understanding why it works might help clarify why it’s time social scientists consider defaulting to multilevel models for their work-a-day projects.</description>
     </item>
     
   </channel>
