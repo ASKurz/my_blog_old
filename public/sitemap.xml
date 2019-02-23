@@ -20,6 +20,14 @@
     
     <url>
     
+      <loc>/post/stein-s-paradox-and-what-partial-pooling-can-do-for-you/</loc>
+      <lastmod>2019-02-23T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/post/bayesian-correlations-let-s-talk-options/</loc>
       <lastmod>2019-02-16T00:00:00+00:00</lastmod>
     </url>
@@ -126,7 +134,7 @@
     <url>
     
       <loc>/tags/bayesian/</loc>
-      <lastmod>2019-02-16T00:00:00+00:00</lastmod>
+      <lastmod>2019-02-23T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -232,7 +240,7 @@
     <url>
     
       <loc>/tags/r/</loc>
-      <lastmod>2019-02-16T00:00:00+00:00</lastmod>
+      <lastmod>2019-02-23T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -265,7 +273,7 @@
     <url>
     
       <loc>/tags/</loc>
-      <lastmod>2019-02-16T00:00:00+00:00</lastmod>
+      <lastmod>2019-02-23T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -292,7 +300,7 @@
     <url>
     
       <loc>/tags/brms/</loc>
-      <lastmod>2019-02-16T00:00:00+00:00</lastmod>
+      <lastmod>2019-02-23T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -320,6 +328,15 @@
     
       <loc>/tags/mindfulness/</loc>
       <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/multilevel/</loc>
+      <lastmod>2019-02-23T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -382,7 +399,7 @@
     <url>
     
       <loc>/tags/tutorial/</loc>
-      <lastmod>2019-02-16T00:00:00+00:00</lastmod>
+      <lastmod>2019-02-23T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
