@@ -243,7 +243,7 @@ $$c = 1 - \frac{(k - 3)\sigma^2}{\sum (y - \overline y)^2}$$
 
 The difficulty of that formula is we don't know the value for $\sigma^2$. It's not the simple variance of $y$ (i.e., `var(y)`). An [answer to this stackexchange question](https://stats.stackexchange.com/questions/5727/james-stein-estimator-how-did-efron-and-morris-calculate-sigma2-in-shrinkag) appears to have uncovered the method Efron and Morris used in the paper. I'll reproduce it in detail:
 
-![](/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/answer.PNG){width=33%}
+![](/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/answer.PNG){width=100%}
 
 Following along, we can compute `sigma_squared` like so:
 
@@ -274,7 +274,7 @@ The James-Stein estimator is not Bayesian, but it is a precursor to the kind of 
 library(brms)
 ```
 
-I typically work with the linear regression paradigm. If we were to analyze the `baseball` data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about [here](https://www.youtube.com/watch?v=DyrUkqK9Tj4&t=1581s&frags=pl%2Cwn) or [here](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md. If we wanted a model that corresponded to the $y$ estimates, above, we’d use `hits` as the criterion and allow each player to get his own *separate* estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing $\text{Normal} (0, 1.5)$ on the intercepts. See [this wiki](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) for more on weakly-regularizing priors. 
+I typically work with the linear regression paradigm. If we were to analyze the `baseball` data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about [here](https://www.youtube.com/watch?v=DyrUkqK9Tj4&t=1581s&frags=pl%2Cwn) or [here](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md). If we wanted a model that corresponded to the $y$ estimates, above, we’d use `hits` as the criterion and allow each player to get his own *separate* estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing $\text{Normal} (0, 1.5)$ on the intercepts. See [this wiki](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) for more on weakly-regularizing priors. 
 
 Here’s the code to fit the model in brms.
 

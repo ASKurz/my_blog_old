@@ -231,7 +231,7 @@ baseball %&amp;gt;%
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[c = 1 - \frac{(k - 3)\sigma^2}{\sum (y - \overline y)^2}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;The difficulty of that formula is we don’t know the value for &lt;span class=&#34;math inline&#34;&gt;\(\sigma^2\)&lt;/span&gt;. It’s not the simple variance of &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; (i.e., &lt;code&gt;var(y)&lt;/code&gt;). An &lt;a href=&#34;https://stats.stackexchange.com/questions/5727/james-stein-estimator-how-did-efron-and-morris-calculate-sigma2-in-shrinkag&#34;&gt;answer to this stackexchange question&lt;/a&gt; appears to have uncovered the method Efron and Morris used in the paper. I’ll reproduce it in detail:&lt;/p&gt;
 &lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/answer.PNG&#34; style=&#34;width:33.0%&#34; /&gt;
+&lt;img src=&#34;/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/answer.PNG&#34; style=&#34;width:100.0%&#34; /&gt;
 
 &lt;/div&gt;
 &lt;p&gt;Following along, we can compute &lt;code&gt;sigma_squared&lt;/code&gt; like so:&lt;/p&gt;
@@ -257,7 +257,7 @@ baseball %&amp;gt;%
 &lt;/blockquote&gt;
 &lt;p&gt;The James-Stein estimator is not Bayesian, but it is a precursor to the kind of analyses we now do with Bayesian multilevel models, which pool cluster-level means toward a grand mean. To get a sense of this, let’s fit a couple models. First, let’s load the brms package.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;I typically work with the linear regression paradigm. If we were to analyze the &lt;code&gt;baseball&lt;/code&gt; data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about &lt;a href=&#34;https://www.youtube.com/watch?v=DyrUkqK9Tj4&amp;amp;t=1581s&amp;amp;frags=pl%2Cwn&#34;&gt;here&lt;/a&gt; or [here](&lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md&#34; class=&#34;uri&#34;&gt;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md&lt;/a&gt;. If we wanted a model that corresponded to the &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; estimates, above, we’d use &lt;code&gt;hits&lt;/code&gt; as the criterion and allow each player to get his own &lt;em&gt;separate&lt;/em&gt; estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing &lt;span class=&#34;math inline&#34;&gt;\(\text{Normal} (0, 1.5)\)&lt;/span&gt; on the intercepts. See &lt;a href=&#34;https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations&#34;&gt;this wiki&lt;/a&gt; for more on weakly-regularizing priors.&lt;/p&gt;
+&lt;p&gt;I typically work with the linear regression paradigm. If we were to analyze the &lt;code&gt;baseball&lt;/code&gt; data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about &lt;a href=&#34;https://www.youtube.com/watch?v=DyrUkqK9Tj4&amp;amp;t=1581s&amp;amp;frags=pl%2Cwn&#34;&gt;here&lt;/a&gt; or &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md&#34;&gt;here&lt;/a&gt;. If we wanted a model that corresponded to the &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; estimates, above, we’d use &lt;code&gt;hits&lt;/code&gt; as the criterion and allow each player to get his own &lt;em&gt;separate&lt;/em&gt; estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing &lt;span class=&#34;math inline&#34;&gt;\(\text{Normal} (0, 1.5)\)&lt;/span&gt; on the intercepts. See &lt;a href=&#34;https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations&#34;&gt;this wiki&lt;/a&gt; for more on weakly-regularizing priors.&lt;/p&gt;
 &lt;p&gt;Here’s the code to fit the model in brms.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit_y &amp;lt;-
   brm(data = baseball, family = binomial,
@@ -522,35 +522,35 @@ grid.arrange(p3, p4, ncol = 2)&lt;/code&gt;&lt;/pre&gt;
 ##   [7] base64enc_0.1-3           rstudioapi_0.7            rstan_2.18.2             
 ##  [10] svUnit_0.7-12             DT_0.4                    fansi_0.4.0              
 ##  [13] mvtnorm_1.0-8             lubridate_1.7.4           xml2_1.2.0               
-##  [16] codetools_0.2-15          bridgesampling_0.4-0      knitr_1.20               
-##  [19] shinythemes_1.1.1         bayesplot_1.6.0           jsonlite_1.5             
-##  [22] broom_0.5.1               shiny_1.1.0               compiler_3.5.1           
-##  [25] httr_1.3.1                backports_1.1.2           assertthat_0.2.0         
-##  [28] Matrix_1.2-14             lazyeval_0.2.1            cli_1.0.1                
-##  [31] later_0.7.3               prettyunits_1.0.2         htmltools_0.3.6          
-##  [34] tools_3.5.1               igraph_1.2.1              coda_0.19-2              
-##  [37] gtable_0.2.0              glue_1.3.0                reshape2_1.4.3           
-##  [40] cellranger_1.1.0          nlme_3.1-137              blogdown_0.8             
-##  [43] crosstalk_1.0.0           xfun_0.3                  ps_1.2.1                 
-##  [46] rvest_0.3.2               mime_0.5                  miniUI_0.1.1.1           
-##  [49] gtools_3.8.1              MASS_7.3-50               zoo_1.8-2                
-##  [52] scales_1.0.0              colourpicker_1.0          hms_0.4.2                
-##  [55] promises_1.0.1            Brobdingnag_1.2-5         parallel_3.5.1           
-##  [58] inline_0.3.15             shinystan_2.5.0           yaml_2.1.19              
-##  [61] StanHeaders_2.18.0-1      loo_2.0.0                 stringi_1.2.3            
-##  [64] dygraphs_1.1.1.5          pkgbuild_1.0.2            rlang_0.3.1              
-##  [67] pkgconfig_2.0.2           matrixStats_0.54.0        evaluate_0.10.1          
-##  [70] lattice_0.20-35           bindr_0.1.1               rstantools_1.5.0         
-##  [73] htmlwidgets_1.2           labeling_0.3              processx_3.2.1           
-##  [76] tidyselect_0.2.4          plyr_1.8.4                magrittr_1.5             
-##  [79] bookdown_0.7              R6_2.3.0                  generics_0.0.2           
-##  [82] pillar_1.3.1              haven_1.1.2               withr_2.1.2              
-##  [85] xts_0.10-2                abind_1.4-5               modelr_0.1.2             
-##  [88] crayon_1.3.4              arrayhelpers_1.0-20160527 utf8_1.1.4               
-##  [91] rmarkdown_1.10            grid_3.5.1                readxl_1.1.0             
-##  [94] callr_3.1.0               threejs_0.3.1             digest_0.6.18            
-##  [97] xtable_1.8-2              httpuv_1.4.4.2            stats4_3.5.1             
-## [100] munsell_0.5.0             viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##  [16] bridgesampling_0.4-0      knitr_1.20                shinythemes_1.1.1        
+##  [19] bayesplot_1.6.0           jsonlite_1.5              broom_0.5.1              
+##  [22] shiny_1.1.0               compiler_3.5.1            httr_1.3.1               
+##  [25] backports_1.1.2           assertthat_0.2.0          Matrix_1.2-14            
+##  [28] lazyeval_0.2.1            cli_1.0.1                 later_0.7.3              
+##  [31] prettyunits_1.0.2         htmltools_0.3.6           tools_3.5.1              
+##  [34] igraph_1.2.1              coda_0.19-2               gtable_0.2.0             
+##  [37] glue_1.3.0                reshape2_1.4.3            cellranger_1.1.0         
+##  [40] nlme_3.1-137              blogdown_0.8              crosstalk_1.0.0          
+##  [43] xfun_0.3                  ps_1.2.1                  rvest_0.3.2              
+##  [46] mime_0.5                  miniUI_0.1.1.1            gtools_3.8.1             
+##  [49] MASS_7.3-50               zoo_1.8-2                 scales_1.0.0             
+##  [52] colourpicker_1.0          hms_0.4.2                 promises_1.0.1           
+##  [55] Brobdingnag_1.2-5         parallel_3.5.1            inline_0.3.15            
+##  [58] shinystan_2.5.0           yaml_2.1.19               StanHeaders_2.18.0-1     
+##  [61] loo_2.0.0                 stringi_1.2.3             dygraphs_1.1.1.5         
+##  [64] pkgbuild_1.0.2            rlang_0.3.1               pkgconfig_2.0.2          
+##  [67] matrixStats_0.54.0        evaluate_0.10.1           lattice_0.20-35          
+##  [70] bindr_0.1.1               rstantools_1.5.0          htmlwidgets_1.2          
+##  [73] labeling_0.3              processx_3.2.1            tidyselect_0.2.4         
+##  [76] plyr_1.8.4                magrittr_1.5              bookdown_0.7             
+##  [79] R6_2.3.0                  generics_0.0.2            pillar_1.3.1             
+##  [82] haven_1.1.2               withr_2.1.2               xts_0.10-2               
+##  [85] abind_1.4-5               modelr_0.1.2              crayon_1.3.4             
+##  [88] arrayhelpers_1.0-20160527 utf8_1.1.4                rmarkdown_1.10           
+##  [91] grid_3.5.1                readxl_1.1.0              callr_3.1.0              
+##  [94] threejs_0.3.1             digest_0.6.18             xtable_1.8-2             
+##  [97] httpuv_1.4.4.2            stats4_3.5.1              munsell_0.5.0            
+## [100] viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>
@@ -3164,8 +3164,8 @@ ABC =
 &lt;pre&gt;&lt;code&gt;## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 7.1e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.71 seconds.
+## Chain 1: Gradient evaluation took 3.3e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.33 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -3182,15 +3182,15 @@ ABC =
 ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.563211 seconds (Warm-up)
-## Chain 1:                0.576654 seconds (Sampling)
-## Chain 1:                1.13986 seconds (Total)
+## Chain 1:  Elapsed Time: 0.688459 seconds (Warm-up)
+## Chain 1:                0.631558 seconds (Sampling)
+## Chain 1:                1.32002 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 3.1e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.31 seconds.
+## Chain 2: Gradient evaluation took 1.8e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.18 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -3207,15 +3207,15 @@ ABC =
 ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.629479 seconds (Warm-up)
-## Chain 2:                0.665822 seconds (Sampling)
-## Chain 2:                1.2953 seconds (Total)
+## Chain 2:  Elapsed Time: 0.630012 seconds (Warm-up)
+## Chain 2:                0.666092 seconds (Sampling)
+## Chain 2:                1.2961 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 2.5e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.25 seconds.
+## Chain 3: Gradient evaluation took 1.6e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -3232,15 +3232,15 @@ ABC =
 ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.722526 seconds (Warm-up)
-## Chain 3:                0.574893 seconds (Sampling)
-## Chain 3:                1.29742 seconds (Total)
+## Chain 3:  Elapsed Time: 0.72341 seconds (Warm-up)
+## Chain 3:                0.574373 seconds (Sampling)
+## Chain 3:                1.29778 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
 ## Chain 4: 
-## Chain 4: Gradient evaluation took 1.3e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
+## Chain 4: Gradient evaluation took 1.6e-05 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
 ## Chain 4: Adjust your expectations accordingly!
 ## Chain 4: 
 ## Chain 4: 
@@ -3257,9 +3257,9 @@ ABC =
 ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.606805 seconds (Warm-up)
-## Chain 4:                0.681957 seconds (Sampling)
-## Chain 4:                1.28876 seconds (Total)
+## Chain 4:  Elapsed Time: 0.571025 seconds (Warm-up)
+## Chain 4:                0.706697 seconds (Sampling)
+## Chain 4:                1.27772 seconds (Total)
 ## Chain 4:&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
   spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%

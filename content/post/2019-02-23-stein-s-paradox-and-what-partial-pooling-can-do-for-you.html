@@ -232,7 +232,7 @@ baseball %&gt;%
 <p><span class="math display">\[c = 1 - \frac{(k - 3)\sigma^2}{\sum (y - \overline y)^2}\]</span></p>
 <p>The difficulty of that formula is we don’t know the value for <span class="math inline">\(\sigma^2\)</span>. It’s not the simple variance of <span class="math inline">\(y\)</span> (i.e., <code>var(y)</code>). An <a href="https://stats.stackexchange.com/questions/5727/james-stein-estimator-how-did-efron-and-morris-calculate-sigma2-in-shrinkag">answer to this stackexchange question</a> appears to have uncovered the method Efron and Morris used in the paper. I’ll reproduce it in detail:</p>
 <div class="figure">
-<img src="/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/answer.PNG" style="width:33.0%" />
+<img src="/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/answer.PNG" style="width:100.0%" />
 
 </div>
 <p>Following along, we can compute <code>sigma_squared</code> like so:</p>
@@ -258,7 +258,7 @@ baseball %&gt;%
 </blockquote>
 <p>The James-Stein estimator is not Bayesian, but it is a precursor to the kind of analyses we now do with Bayesian multilevel models, which pool cluster-level means toward a grand mean. To get a sense of this, let’s fit a couple models. First, let’s load the brms package.</p>
 <pre class="r"><code>library(brms)</code></pre>
-<p>I typically work with the linear regression paradigm. If we were to analyze the <code>baseball</code> data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about <a href="https://www.youtube.com/watch?v=DyrUkqK9Tj4&amp;t=1581s&amp;frags=pl%2Cwn">here</a> or [here](<a href="https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md" class="uri">https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md</a>. If we wanted a model that corresponded to the <span class="math inline">\(y\)</span> estimates, above, we’d use <code>hits</code> as the criterion and allow each player to get his own <em>separate</em> estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing <span class="math inline">\(\text{Normal} (0, 1.5)\)</span> on the intercepts. See <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations">this wiki</a> for more on weakly-regularizing priors.</p>
+<p>I typically work with the linear regression paradigm. If we were to analyze the <code>baseball</code> data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about <a href="https://www.youtube.com/watch?v=DyrUkqK9Tj4&amp;t=1581s&amp;frags=pl%2Cwn">here</a> or <a href="https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md">here</a>. If we wanted a model that corresponded to the <span class="math inline">\(y\)</span> estimates, above, we’d use <code>hits</code> as the criterion and allow each player to get his own <em>separate</em> estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing <span class="math inline">\(\text{Normal} (0, 1.5)\)</span> on the intercepts. See <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations">this wiki</a> for more on weakly-regularizing priors.</p>
 <p>Here’s the code to fit the model in brms.</p>
 <pre class="r"><code>fit_y &lt;-
   brm(data = baseball, family = binomial,
@@ -523,33 +523,33 @@ grid.arrange(p3, p4, ncol = 2)</code></pre>
 ##   [7] base64enc_0.1-3           rstudioapi_0.7            rstan_2.18.2             
 ##  [10] svUnit_0.7-12             DT_0.4                    fansi_0.4.0              
 ##  [13] mvtnorm_1.0-8             lubridate_1.7.4           xml2_1.2.0               
-##  [16] codetools_0.2-15          bridgesampling_0.4-0      knitr_1.20               
-##  [19] shinythemes_1.1.1         bayesplot_1.6.0           jsonlite_1.5             
-##  [22] broom_0.5.1               shiny_1.1.0               compiler_3.5.1           
-##  [25] httr_1.3.1                backports_1.1.2           assertthat_0.2.0         
-##  [28] Matrix_1.2-14             lazyeval_0.2.1            cli_1.0.1                
-##  [31] later_0.7.3               prettyunits_1.0.2         htmltools_0.3.6          
-##  [34] tools_3.5.1               igraph_1.2.1              coda_0.19-2              
-##  [37] gtable_0.2.0              glue_1.3.0                reshape2_1.4.3           
-##  [40] cellranger_1.1.0          nlme_3.1-137              blogdown_0.8             
-##  [43] crosstalk_1.0.0           xfun_0.3                  ps_1.2.1                 
-##  [46] rvest_0.3.2               mime_0.5                  miniUI_0.1.1.1           
-##  [49] gtools_3.8.1              MASS_7.3-50               zoo_1.8-2                
-##  [52] scales_1.0.0              colourpicker_1.0          hms_0.4.2                
-##  [55] promises_1.0.1            Brobdingnag_1.2-5         parallel_3.5.1           
-##  [58] inline_0.3.15             shinystan_2.5.0           yaml_2.1.19              
-##  [61] StanHeaders_2.18.0-1      loo_2.0.0                 stringi_1.2.3            
-##  [64] dygraphs_1.1.1.5          pkgbuild_1.0.2            rlang_0.3.1              
-##  [67] pkgconfig_2.0.2           matrixStats_0.54.0        evaluate_0.10.1          
-##  [70] lattice_0.20-35           bindr_0.1.1               rstantools_1.5.0         
-##  [73] htmlwidgets_1.2           labeling_0.3              processx_3.2.1           
-##  [76] tidyselect_0.2.4          plyr_1.8.4                magrittr_1.5             
-##  [79] bookdown_0.7              R6_2.3.0                  generics_0.0.2           
-##  [82] pillar_1.3.1              haven_1.1.2               withr_2.1.2              
-##  [85] xts_0.10-2                abind_1.4-5               modelr_0.1.2             
-##  [88] crayon_1.3.4              arrayhelpers_1.0-20160527 utf8_1.1.4               
-##  [91] rmarkdown_1.10            grid_3.5.1                readxl_1.1.0             
-##  [94] callr_3.1.0               threejs_0.3.1             digest_0.6.18            
-##  [97] xtable_1.8-2              httpuv_1.4.4.2            stats4_3.5.1             
-## [100] munsell_0.5.0             viridisLite_0.3.0         shinyjs_1.0</code></pre>
+##  [16] bridgesampling_0.4-0      knitr_1.20                shinythemes_1.1.1        
+##  [19] bayesplot_1.6.0           jsonlite_1.5              broom_0.5.1              
+##  [22] shiny_1.1.0               compiler_3.5.1            httr_1.3.1               
+##  [25] backports_1.1.2           assertthat_0.2.0          Matrix_1.2-14            
+##  [28] lazyeval_0.2.1            cli_1.0.1                 later_0.7.3              
+##  [31] prettyunits_1.0.2         htmltools_0.3.6           tools_3.5.1              
+##  [34] igraph_1.2.1              coda_0.19-2               gtable_0.2.0             
+##  [37] glue_1.3.0                reshape2_1.4.3            cellranger_1.1.0         
+##  [40] nlme_3.1-137              blogdown_0.8              crosstalk_1.0.0          
+##  [43] xfun_0.3                  ps_1.2.1                  rvest_0.3.2              
+##  [46] mime_0.5                  miniUI_0.1.1.1            gtools_3.8.1             
+##  [49] MASS_7.3-50               zoo_1.8-2                 scales_1.0.0             
+##  [52] colourpicker_1.0          hms_0.4.2                 promises_1.0.1           
+##  [55] Brobdingnag_1.2-5         parallel_3.5.1            inline_0.3.15            
+##  [58] shinystan_2.5.0           yaml_2.1.19               StanHeaders_2.18.0-1     
+##  [61] loo_2.0.0                 stringi_1.2.3             dygraphs_1.1.1.5         
+##  [64] pkgbuild_1.0.2            rlang_0.3.1               pkgconfig_2.0.2          
+##  [67] matrixStats_0.54.0        evaluate_0.10.1           lattice_0.20-35          
+##  [70] bindr_0.1.1               rstantools_1.5.0          htmlwidgets_1.2          
+##  [73] labeling_0.3              processx_3.2.1            tidyselect_0.2.4         
+##  [76] plyr_1.8.4                magrittr_1.5              bookdown_0.7             
+##  [79] R6_2.3.0                  generics_0.0.2            pillar_1.3.1             
+##  [82] haven_1.1.2               withr_2.1.2               xts_0.10-2               
+##  [85] abind_1.4-5               modelr_0.1.2              crayon_1.3.4             
+##  [88] arrayhelpers_1.0-20160527 utf8_1.1.4                rmarkdown_1.10           
+##  [91] grid_3.5.1                readxl_1.1.0              callr_3.1.0              
+##  [94] threejs_0.3.1             digest_0.6.18             xtable_1.8-2             
+##  [97] httpuv_1.4.4.2            stats4_3.5.1              munsell_0.5.0            
+## [100] viridisLite_0.3.0         shinyjs_1.0</code></pre>
 </div>
