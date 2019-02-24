@@ -562,7 +562,7 @@ baseball %&gt;%
 </blockquote>
 <p>The James-Stein estimator is not Bayesian, but it is a precursor to the kind of analyses we now do with Bayesian multilevel models, which pool cluster-level means toward a grand mean. To get a sense of this, let’s fit a couple models. First, let’s load the brms package.</p>
 <pre class="r"><code>library(brms)</code></pre>
-<p>I typically work with the linear regression paradigm. If we were to analyze the <code>baseball</code> data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about <a href="https://www.youtube.com/watch?v=DyrUkqK9Tj4&amp;t=1581s&amp;frags=pl%2Cwn">here</a> or <a href="https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md">here</a>. If we wanted a model that corresponded to the <span class="math inline">\(y\)</span> estimates, above, we’d use <code>hits</code> as the criterion and allow each player to get his own <em>separate</em> estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing <span class="math inline">\(\text{Normal} (0, 1.5)\)</span> on the intercepts. See <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations">this wiki</a> for more on weakly-regularizing priors.</p>
+<p>I typically work with the linear regression paradigm. If we were to analyze the <code>baseball</code> data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about it <a href="https://www.youtube.com/watch?v=DyrUkqK9Tj4&amp;t=1581s&amp;frags=pl%2Cwn">here</a> or <a href="https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md">here</a>. If we wanted a model that corresponded to the <span class="math inline">\(y\)</span> estimates, above, we’d use <code>hits</code> as the criterion and allow each player to get his own <em>separate</em> estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing <span class="math inline">\(\text{Normal} (0, 1.5)\)</span> on the intercepts. See <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations">this wiki</a> for more on weakly-regularizing priors.</p>
 <p>Here’s the code to fit the model in brms.</p>
 <pre class="r"><code>fit_y &lt;-
   brm(data = baseball, family = binomial,
@@ -740,12 +740,13 @@ p2 &lt;-
 
 grid.arrange(p1, p2, ncol = 2)</code></pre>
 <p><img src="/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/figure-html/unnamed-chunk-24-1.png" width="768" /></p>
-<p>In both panels, the end-of-the-season batting averages (i.e., <span class="math inline">\(\theta\)</span>) are the blue dots. The model-implied estimates are depicted by 95% and 50% interval bands (i.e., the lighter and darker green horizontal lines, respectively). The white line in the background marks off the mean of <span class="math inline">\(\theta\)</span>. Although neither model was perfect, the multilevel model, our analogue to the James-Stein estimates, yielded predictions that appear more valid and precise.</p>
+<p>In both panels, the end-of-the-season batting averages (i.e., <span class="math inline">\(\theta\)</span>) are the blue dots. The model-implied estimates are depicted by 95% and 50% interval bands (i.e., the lighter and darker green horizontal lines, respectively). The white line in the background marks off the mean of <span class="math inline">\(\theta\)</span>. Although neither model was perfect, the multilevel model, our analogue to the James-Stein estimates, yielded predictions that appear both more valid and more precise.</p>
 <p>We might also compare the models by their prediction errors. Here we’ll subtract the end-of-the-season batting averages from the model estimates. But unlike with <code>y</code> and <code>z</code> estimates, above, our <code>fit_y</code> and <code>fit_z</code> models yielded entire posterior distributions. Therefore, we’ll express our prediction errors in terms of error distributions, rather than single values.</p>
 <pre class="r"><code># save the `fit_y` plot
 p3 &lt;-
   f_y %&gt;% 
-  # the error distribution is just the model-implied values minus the true end-of-season values
+  # the error distribution is just the model-implied values minus 
+  # the true end-of-season values
   mutate(error = mu - true_ba)  %&gt;% 
 
   ggplot(aes(x = error, y = reorder(player, true_ba))) +
@@ -779,13 +780,17 @@ p4 &lt;-
         axis.ticks.y  = element_blank(),
         plot.subtitle = element_text(hjust = .5))
 
-# now combine the two and plot
+# now combine the two and behold
 grid.arrange(p3, p4, ncol = 2)</code></pre>
 <p><img src="/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/figure-html/unnamed-chunk-25-1.png" width="768" /></p>
-<p>For consistency, I’ve ordered the players the same as in the previous plots. In both panels, we see the prediction error distribution for each player in green and then summarize those distributions in terms of their means and percentile-based 95% intervals. Since these are error distributions, we prefer them to be as close to zero as possible. Although neither model made perfect predictions, the overall errors in the multilevel model were clearly smaller. Much like with the James-Stein estimator, the partial pooling of the multilevel model made for better end-of-the-season estimates.</p>
+<p>For consistency, I’ve ordered the players along the y-axis the same as above. In both panels, we see the prediction error distribution for each player in green and then summarize those distributions in terms of their means and percentile-based 95% intervals. Since these are error distributions, we prefer them to be as close to zero as possible. Although neither model made perfect predictions, the overall errors in the multilevel model were clearly smaller. Much like with the James-Stein estimator, the partial pooling of the multilevel model made for better end-of-the-season estimates.</p>
 <blockquote>
-<p>The paradoxical [consequence of Bayesian multilevel models] is that [they can contradict] this elementary law of statistical theory. If we have [two] or more baseball players, and if we are interested in predicting future batting averages for each of them, then [the Bayesian multilevel model can be better] than simply extrapolating from [the] separate averages. (p. 119) ## Next steps</p>
+<p>The paradoxical [consequence of Bayesian multilevel models] is that [they can contradict] this elementary law of statistical theory. If we have [two] or more baseball players, and if we are interested in predicting future batting averages for each of them, then [the Bayesian multilevel model can be better] than simply extrapolating from [the] separate averages. (p. 119)</p>
 </blockquote>
+<p>This is another example of how the <a href="https://en.wikipedia.org/wiki/KISS_principle">KISS principle</a> isn’t always the best bet with data analysis.</p>
+</div>
+<div id="next-steps" class="section level2">
+<h2>Next steps</h2>
 <p>If you’re new to logistic regression, multilevel models or Bayesian statistics, I recommend any of the following texts:</p>
 <ul>
 <li><a href="http://xcelab.net/rm/statistical-rethinking/"><em>Statistical Rethinking</em></a></li>

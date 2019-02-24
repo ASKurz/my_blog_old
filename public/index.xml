@@ -257,7 +257,7 @@ baseball %&amp;gt;%
 &lt;/blockquote&gt;
 &lt;p&gt;The James-Stein estimator is not Bayesian, but it is a precursor to the kind of analyses we now do with Bayesian multilevel models, which pool cluster-level means toward a grand mean. To get a sense of this, let’s fit a couple models. First, let’s load the brms package.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;I typically work with the linear regression paradigm. If we were to analyze the &lt;code&gt;baseball&lt;/code&gt; data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about &lt;a href=&#34;https://www.youtube.com/watch?v=DyrUkqK9Tj4&amp;amp;t=1581s&amp;amp;frags=pl%2Cwn&#34;&gt;here&lt;/a&gt; or &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md&#34;&gt;here&lt;/a&gt;. If we wanted a model that corresponded to the &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; estimates, above, we’d use &lt;code&gt;hits&lt;/code&gt; as the criterion and allow each player to get his own &lt;em&gt;separate&lt;/em&gt; estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing &lt;span class=&#34;math inline&#34;&gt;\(\text{Normal} (0, 1.5)\)&lt;/span&gt; on the intercepts. See &lt;a href=&#34;https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations&#34;&gt;this wiki&lt;/a&gt; for more on weakly-regularizing priors.&lt;/p&gt;
+&lt;p&gt;I typically work with the linear regression paradigm. If we were to analyze the &lt;code&gt;baseball&lt;/code&gt; data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about it &lt;a href=&#34;https://www.youtube.com/watch?v=DyrUkqK9Tj4&amp;amp;t=1581s&amp;amp;frags=pl%2Cwn&#34;&gt;here&lt;/a&gt; or &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/blob/master/10.md&#34;&gt;here&lt;/a&gt;. If we wanted a model that corresponded to the &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; estimates, above, we’d use &lt;code&gt;hits&lt;/code&gt; as the criterion and allow each player to get his own &lt;em&gt;separate&lt;/em&gt; estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing &lt;span class=&#34;math inline&#34;&gt;\(\text{Normal} (0, 1.5)\)&lt;/span&gt; on the intercepts. See &lt;a href=&#34;https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations&#34;&gt;this wiki&lt;/a&gt; for more on weakly-regularizing priors.&lt;/p&gt;
 &lt;p&gt;Here’s the code to fit the model in brms.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit_y &amp;lt;-
   brm(data = baseball, family = binomial,
@@ -435,12 +435,13 @@ p2 &amp;lt;-
 
 grid.arrange(p1, p2, ncol = 2)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/figure-html/unnamed-chunk-24-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;In both panels, the end-of-the-season batting averages (i.e., &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;) are the blue dots. The model-implied estimates are depicted by 95% and 50% interval bands (i.e., the lighter and darker green horizontal lines, respectively). The white line in the background marks off the mean of &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;. Although neither model was perfect, the multilevel model, our analogue to the James-Stein estimates, yielded predictions that appear more valid and precise.&lt;/p&gt;
+&lt;p&gt;In both panels, the end-of-the-season batting averages (i.e., &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;) are the blue dots. The model-implied estimates are depicted by 95% and 50% interval bands (i.e., the lighter and darker green horizontal lines, respectively). The white line in the background marks off the mean of &lt;span class=&#34;math inline&#34;&gt;\(\theta\)&lt;/span&gt;. Although neither model was perfect, the multilevel model, our analogue to the James-Stein estimates, yielded predictions that appear both more valid and more precise.&lt;/p&gt;
 &lt;p&gt;We might also compare the models by their prediction errors. Here we’ll subtract the end-of-the-season batting averages from the model estimates. But unlike with &lt;code&gt;y&lt;/code&gt; and &lt;code&gt;z&lt;/code&gt; estimates, above, our &lt;code&gt;fit_y&lt;/code&gt; and &lt;code&gt;fit_z&lt;/code&gt; models yielded entire posterior distributions. Therefore, we’ll express our prediction errors in terms of error distributions, rather than single values.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# save the `fit_y` plot
 p3 &amp;lt;-
   f_y %&amp;gt;% 
-  # the error distribution is just the model-implied values minus the true end-of-season values
+  # the error distribution is just the model-implied values minus 
+  # the true end-of-season values
   mutate(error = mu - true_ba)  %&amp;gt;% 
 
   ggplot(aes(x = error, y = reorder(player, true_ba))) +
@@ -474,13 +475,17 @@ p4 &amp;lt;-
         axis.ticks.y  = element_blank(),
         plot.subtitle = element_text(hjust = .5))
 
-# now combine the two and plot
+# now combine the two and behold
 grid.arrange(p3, p4, ncol = 2)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/figure-html/unnamed-chunk-25-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;For consistency, I’ve ordered the players the same as in the previous plots. In both panels, we see the prediction error distribution for each player in green and then summarize those distributions in terms of their means and percentile-based 95% intervals. Since these are error distributions, we prefer them to be as close to zero as possible. Although neither model made perfect predictions, the overall errors in the multilevel model were clearly smaller. Much like with the James-Stein estimator, the partial pooling of the multilevel model made for better end-of-the-season estimates.&lt;/p&gt;
+&lt;p&gt;For consistency, I’ve ordered the players along the y-axis the same as above. In both panels, we see the prediction error distribution for each player in green and then summarize those distributions in terms of their means and percentile-based 95% intervals. Since these are error distributions, we prefer them to be as close to zero as possible. Although neither model made perfect predictions, the overall errors in the multilevel model were clearly smaller. Much like with the James-Stein estimator, the partial pooling of the multilevel model made for better end-of-the-season estimates.&lt;/p&gt;
 &lt;blockquote&gt;
-&lt;p&gt;The paradoxical [consequence of Bayesian multilevel models] is that [they can contradict] this elementary law of statistical theory. If we have [two] or more baseball players, and if we are interested in predicting future batting averages for each of them, then [the Bayesian multilevel model can be better] than simply extrapolating from [the] separate averages. (p. 119) ## Next steps&lt;/p&gt;
+&lt;p&gt;The paradoxical [consequence of Bayesian multilevel models] is that [they can contradict] this elementary law of statistical theory. If we have [two] or more baseball players, and if we are interested in predicting future batting averages for each of them, then [the Bayesian multilevel model can be better] than simply extrapolating from [the] separate averages. (p. 119)&lt;/p&gt;
 &lt;/blockquote&gt;
+&lt;p&gt;This is another example of how the &lt;a href=&#34;https://en.wikipedia.org/wiki/KISS_principle&#34;&gt;KISS principle&lt;/a&gt; isn’t always the best bet with data analysis.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;next-steps&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Next steps&lt;/h2&gt;
 &lt;p&gt;If you’re new to logistic regression, multilevel models or Bayesian statistics, I recommend any of the following texts:&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;&lt;a href=&#34;http://xcelab.net/rm/statistical-rethinking/&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt;&lt;/a&gt;&lt;/li&gt;
@@ -3164,8 +3169,8 @@ ABC =
 &lt;pre&gt;&lt;code&gt;## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 3.3e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.33 seconds.
+## Chain 1: Gradient evaluation took 3.8e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.38 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -3182,15 +3187,15 @@ ABC =
 ## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.688459 seconds (Warm-up)
-## Chain 1:                0.631558 seconds (Sampling)
-## Chain 1:                1.32002 seconds (Total)
+## Chain 1:  Elapsed Time: 0.556678 seconds (Warm-up)
+## Chain 1:                0.58899 seconds (Sampling)
+## Chain 1:                1.14567 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 1.8e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.18 seconds.
+## Chain 2: Gradient evaluation took 2.3e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.23 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -3207,15 +3212,15 @@ ABC =
 ## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.630012 seconds (Warm-up)
-## Chain 2:                0.666092 seconds (Sampling)
-## Chain 2:                1.2961 seconds (Total)
+## Chain 2:  Elapsed Time: 0.621878 seconds (Warm-up)
+## Chain 2:                0.727946 seconds (Sampling)
+## Chain 2:                1.34982 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 1.6e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
+## Chain 3: Gradient evaluation took 1.3e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -3232,15 +3237,15 @@ ABC =
 ## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.72341 seconds (Warm-up)
-## Chain 3:                0.574373 seconds (Sampling)
-## Chain 3:                1.29778 seconds (Total)
+## Chain 3:  Elapsed Time: 0.717594 seconds (Warm-up)
+## Chain 3:                0.586118 seconds (Sampling)
+## Chain 3:                1.30371 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
 ## Chain 4: 
-## Chain 4: Gradient evaluation took 1.6e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.16 seconds.
+## Chain 4: Gradient evaluation took 1.2e-05 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
 ## Chain 4: Adjust your expectations accordingly!
 ## Chain 4: 
 ## Chain 4: 
@@ -3257,9 +3262,9 @@ ABC =
 ## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.571025 seconds (Warm-up)
-## Chain 4:                0.706697 seconds (Sampling)
-## Chain 4:                1.27772 seconds (Total)
+## Chain 4:  Elapsed Time: 0.593527 seconds (Warm-up)
+## Chain 4:                0.660565 seconds (Sampling)
+## Chain 4:                1.25409 seconds (Total)
 ## Chain 4:&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
   spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%
