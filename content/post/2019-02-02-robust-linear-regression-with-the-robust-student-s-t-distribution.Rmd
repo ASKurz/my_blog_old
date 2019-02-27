@@ -16,7 +16,7 @@ header:
   image: ''
 ---
 
-[edited Feb 3, 2018]
+[edited Feb 3, 2019]
  
 The purpose of this post is to demonstrate the advantages of the Student's $t$-distribution for regression with outliers, particularly within a [Bayesian framework](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists).
 
