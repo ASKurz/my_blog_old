@@ -17,6 +17,8 @@ header:
   image: ''
 ---
 
+[edited Feb 27, 2019]
+
 ## Preamble
 
 I released the first [bookdown](https://bookdown.org) version of my [*Statistical Rethinking* with brms, ggplot2, and the tidyverse](https://bookdown.org/connect/#/apps/1850/access) project a couple weeks ago. I consider it the 0.9.0 version. I wanted a little time to step back from the project before giving it a final edit for the first major edition. I also wanted to give others a little time to take a look and suggest edits, which some thankfully have. 
@@ -53,7 +55,7 @@ Since there’s no example of a meta-analysis in the text, we’ll have to look 
 
 > Around the world, most children (80%) are spanked or otherwise physically punished by their parents ([UNICEF, 2014](https://www.unicef.org/publications/index_74865.html)). The question of whether parents should spank their children to correct misbehaviors sits at a nexus of arguments from ethical, religious, and human rights perspectives both in the U.S. and around the world ([Gershoff, 2013](https://onlinelibrary.wiley.com/doi/abs/10.1111/cdep.12038)). Several hundred studies have been conducted on the associations between parents’ use of spanking or physical punishment and children’s behavioral, emotional, cognitive, and physical outcomes, making spanking one of the most studied aspects of parenting. What has been learned from these hundreds of studies? (p. 453)
 
-Our goal will be to learn Bayesian meta-analysis by answering part of that question. I’ve transcribed the values directly from Gershoff and Grogan-Kaylor’s paper and saved them as a file called `spank`.
+Our goal will be to learn Bayesian meta-analysis by answering part of that question. I’ve transcribed the values directly from Gershoff and Grogan-Kaylor’s paper and saved them as a file called `spank.xlsx`.
 You can find the data in [this project’s GitHub repository](https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse). Let's load them and `glimpse()`.
 
 ```{r, warning = F, message = F}
@@ -118,7 +120,8 @@ b14.5 <-
       d | se(se) ~ 1 + (1 | study),
       prior = c(prior(normal(0, 1), class = Intercept),
                 prior(cauchy(0, 1), class = sd)),
-      iter = 2000, warmup = 1000, cores = 4, chains = 4)
+      iter = 2000, warmup = 1000, cores = 4, chains = 4,
+      seed = 14)
 ```
 
 One thing you might notice is our `se(se)` function excluded the `sigma` argument. If you recall from section 14.1, we specified `sigma = T` in our measurement-error models. The brms default is that within `se()`, `sigma = FALSE`. As such, we have no estimate for sigma the way we would if we were doing this analysis with the raw data from the studies. Hopefully this makes sense. The uncertainty around the `d`-value for each study $i$ has already been encoded in the data as `se`.
@@ -155,7 +158,8 @@ b14.6 <-
       d | se(se) ~ 1 + (1 | study) + (1 | outcome),
       prior = c(prior(normal(0, 1), class = Intercept),
                 prior(cauchy(0, 1), class = sd)),
-      iter = 2000, warmup = 1000, cores = 4, chains = 4)
+      iter = 2000, warmup = 1000, cores = 4, chains = 4,
+      seed = 14)
 ```
 
 ```{r}
@@ -183,6 +187,7 @@ So at this point, the big story is there's more variability between the studies 
 ```{r, fig.width = 5, fig.height = 4, warning = F, message = F}
 # load tidybayes
 library(tidybayes)
+
 b14.6 %>%
   spread_draws(b_Intercept, r_outcome[outcome,]) %>%
   # add the grand mean to the group-specific deviations
@@ -191,8 +196,9 @@ b14.6 %>%
   mutate(outcome = str_replace_all(outcome, "[.]", " ")) %>% 
 
   # plot
-  ggplot(aes(x = mu, y = outcome, fill = mu)) +
-  # ggplot(aes(x = mu, y = reorder(outcome, mu))) +
+  ggplot(aes(x = mu, y = reorder(outcome, mu))) +
+  geom_vline(xintercept = fixef(b14.6)[1, 1], color = "white", size = 1) +
+  geom_vline(xintercept = fixef(b14.6)[1, 3:4], color = "white", linetype = 2) +
   geom_halfeyeh(.width = .95, size = 2/3) +
   labs(x = expression(italic("Cohen's d")),
        y = NULL) +
@@ -201,7 +207,7 @@ b14.6 %>%
         axis.text.y  = element_text(hjust = 0))
 ```
 
-Nope, not a lot of variability, there. Let's go one step further with the model. Doubling back to Gelman and colleagues, we read:
+The solid and dashed verticle white lines in the background mark off the grand mean (i.e., the meta-analytic effect) and its 95% intervals. But anywah, there's not a lot of variability across the outcomes. Let's go one step further with the model. Doubling back to Gelman and colleagues, we read:
 
 > When assuming exchangeability we assume there are no important covariates that might form the basis of a more complex model, and this assumption (perhaps misguidedly) is widely adopted in meta-analysis. What if other information (in addition to the data $(n, y)$) is available to distinguish among the $J$ studies in a meta-analysis, so that an exchangeable model is inappropriate? In this situation, we can expand the framework of the model to be exchangeable in the observed data and covariates, for example using a hierarchical regression model. (p. 126)
 
@@ -220,7 +226,8 @@ b14.7 <-
       d | se(se) ~ 0 + intercept + between + (1 | study) + (1 | outcome),
       prior = c(prior(normal(0, 1), class = b),
                 prior(cauchy(0, 1), class = sd)),
-      iter = 2000, warmup = 1000, cores = 4, chains = 4)
+      iter = 2000, warmup = 1000, cores = 4, chains = 4,
+      seed = 14)
 ```
 
 ```{r}
@@ -251,36 +258,3 @@ If you’d like to learn more about these methods, do check out Vourre’s [*Met
 ```{r}
 sessionInfo()
 ```
-
-
-
-
-```{r}
-set.seed(5)
-n = 10
-n_condition = 5
-ABC =
-  data_frame(
-    condition = rep(c("A","B","C","D","E"), n),
-    response = rnorm(n * 5, c(0,1,2,1,-1), 0.5)
-  )
-
-m <- brm(response ~ (1|condition), 
-         data = ABC, 
-         control = list(adapt_delta = .99),
-  prior = c(
-    prior(normal(0, 1), class = Intercept),
-    prior(student_t(3, 0, 1), class = sd),
-    prior(student_t(3, 0, 1), class = sigma)
-  ))
-```
-
-```{r}
-m %>%
-  spread_draws(b_Intercept, r_condition[condition,]) %>%
-  mutate(condition_mean = b_Intercept + r_condition) %>%
-
-  ggplot(aes(y = condition, x = condition_mean, fill = condition_mean)) +
-  geom_halfeyeh()
-```
-
