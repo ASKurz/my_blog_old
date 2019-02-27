@@ -1564,7 +1564,7 @@ posts %&amp;gt;%
       <pubDate>Sat, 02 Feb 2019 00:00:00 +0000</pubDate>
       
       <guid>/post/robust-linear-regression-with-the-robust-student-s-t-distribution/</guid>
-      <description>&lt;p&gt;[edited Feb 3, 2018]&lt;/p&gt;
+      <description>&lt;p&gt;[edited Feb 3, 2019]&lt;/p&gt;
 &lt;p&gt;The purpose of this post is to demonstrate the advantages of the Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution for regression with outliers, particularly within a &lt;a href=&#34;https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists&#34;&gt;Bayesian framework&lt;/a&gt;.&lt;/p&gt;
 &lt;div id=&#34;i-make-assumptions&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;I make assumptions&lt;/h2&gt;
@@ -2768,7 +2768,8 @@ glimpse(afd)&lt;/code&gt;&lt;/pre&gt;
       <pubDate>Sun, 14 Oct 2018 00:00:00 +0000</pubDate>
       
       <guid>/post/bayesian-meta-analysis/</guid>
-      <description>&lt;div id=&#34;preamble&#34; class=&#34;section level2&#34;&gt;
+      <description>&lt;p&gt;[edited Feb 27, 2019]&lt;/p&gt;
+&lt;div id=&#34;preamble&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Preamble&lt;/h2&gt;
 &lt;p&gt;I released the first &lt;a href=&#34;https://bookdown.org&#34;&gt;bookdown&lt;/a&gt; version of my &lt;a href=&#34;https://bookdown.org/connect/#/apps/1850/access&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt; with brms, ggplot2, and the tidyverse&lt;/a&gt; project a couple weeks ago. I consider it the 0.9.0 version. I wanted a little time to step back from the project before giving it a final edit for the first major edition. I also wanted to give others a little time to take a look and suggest edits, which some thankfully have.&lt;/p&gt;
 &lt;p&gt;Now some time has passed, it’s become clear I’d like to add a bonus section on Bayesian meta-analysis. IMO, this is a natural extension of the hierarchical models McElreath introduced in chapter’s 12 and 13 of &lt;a href=&#34;https://xcelab.net/rm/statistical-rethinking/&#34;&gt;his text&lt;/a&gt; and of the measurement-error models he introduced in chapter 14. So the purpose of this post is to present a rough draft of how I’d like to introduce fitting meta-analyses with Bürkner’s great brms package.&lt;/p&gt;
@@ -2793,7 +2794,7 @@ glimpse(afd)&lt;/code&gt;&lt;/pre&gt;
 &lt;blockquote&gt;
 &lt;p&gt;Around the world, most children (80%) are spanked or otherwise physically punished by their parents (&lt;a href=&#34;https://www.unicef.org/publications/index_74865.html&#34;&gt;UNICEF, 2014&lt;/a&gt;). The question of whether parents should spank their children to correct misbehaviors sits at a nexus of arguments from ethical, religious, and human rights perspectives both in the U.S. and around the world (&lt;a href=&#34;https://onlinelibrary.wiley.com/doi/abs/10.1111/cdep.12038&#34;&gt;Gershoff, 2013&lt;/a&gt;). Several hundred studies have been conducted on the associations between parents’ use of spanking or physical punishment and children’s behavioral, emotional, cognitive, and physical outcomes, making spanking one of the most studied aspects of parenting. What has been learned from these hundreds of studies? (p. 453)&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;Our goal will be to learn Bayesian meta-analysis by answering part of that question. I’ve transcribed the values directly from Gershoff and Grogan-Kaylor’s paper and saved them as a file called &lt;code&gt;spank&lt;/code&gt;. You can find the data in &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse&#34;&gt;this project’s GitHub repository&lt;/a&gt;. Let’s load them and &lt;code&gt;glimpse()&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Our goal will be to learn Bayesian meta-analysis by answering part of that question. I’ve transcribed the values directly from Gershoff and Grogan-Kaylor’s paper and saved them as a file called &lt;code&gt;spank.xlsx&lt;/code&gt;. You can find the data in &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse&#34;&gt;this project’s GitHub repository&lt;/a&gt;. Let’s load them and &lt;code&gt;glimpse()&lt;/code&gt;.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;spank &amp;lt;- readxl::read_excel(&amp;quot;spank.xlsx&amp;quot;)
 
 library(tidyverse)
@@ -2852,7 +2853,8 @@ glimpse(spank)&lt;/code&gt;&lt;/pre&gt;
       d | se(se) ~ 1 + (1 | study),
       prior = c(prior(normal(0, 1), class = Intercept),
                 prior(cauchy(0, 1), class = sd)),
-      iter = 2000, warmup = 1000, cores = 4, chains = 4)&lt;/code&gt;&lt;/pre&gt;
+      iter = 2000, warmup = 1000, cores = 4, chains = 4,
+      seed = 14)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;One thing you might notice is our &lt;code&gt;se(se)&lt;/code&gt; function excluded the &lt;code&gt;sigma&lt;/code&gt; argument. If you recall from section 14.1, we specified &lt;code&gt;sigma = T&lt;/code&gt; in our measurement-error models. The brms default is that within &lt;code&gt;se()&lt;/code&gt;, &lt;code&gt;sigma = FALSE&lt;/code&gt;. As such, we have no estimate for sigma the way we would if we were doing this analysis with the raw data from the studies. Hopefully this makes sense. The uncertainty around the &lt;code&gt;d&lt;/code&gt;-value for each study &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt; has already been encoded in the data as &lt;code&gt;se&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;This brings us to another point. We typically perform meta-analyses on data summaries. In my field and perhaps in yours, this is due to the historical accident that it has not been the norm among researchers to make their data publically available. So effect size summaries were the best we typically had. However, times are changing (e.g., &lt;a href=&#34;https://www.apa.org/monitor/2017/11/trends-open-science.aspx&#34;&gt;here&lt;/a&gt;, &lt;a href=&#34;https://www.blog.google/products/search/making-it-easier-discover-datasets/&#34;&gt;here&lt;/a&gt;). If the raw data from all the studies for your meta-analysis are available, you can just fit a multilevel model in which the data are nested in the studies. Heck, you could even allow the studies to vary by &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; by taking the &lt;a href=&#34;https://cran.r-project.org/web/packages/brms/vignettes/brms_distreg.html#a-simple-distributional-model&#34;&gt;distributional modeling approach&lt;/a&gt; and specify something like &lt;code&gt;sigma ~ 0 + study&lt;/code&gt; or even &lt;code&gt;sigma ~ 1 + (1 | study)&lt;/code&gt;.&lt;/p&gt;
 &lt;p&gt;But enough technical talk. Let’s look at the model results.&lt;/p&gt;
@@ -2867,16 +2869,16 @@ glimpse(spank)&lt;/code&gt;&lt;/pre&gt;
 ## Group-Level Effects: 
 ## ~study (Number of levels: 76) 
 ##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sd(Intercept)     0.27      0.03     0.21     0.33        773 1.00
+## sd(Intercept)     0.26      0.03     0.21     0.33        703 1.01
 ## 
 ## Population-Level Effects: 
 ##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## Intercept     0.38      0.03     0.30     0.44        482 1.01
+## Intercept     0.37      0.04     0.30     0.44        397 1.01
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
 ## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Thus, in our simple Bayesian meta-analysis, we have a population &lt;em&gt;Cohen’s d&lt;/em&gt; of about 0.38. Our estimate for &lt;span class=&#34;math inline&#34;&gt;\(\tau\)&lt;/span&gt;, 0.27, suggests we have quite a bit of between-study variability. One question you might ask is: &lt;em&gt;What exactly are these&lt;/em&gt; Cohen’s d&lt;em&gt;s measuring, anyways?&lt;/em&gt; We’ve encoded that in the &lt;code&gt;outcome&lt;/code&gt; vector of the &lt;code&gt;spank&lt;/code&gt; data.&lt;/p&gt;
+&lt;p&gt;Thus, in our simple Bayesian meta-analysis, we have a population &lt;em&gt;Cohen’s d&lt;/em&gt; of about 0.37. Our estimate for &lt;span class=&#34;math inline&#34;&gt;\(\tau\)&lt;/span&gt;, 0.26, suggests we have quite a bit of between-study variability. One question you might ask is: &lt;em&gt;What exactly are these&lt;/em&gt; Cohen’s d&lt;em&gt;s measuring, anyways?&lt;/em&gt; We’ve encoded that in the &lt;code&gt;outcome&lt;/code&gt; vector of the &lt;code&gt;spank&lt;/code&gt; data.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;spank %&amp;gt;% 
   distinct(outcome) %&amp;gt;% 
   knitr::kable()&lt;/code&gt;&lt;/pre&gt;
@@ -2954,7 +2956,8 @@ glimpse(spank)&lt;/code&gt;&lt;/pre&gt;
       d | se(se) ~ 1 + (1 | study) + (1 | outcome),
       prior = c(prior(normal(0, 1), class = Intercept),
                 prior(cauchy(0, 1), class = sd)),
-      iter = 2000, warmup = 1000, cores = 4, chains = 4)&lt;/code&gt;&lt;/pre&gt;
+      iter = 2000, warmup = 1000, cores = 4, chains = 4,
+      seed = 14)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(b14.6)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##  Family: gaussian 
 ##   Links: mu = identity; sigma = identity 
@@ -2966,15 +2969,15 @@ glimpse(spank)&lt;/code&gt;&lt;/pre&gt;
 ## Group-Level Effects: 
 ## ~outcome (Number of levels: 17) 
 ##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sd(Intercept)     0.08      0.02     0.04     0.14        876 1.00
+## sd(Intercept)     0.08      0.03     0.04     0.14        950 1.00
 ## 
 ## ~study (Number of levels: 76) 
 ##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sd(Intercept)     0.25      0.03     0.20     0.32        828 1.00
+## sd(Intercept)     0.25      0.03     0.20     0.32        824 1.00
 ## 
 ## Population-Level Effects: 
 ##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## Intercept     0.35      0.04     0.28     0.44        550 1.00
+## Intercept     0.35      0.04     0.27     0.44        654 1.01
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -2995,6 +2998,7 @@ glimpse(spank)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;So at this point, the big story is there’s more variability between the studies than there is the outcomes. But I still want to get a sense of the individual outcomes. Here we’ll use &lt;code&gt;tidybayes::geom_halfeyeh()&lt;/code&gt; to help us make our version of a &lt;a href=&#34;https://cran.r-project.org/web/packages/forestplot/vignettes/forestplot.html&#34;&gt;forest plot&lt;/a&gt;.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# load tidybayes
 library(tidybayes)
+
 b14.6 %&amp;gt;%
   spread_draws(b_Intercept, r_outcome[outcome,]) %&amp;gt;%
   # add the grand mean to the group-specific deviations
@@ -3003,8 +3007,9 @@ b14.6 %&amp;gt;%
   mutate(outcome = str_replace_all(outcome, &amp;quot;[.]&amp;quot;, &amp;quot; &amp;quot;)) %&amp;gt;% 
 
   # plot
-  ggplot(aes(x = mu, y = outcome, fill = mu)) +
-  # ggplot(aes(x = mu, y = reorder(outcome, mu))) +
+  ggplot(aes(x = mu, y = reorder(outcome, mu))) +
+  geom_vline(xintercept = fixef(b14.6)[1, 1], color = &amp;quot;white&amp;quot;, size = 1) +
+  geom_vline(xintercept = fixef(b14.6)[1, 3:4], color = &amp;quot;white&amp;quot;, linetype = 2) +
   geom_halfeyeh(.width = .95, size = 2/3) +
   labs(x = expression(italic(&amp;quot;Cohen&amp;#39;s d&amp;quot;)),
        y = NULL) +
@@ -3012,7 +3017,7 @@ b14.6 %&amp;gt;%
         axis.ticks.y = element_blank(),
         axis.text.y  = element_text(hjust = 0))&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;&lt;img src=&#34;/post/2018-10-14-bayesian-meta-analysis_files/figure-html/unnamed-chunk-9-1.png&#34; width=&#34;480&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;Nope, not a lot of variability, there. Let’s go one step further with the model. Doubling back to Gelman and colleagues, we read:&lt;/p&gt;
+&lt;p&gt;The solid and dashed verticle white lines in the background mark off the grand mean (i.e., the meta-analytic effect) and its 95% intervals. But anywah, there’s not a lot of variability across the outcomes. Let’s go one step further with the model. Doubling back to Gelman and colleagues, we read:&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;p&gt;When assuming exchangeability we assume there are no important covariates that might form the basis of a more complex model, and this assumption (perhaps misguidedly) is widely adopted in meta-analysis. What if other information (in addition to the data &lt;span class=&#34;math inline&#34;&gt;\((n, y)\)&lt;/span&gt;) is available to distinguish among the &lt;span class=&#34;math inline&#34;&gt;\(J\)&lt;/span&gt; studies in a meta-analysis, so that an exchangeable model is inappropriate? In this situation, we can expand the framework of the model to be exchangeable in the observed data and covariates, for example using a hierarchical regression model. (p. 126)&lt;/p&gt;
 &lt;/blockquote&gt;
@@ -3030,7 +3035,8 @@ b14.6 %&amp;gt;%
       d | se(se) ~ 0 + intercept + between + (1 | study) + (1 | outcome),
       prior = c(prior(normal(0, 1), class = b),
                 prior(cauchy(0, 1), class = sd)),
-      iter = 2000, warmup = 1000, cores = 4, chains = 4)&lt;/code&gt;&lt;/pre&gt;
+      iter = 2000, warmup = 1000, cores = 4, chains = 4,
+      seed = 14)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(b14.7)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##  Family: gaussian 
 ##   Links: mu = identity; sigma = identity 
@@ -3042,16 +3048,16 @@ b14.6 %&amp;gt;%
 ## Group-Level Effects: 
 ## ~outcome (Number of levels: 17) 
 ##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sd(Intercept)     0.08      0.02     0.04     0.14       1319 1.00
+## sd(Intercept)     0.08      0.02     0.04     0.14       1580 1.00
 ## 
 ## ~study (Number of levels: 76) 
 ##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sd(Intercept)     0.25      0.03     0.20     0.32       1088 1.00
+## sd(Intercept)     0.25      0.03     0.20     0.32       1186 1.00
 ## 
 ## Population-Level Effects: 
 ##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## intercept     0.38      0.05     0.29     0.48       1017 1.00
-## between      -0.07      0.07    -0.21     0.07       1194 1.00
+## intercept     0.38      0.05     0.28     0.48       1052 1.00
+## between      -0.08      0.07    -0.22     0.07        979 1.00
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -3101,178 +3107,51 @@ b14.6 %&amp;gt;%
 ##   [9] rstan_2.18.2              svUnit_0.7-12            
 ##  [11] DT_0.4                    fansi_0.4.0              
 ##  [13] mvtnorm_1.0-8             lubridate_1.7.4          
-##  [15] xml2_1.2.0                bridgesampling_0.4-0     
-##  [17] knitr_1.20                shinythemes_1.1.1        
-##  [19] bayesplot_1.6.0           jsonlite_1.5             
-##  [21] broom_0.5.1               shiny_1.1.0              
-##  [23] compiler_3.5.1            httr_1.3.1               
-##  [25] backports_1.1.2           assertthat_0.2.0         
-##  [27] Matrix_1.2-14             lazyeval_0.2.1           
-##  [29] cli_1.0.1                 later_0.7.3              
-##  [31] htmltools_0.3.6           prettyunits_1.0.2        
-##  [33] tools_3.5.1               igraph_1.2.1             
-##  [35] coda_0.19-2               gtable_0.2.0             
-##  [37] glue_1.3.0                reshape2_1.4.3           
-##  [39] cellranger_1.1.0          nlme_3.1-137             
-##  [41] blogdown_0.8              crosstalk_1.0.0          
-##  [43] xfun_0.3                  ps_1.2.1                 
-##  [45] rvest_0.3.2               mime_0.5                 
-##  [47] miniUI_0.1.1.1            gtools_3.8.1             
-##  [49] MASS_7.3-50               zoo_1.8-2                
-##  [51] scales_1.0.0              colourpicker_1.0         
-##  [53] hms_0.4.2                 promises_1.0.1           
-##  [55] Brobdingnag_1.2-5         parallel_3.5.1           
-##  [57] inline_0.3.15             shinystan_2.5.0          
-##  [59] yaml_2.1.19               gridExtra_2.3            
-##  [61] loo_2.0.0                 StanHeaders_2.18.0-1     
-##  [63] stringi_1.2.3             highr_0.7                
-##  [65] dygraphs_1.1.1.5          pkgbuild_1.0.2           
-##  [67] rlang_0.3.1               pkgconfig_2.0.2          
-##  [69] matrixStats_0.54.0        evaluate_0.10.1          
-##  [71] lattice_0.20-35           bindr_0.1.1              
-##  [73] rstantools_1.5.0          htmlwidgets_1.2          
-##  [75] labeling_0.3              tidyselect_0.2.4         
-##  [77] processx_3.2.1            plyr_1.8.4               
-##  [79] magrittr_1.5              bookdown_0.7             
-##  [81] R6_2.3.0                  generics_0.0.2           
-##  [83] pillar_1.3.1              haven_1.1.2              
-##  [85] withr_2.1.2               xts_0.10-2               
-##  [87] abind_1.4-5               modelr_0.1.2             
-##  [89] crayon_1.3.4              arrayhelpers_1.0-20160527
-##  [91] utf8_1.1.4                rmarkdown_1.10           
-##  [93] grid_3.5.1                readxl_1.1.0             
-##  [95] callr_3.1.0               threejs_0.3.1            
-##  [97] digest_0.6.18             xtable_1.8-2             
-##  [99] httpuv_1.4.4.2            stats4_3.5.1             
-## [101] munsell_0.5.0             viridisLite_0.3.0        
-## [103] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;set.seed(5)
-n = 10
-n_condition = 5
-ABC =
-  data_frame(
-    condition = rep(c(&amp;quot;A&amp;quot;,&amp;quot;B&amp;quot;,&amp;quot;C&amp;quot;,&amp;quot;D&amp;quot;,&amp;quot;E&amp;quot;), n),
-    response = rnorm(n * 5, c(0,1,2,1,-1), 0.5)
-  )&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## Warning: `data_frame()` is deprecated, use `tibble()`.
-## This warning is displayed once per session.&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m &amp;lt;- brm(response ~ (1|condition), 
-         data = ABC, 
-         control = list(adapt_delta = .99),
-  prior = c(
-    prior(normal(0, 1), class = Intercept),
-    prior(student_t(3, 0, 1), class = sd),
-    prior(student_t(3, 0, 1), class = sigma)
-  ))&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## Compiling the C++ model&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## Start sampling&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## 
-## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 1).
-## Chain 1: 
-## Chain 1: Gradient evaluation took 3.8e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.38 seconds.
-## Chain 1: Adjust your expectations accordingly!
-## Chain 1: 
-## Chain 1: 
-## Chain 1: Iteration:    1 / 2000 [  0%]  (Warmup)
-## Chain 1: Iteration:  200 / 2000 [ 10%]  (Warmup)
-## Chain 1: Iteration:  400 / 2000 [ 20%]  (Warmup)
-## Chain 1: Iteration:  600 / 2000 [ 30%]  (Warmup)
-## Chain 1: Iteration:  800 / 2000 [ 40%]  (Warmup)
-## Chain 1: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-## Chain 1: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-## Chain 1: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-## Chain 1: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-## Chain 1: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-## Chain 1: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-## Chain 1: Iteration: 2000 / 2000 [100%]  (Sampling)
-## Chain 1: 
-## Chain 1:  Elapsed Time: 0.556678 seconds (Warm-up)
-## Chain 1:                0.58899 seconds (Sampling)
-## Chain 1:                1.14567 seconds (Total)
-## Chain 1: 
-## 
-## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 2).
-## Chain 2: 
-## Chain 2: Gradient evaluation took 2.3e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.23 seconds.
-## Chain 2: Adjust your expectations accordingly!
-## Chain 2: 
-## Chain 2: 
-## Chain 2: Iteration:    1 / 2000 [  0%]  (Warmup)
-## Chain 2: Iteration:  200 / 2000 [ 10%]  (Warmup)
-## Chain 2: Iteration:  400 / 2000 [ 20%]  (Warmup)
-## Chain 2: Iteration:  600 / 2000 [ 30%]  (Warmup)
-## Chain 2: Iteration:  800 / 2000 [ 40%]  (Warmup)
-## Chain 2: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-## Chain 2: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-## Chain 2: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-## Chain 2: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-## Chain 2: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-## Chain 2: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-## Chain 2: Iteration: 2000 / 2000 [100%]  (Sampling)
-## Chain 2: 
-## Chain 2:  Elapsed Time: 0.621878 seconds (Warm-up)
-## Chain 2:                0.727946 seconds (Sampling)
-## Chain 2:                1.34982 seconds (Total)
-## Chain 2: 
-## 
-## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 3).
-## Chain 3: 
-## Chain 3: Gradient evaluation took 1.3e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.13 seconds.
-## Chain 3: Adjust your expectations accordingly!
-## Chain 3: 
-## Chain 3: 
-## Chain 3: Iteration:    1 / 2000 [  0%]  (Warmup)
-## Chain 3: Iteration:  200 / 2000 [ 10%]  (Warmup)
-## Chain 3: Iteration:  400 / 2000 [ 20%]  (Warmup)
-## Chain 3: Iteration:  600 / 2000 [ 30%]  (Warmup)
-## Chain 3: Iteration:  800 / 2000 [ 40%]  (Warmup)
-## Chain 3: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-## Chain 3: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-## Chain 3: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-## Chain 3: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-## Chain 3: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-## Chain 3: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-## Chain 3: Iteration: 2000 / 2000 [100%]  (Sampling)
-## Chain 3: 
-## Chain 3:  Elapsed Time: 0.717594 seconds (Warm-up)
-## Chain 3:                0.586118 seconds (Sampling)
-## Chain 3:                1.30371 seconds (Total)
-## Chain 3: 
-## 
-## SAMPLING FOR MODEL &amp;#39;aed3c976cefe3e319d41eeba97e15379&amp;#39; NOW (CHAIN 4).
-## Chain 4: 
-## Chain 4: Gradient evaluation took 1.2e-05 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.12 seconds.
-## Chain 4: Adjust your expectations accordingly!
-## Chain 4: 
-## Chain 4: 
-## Chain 4: Iteration:    1 / 2000 [  0%]  (Warmup)
-## Chain 4: Iteration:  200 / 2000 [ 10%]  (Warmup)
-## Chain 4: Iteration:  400 / 2000 [ 20%]  (Warmup)
-## Chain 4: Iteration:  600 / 2000 [ 30%]  (Warmup)
-## Chain 4: Iteration:  800 / 2000 [ 40%]  (Warmup)
-## Chain 4: Iteration: 1000 / 2000 [ 50%]  (Warmup)
-## Chain 4: Iteration: 1001 / 2000 [ 50%]  (Sampling)
-## Chain 4: Iteration: 1200 / 2000 [ 60%]  (Sampling)
-## Chain 4: Iteration: 1400 / 2000 [ 70%]  (Sampling)
-## Chain 4: Iteration: 1600 / 2000 [ 80%]  (Sampling)
-## Chain 4: Iteration: 1800 / 2000 [ 90%]  (Sampling)
-## Chain 4: Iteration: 2000 / 2000 [100%]  (Sampling)
-## Chain 4: 
-## Chain 4:  Elapsed Time: 0.593527 seconds (Warm-up)
-## Chain 4:                0.660565 seconds (Sampling)
-## Chain 4:                1.25409 seconds (Total)
-## Chain 4:&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;m %&amp;gt;%
-  spread_draws(b_Intercept, r_condition[condition,]) %&amp;gt;%
-  mutate(condition_mean = b_Intercept + r_condition) %&amp;gt;%
-
-  ggplot(aes(y = condition, x = condition_mean, fill = condition_mean)) +
-  geom_halfeyeh()&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-14-bayesian-meta-analysis_files/figure-html/unnamed-chunk-15-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+##  [15] xml2_1.2.0                codetools_0.2-15         
+##  [17] bridgesampling_0.4-0      knitr_1.20               
+##  [19] shinythemes_1.1.1         bayesplot_1.6.0          
+##  [21] jsonlite_1.5              broom_0.5.1              
+##  [23] shiny_1.1.0               compiler_3.5.1           
+##  [25] httr_1.3.1                backports_1.1.2          
+##  [27] assertthat_0.2.0          Matrix_1.2-14            
+##  [29] lazyeval_0.2.1            cli_1.0.1                
+##  [31] later_0.7.3               htmltools_0.3.6          
+##  [33] prettyunits_1.0.2         tools_3.5.1              
+##  [35] igraph_1.2.1              coda_0.19-2              
+##  [37] gtable_0.2.0              glue_1.3.0               
+##  [39] reshape2_1.4.3            cellranger_1.1.0         
+##  [41] nlme_3.1-137              blogdown_0.8             
+##  [43] crosstalk_1.0.0           xfun_0.3                 
+##  [45] ps_1.2.1                  rvest_0.3.2              
+##  [47] mime_0.5                  miniUI_0.1.1.1           
+##  [49] gtools_3.8.1              MASS_7.3-50              
+##  [51] zoo_1.8-2                 scales_1.0.0             
+##  [53] colourpicker_1.0          hms_0.4.2                
+##  [55] promises_1.0.1            Brobdingnag_1.2-5        
+##  [57] parallel_3.5.1            inline_0.3.15            
+##  [59] shinystan_2.5.0           yaml_2.1.19              
+##  [61] gridExtra_2.3             loo_2.0.0                
+##  [63] StanHeaders_2.18.0-1      stringi_1.2.3            
+##  [65] highr_0.7                 dygraphs_1.1.1.5         
+##  [67] pkgbuild_1.0.2            rlang_0.3.1              
+##  [69] pkgconfig_2.0.2           matrixStats_0.54.0       
+##  [71] evaluate_0.10.1           lattice_0.20-35          
+##  [73] bindr_0.1.1               labeling_0.3             
+##  [75] rstantools_1.5.0          htmlwidgets_1.2          
+##  [77] tidyselect_0.2.4          processx_3.2.1           
+##  [79] plyr_1.8.4                magrittr_1.5             
+##  [81] bookdown_0.7              R6_2.3.0                 
+##  [83] generics_0.0.2            pillar_1.3.1             
+##  [85] haven_1.1.2               withr_2.1.2              
+##  [87] xts_0.10-2                abind_1.4-5              
+##  [89] modelr_0.1.2              crayon_1.3.4             
+##  [91] arrayhelpers_1.0-20160527 utf8_1.1.4               
+##  [93] rmarkdown_1.10            grid_3.5.1               
+##  [95] readxl_1.1.0              callr_3.1.0              
+##  [97] threejs_0.3.1             digest_0.6.18            
+##  [99] xtable_1.8-2              httpuv_1.4.4.2           
+## [101] stats4_3.5.1              munsell_0.5.0            
+## [103] viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>
