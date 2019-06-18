@@ -18,8 +18,9 @@
       <pubDate>Sun, 10 Feb 2019 00:00:00 +0000</pubDate>
       
       <guid>/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/</guid>
-      <description>In this post, we’ll show how Student’s \(t\)-distribution can produce better correlation estimates when your data have outliers. As is often the case, we’ll do so as Bayesians.
-This post is a direct consequence of Adrian Baez-Ortega’s great blog, “Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)”. Baez-Ortega worked out the approach and code for direct use with Stan computational environment. That solution is great because Stan is free, open source, and very flexible.</description>
+      <description>[edited June 18, 2019]
+In this post, we’ll show how Student’s \(t\)-distribution can produce better correlation estimates when your data have outliers. As is often the case, we’ll do so as Bayesians.
+This post is a direct consequence of Adrian Baez-Ortega’s great blog, “Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)”. Baez-Ortega worked out the approach and code for direct use with Stan computational environment.</description>
     </item>
     
     <item>

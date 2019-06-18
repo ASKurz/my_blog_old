@@ -1116,7 +1116,8 @@ tibble(name = str_c(&amp;quot;f&amp;quot;, 1:6)) %&amp;gt;%
       <pubDate>Sun, 10 Feb 2019 00:00:00 +0000</pubDate>
       
       <guid>/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/</guid>
-      <description>&lt;p&gt;In this post, we’ll show how Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution can produce better correlation estimates when your data have outliers. As is often the case, we’ll do so as Bayesians.&lt;/p&gt;
+      <description>&lt;p&gt;[edited June 18, 2019]&lt;/p&gt;
+&lt;p&gt;In this post, we’ll show how Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;-distribution can produce better correlation estimates when your data have outliers. As is often the case, we’ll do so as Bayesians.&lt;/p&gt;
 &lt;p&gt;This post is a direct consequence of Adrian Baez-Ortega’s great blog, “&lt;a href=&#34;https://baezortega.github.io/2018/05/28/robust-correlation/&#34;&gt;Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)&lt;/a&gt;”. Baez-Ortega worked out the approach and code for direct use with &lt;a href=&#34;http://mc-stan.org&#34;&gt;Stan&lt;/a&gt; computational environment. That solution is great because Stan is free, open source, and very flexible. However, Stan’s interface might be prohibitively technical for non-statistician users. Happily, the &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;brms&lt;/a&gt; package allows users to access the computational power of Stan through a simpler interface. In this post, we show how to extend Baez-Ortega’s method to brms. To pay respects where they’re due, the synthetic data, priors, and other model settings are largely the same as those Baez-Ortega used in his blog.&lt;/p&gt;
 &lt;div id=&#34;i-make-assumptions&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;I make assumptions&lt;/h2&gt;
@@ -1212,15 +1213,16 @@ x.clean %&amp;gt;%
 &lt;h2&gt;Bayesian correlations in brms&lt;/h2&gt;
 &lt;p&gt;&lt;a href=&#34;https://twitter.com/paulbuerkner&#34;&gt;Bürkner&lt;/a&gt;’s brms is a general purpose interface for fitting all manner of Bayesian regression models with &lt;a href=&#34;https://mc-stan.org&#34;&gt;Stan&lt;/a&gt; as the engine under the hood. It has popular &lt;a href=&#34;https://cran.r-project.org/web/packages/lme4/index.html&#34;&gt;lme4&lt;/a&gt;-like syntax and offers a variety of convenience functions for post processing. Let’s load it up.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning: package &amp;#39;Rcpp&amp;#39; was built under R version 3.5.2&lt;/code&gt;&lt;/pre&gt;
 &lt;div id=&#34;first-with-the-gaussian-likelihood.&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;First with the Gaussian likelihood.&lt;/h3&gt;
 &lt;p&gt;I’m not going to spend a lot of time walking through the syntax in the main brms function, &lt;code&gt;brm()&lt;/code&gt;. You can learn all about that &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;here&lt;/a&gt; or with my project &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse#statistical-rethinking-with-brms-ggplot2-and-the-tidyverse&#34;&gt;&lt;em&gt;Statistical Rethinking with brms, ggplot2, and the tidyverse&lt;/em&gt;&lt;/a&gt;. But our particular use of &lt;code&gt;brm()&lt;/code&gt; requires we make a few fine points.&lt;/p&gt;
-&lt;p&gt;One doesn’t always think about bivariate correlations within the regression paradigm. But they work just fine. Within brms, you would typically specify the conventional Gaussian likelihood (i.e., &lt;code&gt;family = gaussian&lt;/code&gt;), use the &lt;code&gt;cbind()&lt;/code&gt; syntax to set up a &lt;a href=&#34;https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html&#34;&gt;multivariate model&lt;/a&gt;, and fit that model without predictors. For each variable specified in &lt;code&gt;cbind()&lt;/code&gt;, you’ll estimate an intercept (i.e., mean, &lt;span class=&#34;math inline&#34;&gt;\(\mu\)&lt;/span&gt;) and sigma (i.e., &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt;, often called a residual variance). Since there are no predictors in the model, the residual variance is just the variance and the brms default for multivariate models is to allow the residual variances to covary. But since variances are parameterized in the standard deviation metric in brms, the residual variances and their covariance are &lt;em&gt;SD&lt;/em&gt;s and their correlation, respectively.&lt;/p&gt;
+&lt;p&gt;One doesn’t always think about bivariate correlations within the regression paradigm. But they work just fine. Within brms, you would typically specify the conventional Gaussian likelihood (i.e., &lt;code&gt;family = gaussian&lt;/code&gt;), use the &lt;code&gt;mvbind()&lt;/code&gt; syntax to set up a &lt;a href=&#34;https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html&#34;&gt;multivariate model&lt;/a&gt;, and fit that model without predictors. For each variable specified in &lt;code&gt;cbind()&lt;/code&gt;, you’ll estimate an intercept (i.e., mean, &lt;span class=&#34;math inline&#34;&gt;\(\mu\)&lt;/span&gt;) and sigma (i.e., &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt;, often called a residual variance). Since there are no predictors in the model, the residual variance is just the variance and the brms default for multivariate models is to allow the residual variances to covary. But since variances are parameterized in the standard deviation metric in brms, the residual variances and their covariance are &lt;em&gt;SD&lt;/em&gt;s and their correlation, respectively.&lt;/p&gt;
 &lt;p&gt;Here’s what it looks like in practice.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;f0 &amp;lt;- 
   brm(data = x.clean, 
       family = gaussian,
-      cbind(x, y) ~ 1,
+      mvbind(x, y) ~ 1,
       prior = c(prior(normal(0, 100), class = Intercept),
                 prior(normal(0, 100), class = sigma, resp = x),
                 prior(normal(0, 100), class = sigma, resp = y),
@@ -1309,7 +1311,7 @@ x.clean %&amp;gt;%
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;f2 &amp;lt;- 
   brm(data = x.noisy, 
       family = student,
-      cbind(x, y) ~ 1,
+      mvbind(x, y) ~ 1,
       prior = c(prior(gamma(2, .1), class = nu),
                 prior(normal(0, 100), class = Intercept),
                 prior(normal(0, 100), class = sigma, resp = x),
@@ -1440,31 +1442,31 @@ posts %&amp;gt;%
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] tidybayes_1.0.3 brms_2.7.0      Rcpp_1.0.0      ggthemes_4.0.1 
-##  [5] bindrcpp_0.2.2  forcats_0.3.0   stringr_1.3.1   dplyr_0.7.6    
-##  [9] purrr_0.2.5     readr_1.1.1     tidyr_0.8.1     tibble_2.0.1   
-## [13] ggplot2_3.1.0   tidyverse_1.2.1 mvtnorm_1.0-8  
+##  [1] tidybayes_1.0.4 bindrcpp_0.2.2  brms_2.8.8      Rcpp_1.0.1     
+##  [5] ggthemes_4.0.1  forcats_0.3.0   stringr_1.4.0   dplyr_0.8.0.1  
+##  [9] purrr_0.2.5     readr_1.1.1     tidyr_0.8.1     tibble_2.1.1   
+## [13] ggplot2_3.1.1   tidyverse_1.2.1 mvtnorm_1.0-10 
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] readxl_1.1.0              backports_1.1.2          
+##   [1] readxl_1.1.0              backports_1.1.4          
 ##   [3] Hmisc_4.1-1               plyr_1.8.4               
-##   [5] igraph_1.2.1              lazyeval_0.2.1           
+##   [5] igraph_1.2.1              lazyeval_0.2.2           
 ##   [7] splines_3.5.1             svUnit_0.7-12            
-##   [9] crosstalk_1.0.0           rstantools_1.5.0         
+##   [9] crosstalk_1.0.0           rstantools_1.5.1         
 ##  [11] inline_0.3.15             digest_0.6.18            
 ##  [13] htmltools_0.3.6           rsconnect_0.8.8          
-##  [15] gdata_2.18.0              fansi_0.4.0              
+##  [15] fansi_0.4.0               gdata_2.18.0             
 ##  [17] magrittr_1.5              checkmate_1.8.5          
 ##  [19] cluster_2.0.7-1           modelr_0.1.2             
 ##  [21] matrixStats_0.54.0        xts_0.10-2               
 ##  [23] prettyunits_1.0.2         colorspace_1.3-2         
-##  [25] rvest_0.3.2               haven_1.1.2              
-##  [27] pan_1.6                   xfun_0.3                 
+##  [25] rvest_0.3.2               pan_1.6                  
+##  [27] haven_1.1.2               xfun_0.3                 
 ##  [29] callr_3.1.0               crayon_1.3.4             
 ##  [31] jsonlite_1.5              lme4_1.1-17              
 ##  [33] bindr_0.1.1               survival_2.42-3          
-##  [35] zoo_1.8-2                 glue_1.3.0               
-##  [37] gtable_0.2.0              pkgbuild_1.0.2           
+##  [35] zoo_1.8-2                 glue_1.3.1.9000          
+##  [37] gtable_0.3.0              pkgbuild_1.0.2           
 ##  [39] weights_1.0               rstan_2.18.2             
 ##  [41] jomo_2.6-2                abind_1.4-5              
 ##  [43] scales_1.0.0              miniUI_0.1.1.1           
@@ -1476,9 +1478,9 @@ posts %&amp;gt;%
 ##  [55] threejs_0.3.1             arrayhelpers_1.0-20160527
 ##  [57] RColorBrewer_1.1-2        acepack_1.4.1            
 ##  [59] mice_3.1.0                pkgconfig_2.0.2          
-##  [61] loo_2.0.0                 nnet_7.3-12              
-##  [63] utf8_1.1.4                tidyselect_0.2.4         
-##  [65] labeling_0.3              rlang_0.3.1              
+##  [61] loo_2.1.0                 nnet_7.3-12              
+##  [63] utf8_1.1.4                tidyselect_0.2.5         
+##  [65] labeling_0.3              rlang_0.3.4              
 ##  [67] reshape2_1.4.3            later_0.7.3              
 ##  [69] munsell_0.5.0             cellranger_1.1.0         
 ##  [71] tools_3.5.1               cli_1.0.1                
@@ -1488,26 +1490,26 @@ posts %&amp;gt;%
 ##  [79] knitr_1.20                mitml_0.3-6              
 ##  [81] nlme_3.1-137              mime_0.5                 
 ##  [83] xml2_1.2.0                compiler_3.5.1           
-##  [85] bayesplot_1.6.0           shinythemes_1.1.1        
-##  [87] rstudioapi_0.7            stringi_1.2.3            
+##  [85] bayesplot_1.7.0           shinythemes_1.1.1        
+##  [87] rstudioapi_0.7            stringi_1.4.3            
 ##  [89] ps_1.2.1                  blogdown_0.8             
-##  [91] Brobdingnag_1.2-5         lattice_0.20-35          
+##  [91] Brobdingnag_1.2-6         lattice_0.20-35          
 ##  [93] Matrix_1.2-14             nloptr_1.0.4             
 ##  [95] markdown_0.8              shinyjs_1.0              
-##  [97] pillar_1.3.1              bridgesampling_0.4-0     
+##  [97] pillar_1.3.1              bridgesampling_0.6-0     
 ##  [99] data.table_1.11.4         httpuv_1.4.4.2           
 ## [101] R6_2.3.0                  latticeExtra_0.6-28      
-## [103] bookdown_0.7              promises_1.0.1           
-## [105] gridExtra_2.3             colourpicker_1.0         
-## [107] MASS_7.3-50               gtools_3.8.1             
-## [109] assertthat_0.2.0          rprojroot_1.3-2          
-## [111] withr_2.1.2               shinystan_2.5.0          
-## [113] parallel_3.5.1            hms_0.4.2                
-## [115] grid_3.5.1                rpart_4.1-13             
-## [117] coda_0.19-2               minqa_1.2.4              
-## [119] rmarkdown_1.10            shiny_1.1.0              
-## [121] lubridate_1.7.4           base64enc_0.1-3          
-## [123] dygraphs_1.1.1.5&lt;/code&gt;&lt;/pre&gt;
+## [103] bookdown_0.9              promises_1.0.1           
+## [105] gridExtra_2.3             codetools_0.2-15         
+## [107] colourpicker_1.0          MASS_7.3-50              
+## [109] gtools_3.8.1              assertthat_0.2.0         
+## [111] rprojroot_1.3-2           withr_2.1.2              
+## [113] shinystan_2.5.0           parallel_3.5.1           
+## [115] hms_0.4.2                 grid_3.5.1               
+## [117] rpart_4.1-13              coda_0.19-2              
+## [119] minqa_1.2.4               rmarkdown_1.10           
+## [121] shiny_1.1.0               lubridate_1.7.4          
+## [123] base64enc_0.1-3           dygraphs_1.1.1.5&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 </description>
@@ -3339,6 +3341,16 @@ b14.6 %&amp;gt;%
 &lt;h2 id=&#34;tip-2&#34;&gt;Tip 2&lt;/h2&gt;
 
 &lt;p&gt;&amp;hellip;&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Privacy Policy</title>
+      <link>/privacy/</link>
+      <pubDate>Thu, 28 Jun 2018 00:00:00 -0500</pubDate>
+      
+      <guid>/privacy/</guid>
+      <description>&lt;p&gt;&amp;hellip;&lt;/p&gt;
 </description>
     </item>
     

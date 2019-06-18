@@ -177,7 +177,7 @@ print(f0)
 
 Way down there in the last line in the 'Family Specific Parameters' section we have `rescor(x,y)`, which is our correlation. And indeed, our Gaussian intercept-only multivariate model did a great job recovering the correlation we used to simulate the `x.clean` data with. Look at what happens when we try this approach with `x.noisy`.
 
-```{r f1, cache = T, message = F, results = 'hide'}
+```{r f1_mvbind, cache = T, message = F, results = 'hide'}
 f1 <-
   update(f0,
          newdata = x.noisy,
@@ -233,7 +233,7 @@ Whoa, look at that correlation, `rescore(x,y)`! It’s right about what we’d h
 
 While we're at it, we may as well see what happens when we fit a Student's $t$ model when we have perfectly multivariate normal data. Here it is with the `x.clean` data.
 
-```{r f3, cache = T, message = F, results = 'hide'}
+```{r f3_mvbind, cache = T, message = F, results = 'hide'}
 f3 <- 
   update(f2,
          newdata = x.clean, 
