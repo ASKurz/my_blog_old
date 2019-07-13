@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Sat, 23 Feb 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 13 Jul 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/bayesian/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Would you like all your posteriors in one plot?</title>
+      <link>/post/would-you-like-all-your-posteriors-in-one-plot/</link>
+      <pubDate>Sat, 13 Jul 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/would-you-like-all-your-posteriors-in-one-plot/</guid>
+      <description>A colleague reached out to me earlier this week with a plotting question. They had fit a series of Bayesian models, all containing a common parameter of interest. They knew how to plot their focal parameter one model at a time, but were stumped on how to combine the plots across models into a seamless whole. It reminded me a bit of this gif
+which I originally got from Jenny Bryan’s great talk, Behind every great plot there’s a great deal of wrangling.</description>
+    </item>
     
     <item>
       <title>Stein’s Paradox and What Partial Pooling Can Do For You</title>
