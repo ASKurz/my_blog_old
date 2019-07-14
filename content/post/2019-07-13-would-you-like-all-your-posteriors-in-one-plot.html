@@ -107,7 +107,7 @@ post1 %&gt;%
   geom_halfeyeh() +
   scale_y_continuous(NULL, breaks = NULL)</code></pre>
 <p><img src="/post/2019-07-13-would-you-like-all-your-posteriors-in-one-plot_files/figure-html/unnamed-chunk-6-1.png" width="480" /></p>
-<p>But how we get the posterior draws from all three fits into one plot. The answer is by somehow combining the posterior draws from each into one data frame. There are many ways to do this. Perhaps the simplest is with the <code>bind_rows()</code> function.</p>
+<p><em>But how might we get the posterior draws from all three fits into one plot?</em> The answer is by somehow combining the posterior draws from each into one data frame. There are many ways to do this. Perhaps the simplest is with the <code>bind_rows()</code> function.</p>
 <pre class="r"><code>posts &lt;-
   bind_rows(
     post1,
@@ -133,7 +133,7 @@ head(posts)</code></pre>
 </div>
 <div id="what-if-my-posterior_samples-arent-of-the-same-dimensions-across-models" class="section level2">
 <h2>What if my <code>posterior_samples()</code> aren’t of the same dimensions across models?</h2>
-<p>For the next examples, we need new data. Here we’ll simulate three predictors–<code>x1</code>, <code>x2</code>, and <code>x3</code>–and define our criterion <code>y</code> as a function of them.</p>
+<p>For the next examples, we need new data. Here we’ll simulate three predictors–<code>x1</code>, <code>x2</code>, and <code>x3</code>. We then simulate our criterion <code>y</code> as a linear additive function of those predictors.</p>
 <pre class="r"><code>set.seed(1)
 d &lt;-
   tibble(x1 = rnorm(n, mean = 0, sd = 1),
@@ -151,7 +151,7 @@ head(d)</code></pre>
 ## 4  1.60  -0.929  -0.384 -1.59 
 ## 5  0.330 -1.49    1.65  -2.41 
 ## 6 -0.820 -1.08    1.51  -0.764</code></pre>
-<p>We are going to work with these data in two ways. For the first example, we’ll fit a series of univariable models that, though they all follow the same basic form, each has a different predictor. For the second example, we’ll fit a series of multivariable models with various combinations of the predictors. Each requires its own approach.</p>
+<p>We are going to work with these data in two ways. For the first example, we’ll fit a series of univariable models following the same basic form, but each with a different predictor. For the second example, we’ll fit a series of multivariable models with various combinations of the predictors. Each requires its own approach.</p>
 <div id="same-form-different-predictors." class="section level3">
 <h3>Same form, different predictors.</h3>
 <p>This time we’re just using the <strong>brms</strong> default priors. As such, the models all follow the form</p>
