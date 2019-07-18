@@ -20,6 +20,14 @@
     
     <url>
     
+      <loc>/post/bayesian-power-analysis-part-i/</loc>
+      <lastmod>2019-07-18T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/post/would-you-like-all-your-posteriors-in-one-plot/</loc>
       <lastmod>2019-07-13T00:00:00+00:00</lastmod>
     </url>
@@ -150,7 +158,7 @@
     <url>
     
       <loc>/tags/bayesian/</loc>
-      <lastmod>2019-07-13T00:00:00+00:00</lastmod>
+      <lastmod>2019-07-18T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -256,7 +264,7 @@
     <url>
     
       <loc>/tags/r/</loc>
-      <lastmod>2019-07-13T00:00:00+00:00</lastmod>
+      <lastmod>2019-07-18T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -289,7 +297,7 @@
     <url>
     
       <loc>/tags/</loc>
-      <lastmod>2019-07-13T00:00:00+00:00</lastmod>
+      <lastmod>2019-07-18T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -316,7 +324,7 @@
     <url>
     
       <loc>/tags/brms/</loc>
-      <lastmod>2019-07-13T00:00:00+00:00</lastmod>
+      <lastmod>2019-07-18T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -378,6 +386,15 @@
     
     <url>
     
+      <loc>/tags/power/</loc>
+      <lastmod>2019-07-18T00:00:00+00:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/tags/robust/</loc>
       <lastmod>2019-02-10T00:00:00+00:00</lastmod>
       <priority>0</priority>
@@ -415,7 +432,7 @@
     <url>
     
       <loc>/tags/tutorial/</loc>
-      <lastmod>2019-07-13T00:00:00+00:00</lastmod>
+      <lastmod>2019-07-18T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -424,7 +441,7 @@
     <url>
     
       <loc>/tags/tydiverse/</loc>
-      <lastmod>2018-12-20T00:00:00+00:00</lastmod>
+      <lastmod>2019-07-18T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
