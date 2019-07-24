@@ -7,7 +7,7 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Thu, 18 Jul 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 24 Jul 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/index.xml" rel="self" type="application/rss+xml" />
     
@@ -15,7 +15,7 @@
     <item>
       <title>Bayesian</title>
       <link>/tags/bayesian/</link>
-      <pubDate>Thu, 18 Jul 2019 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 24 Jul 2019 00:00:00 +0000</pubDate>
       
       <guid>/tags/bayesian/</guid>
       <description></description>
@@ -105,7 +105,7 @@
     <item>
       <title>R</title>
       <link>/tags/r/</link>
-      <pubDate>Thu, 18 Jul 2019 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 24 Jul 2019 00:00:00 +0000</pubDate>
       
       <guid>/tags/r/</guid>
       <description></description>
@@ -141,7 +141,7 @@
     <item>
       <title>brms</title>
       <link>/tags/brms/</link>
-      <pubDate>Thu, 18 Jul 2019 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 24 Jul 2019 00:00:00 +0000</pubDate>
       
       <guid>/tags/brms/</guid>
       <description></description>
@@ -204,7 +204,7 @@
     <item>
       <title>power</title>
       <link>/tags/power/</link>
-      <pubDate>Thu, 18 Jul 2019 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 24 Jul 2019 00:00:00 +0000</pubDate>
       
       <guid>/tags/power/</guid>
       <description></description>
@@ -247,9 +247,18 @@
     </item>
     
     <item>
+      <title>tidyverse</title>
+      <link>/tags/tidyverse/</link>
+      <pubDate>Wed, 24 Jul 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/tags/tidyverse/</guid>
+      <description></description>
+    </item>
+    
+    <item>
       <title>tutorial</title>
       <link>/tags/tutorial/</link>
-      <pubDate>Thu, 18 Jul 2019 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 24 Jul 2019 00:00:00 +0000</pubDate>
       
       <guid>/tags/tutorial/</guid>
       <description></description>

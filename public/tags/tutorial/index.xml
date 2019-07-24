@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Thu, 18 Jul 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 24 Jul 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/tutorial/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Bayesian power analysis: Part II. Some might prefer precision to power</title>
+      <link>/post/bayesian-power-analysis-part-ii/</link>
+      <pubDate>Wed, 24 Jul 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/bayesian-power-analysis-part-ii/</guid>
+      <description>Version 1.0.0  tl;dr When researchers decide on a sample size for an upcoming project, there are more things to consider than null-hypothesis-oriented power. Bayesian researchers might like to frame their concerns in terms of precision. Stick around to learn what and how.
+ Are Bayesians doomed to refer to \(H_0\) 1 with sample-size planning? If you read my last post, you may have found yourself thinking: Sure, last time you avoided computing \(p\)-values with your 95% Bayesian credible intervals.</description>
+    </item>
     
     <item>
       <title>Bayesian power analysis: Part I. Prepare to reject $H_0$ with simulation.</title>
