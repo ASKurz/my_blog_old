@@ -299,6 +299,11 @@ enableGitInfo = false
   name   = "Teaching"
   url    = "/teaching/"
   weight = 4
+  
+[[menu.main]]
+  name   = "Conflicts of interest"
+  url    = "/conflicts_of_interest/"
+  weight = 5
 
 # Link to a PDF of your resume/CV from the menu.
 # To enable, copy your resume/CV to `static/files/cv.pdf` and uncomment the lines below.
