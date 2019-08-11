@@ -11,6 +11,384 @@
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
+      <title>Bayesian power analysis: Part III.a. Counts are special.</title>
+      <link>/post/bayesian-power-analysis-part-iii-a/</link>
+      <pubDate>Sun, 11 Aug 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/bayesian-power-analysis-part-iii-a/</guid>
+      <description>&lt;div id=&#34;version-1.0.0&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Version 1.0.0&lt;/h2&gt;
+&lt;/div&gt;
+&lt;div id=&#34;tldr&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;tl;dr&lt;/h2&gt;
+&lt;p&gt;So far we’ve covered Bayesian power simulations from both a null hypothesis orientation (see &lt;a href=&#34;https://solomonkurz.netlify.com/post/bayesian-power-analysis-part-i/&#34;&gt;part I&lt;/a&gt;) and a parameter width perspective (see &lt;a href=&#34;https://solomonkurz.netlify.com/post/bayesian-power-analysis-part-ii/&#34;&gt;part II&lt;/a&gt;). In both instances, we kept things simple and stayed with Gaussian (i.e., normally distributed) data. But not all data follow that form, so it might do us well to expand our skill set a bit. In the next few posts, we’ll cover how we might perform power simulations with other kinds of data. In this post, we’ll focus on how to use the Poisson likelihood to model counts. In follow-up posts, we’ll explore how to model binary and Likert-type data.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;the-poisson-distribution-is-handy-for-counts.&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;The Poisson distribution is handy for counts.&lt;/h2&gt;
+&lt;p&gt;In the social sciences, count data arise when we ask questions like:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;How many sexual partners have you had?&lt;/li&gt;
+&lt;li&gt;How many pets do you have at home?&lt;/li&gt;
+&lt;li&gt;How many cigarettes did you smoke, yesterday?&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;The values these data will take are discrete &lt;a href=&#34;#fn1&#34; class=&#34;footnote-ref&#34; id=&#34;fnref1&#34;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/a&gt; in that you’ve either slept with 9 or 10 people, but definitely not 9.5. The values cannot go below zero in that even if you quit smoking cold turkey 15 years ago and have been a health nut since, you still could not have smoked -3 cigarettes, yesterday. Zero is as low as it goes.&lt;/p&gt;
+&lt;p&gt;The canonical distribution for data of this type–non-zero integers–is the Poisson. It’s named after the French mathematician Siméon Denis Poisson, &lt;a href=&#34;https://upload.wikimedia.org/wikipedia/commons/e/e8/E._Marcellot_Siméon-Denis_Poisson_1804.jpg&#34;&gt;who had quite the confident stare in his youth&lt;/a&gt;. The Poisson distribution has one parameter, &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt;, which controls both its mean and variance. Although the numbers the Poisson describes are counts, the &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt; parameter does not need to be an integer. For example, here’s the plot of 1000 draws from a Poisson for which &lt;span class=&#34;math inline&#34;&gt;\(\lambda = 3.2\)&lt;/span&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)
+
+theme_set(theme_gray() + theme(panel.grid = element_blank()))
+
+tibble(x = rpois(n = 1e3, lambda = 3.2)) %&amp;gt;% 
+  mutate(x = factor(x)) %&amp;gt;% 
+  
+  ggplot(aes(x = x)) +
+  geom_bar()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-08-11-bayesian-power-analysis-part-iii-a_files/figure-html/unnamed-chunk-1-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;In case you missed it, the key function for generating those data was &lt;code&gt;rpois()&lt;/code&gt;. I’m not going to go into a full-blown tutorial on the Poisson distribution or on count regression. For more thorough introductions, check out Atkins et al’s &lt;a href=&#34;https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3513584/pdf/nihms396181.pdf&#34;&gt;&lt;em&gt;A tutorial on count regression and zero-altered count models for longitudinal substance use data&lt;/em&gt;&lt;/a&gt;, chapters 9 through 11 in McElreath’s &lt;a href=&#34;https://xcelab.net/rm/statistical-rethinking/&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt;&lt;/a&gt;, or, if you really want to dive in, Agresti’s &lt;a href=&#34;https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034&#34;&gt;&lt;em&gt;Foundations of Linear and Generalized Linear Models&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;For our power example, let’s say you were interested in drinking. Using data from &lt;a href=&#34;https://pubs.niaaa.nih.gov/publications/AA70/AA70.htm&#34;&gt;the National Epidemiologic Survey on Alcohol and Related Conditions&lt;/a&gt;, Christopher Ingraham presented &lt;a href=&#34;https://www.washingtonpost.com/news/wonk/wp/2014/09/25/think-you-drink-a-lot-this-chart-will-tell-you/?utm_term=.b81599bbbe25&#34;&gt;a data visualization&lt;/a&gt; of the average number of alcoholic drinks American adults consume, per week. By decile, the numbers were:&lt;/p&gt;
+&lt;ol style=&#34;list-style-type: decimal&#34;&gt;
+&lt;li&gt;0.00&lt;/li&gt;
+&lt;li&gt;0.00&lt;/li&gt;
+&lt;li&gt;0.00&lt;/li&gt;
+&lt;li&gt;0.02&lt;/li&gt;
+&lt;li&gt;0.14&lt;/li&gt;
+&lt;li&gt;0.63&lt;/li&gt;
+&lt;li&gt;2.17&lt;/li&gt;
+&lt;li&gt;6.25&lt;/li&gt;
+&lt;li&gt;15.28&lt;/li&gt;
+&lt;li&gt;73.85&lt;/li&gt;
+&lt;/ol&gt;
+&lt;p&gt;Let’s say you wanted to run a study where you planned on comparing two demographic groups by their weekly drinking levels. Let’s further say you suspected one of those groups drank like the American adults in the 7&lt;sup&gt;th&lt;/sup&gt; decile and the other drank like American adults in the 8&lt;sup&gt;th&lt;/sup&gt;. We’ll call them low and high drinkers, respectively. For convenience, let’s further presume you’ll be able to recruit equal numbers of participants from both groups. The objective for our power analysis–or sample size analysis if you prefer to avoid the language of &lt;em&gt;power&lt;/em&gt;–is to determine how many you’d need per group to detect reliable differences. Using &lt;span class=&#34;math inline&#34;&gt;\(n = 50\)&lt;/span&gt; as a starting point, here’s what the data for our hypothetical groups might look like.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;mu_7 &amp;lt;- 2.17
+mu_8 &amp;lt;- 6.25
+
+n &amp;lt;- 50
+
+set.seed(3)
+
+d &amp;lt;-
+  tibble(low  = rpois(n = n, lambda = mu_7),
+         high = rpois(n = n, lambda = mu_8)) %&amp;gt;% 
+  gather(group, count) 
+
+d %&amp;gt;%
+  mutate(count = factor(count)) %&amp;gt;% 
+  
+  ggplot(aes(x = count)) +
+  geom_bar() +
+  facet_wrap(~group, ncol = 1)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-08-11-bayesian-power-analysis-part-iii-a_files/figure-html/unnamed-chunk-2-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;This will be our primary data type. Our next step is to determine how to express our research question as a regression model. Like with our two-group Gaussian models, we can predict counts in terms of an intercept (i.e., standing for the expected value on the reference group) and slope (i.e., standing for the expected difference between the reference group and the comparison group). If we coded our two groups by a &lt;code&gt;high&lt;/code&gt; variable for which 0 stood for low drinkers and 1 stood for high drinkers, the basic model would follow the form&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\begin{align*}
+\text{drinks_per_week}_i         &amp;amp; \sim \text{Poisson}(\lambda_i) \\
+\operatorname{log} (\lambda_i)   &amp;amp; = \beta_0 + \beta_1 \text{high}_i.
+\end{align*}
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Here’s how to set the data up for that model.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d &amp;lt;-
+  d %&amp;gt;% 
+  mutate(high = ifelse(group == &amp;quot;low&amp;quot;, 0, 1))&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;If you were attending closely to our model formula, you noticed we ran into a detail. Count regression, such as with the Poisson likelihood, tends to use the log link. &lt;em&gt;Why?&lt;/em&gt; you ask. Recall that counts need to be 0 and above. Same deal for our &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt; parameter. In order to make sure our models don’t yield silly estimates for &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt;, like -2 or something, we typically use the log link. You don’t have to, of course. The world is your playground. But this is the method most of your colleagues are likely to use and it’s the one I suggest you use until you have compelling reasons to do otherwise.&lt;/p&gt;
+&lt;p&gt;So then since we’re now fitting a model with a log link, it might seem challenging to pick good priors. As a place to start, we can use the &lt;code&gt;brms::get_prior()&lt;/code&gt; function to see the &lt;strong&gt;brms&lt;/strong&gt; defaults.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)
+
+get_prior(data = d,
+          family = poisson,
+          count ~ 0 + intercept + high)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##   prior class      coef group resp dpar nlpar bound
+## 1           b                                      
+## 2           b      high                            
+## 3           b intercept&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Hopefully two things popped out. First, there’s no prior of &lt;code&gt;class = sigma&lt;/code&gt;. Since the Poisson distribution only has one parameter &lt;span class=&#34;math inline&#34;&gt;\(\lambda\)&lt;/span&gt;, we don’t need to set a prior for &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt;. Our model won’t have one. Second, because we’re continuing to use the &lt;code&gt;0 + intercept&lt;/code&gt; syntax for our model intercept, both our intercept and slope are of prior &lt;code&gt;class = b&lt;/code&gt; and those currently have default flat priors with &lt;strong&gt;brms&lt;/strong&gt;. To be sure, flat priors aren’t the best. But maybe if this was your first time playing around with a Poisson model, default flat priors might seem like a safe place to start. &lt;a href=&#34;https://xkcd.com/386/&#34;&gt;Feel free to disagree&lt;/a&gt;. In the meantime, here’s how to fit that default Poisson model with &lt;code&gt;brms::brm()&lt;/code&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit1 &amp;lt;-
+  brm(data = d,
+      family = poisson,
+      count ~ 0 + intercept + high,
+      seed = 3)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(fit1)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##  Family: poisson 
+##   Links: mu = log 
+## Formula: count ~ 0 + intercept + high 
+##    Data: d (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
+## intercept     0.59      0.11     0.37     0.81        984 1.00
+## high          1.27      0.12     1.02     1.50       1003 1.00
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
+## is a crude measure of effective sample size, and Rhat is the potential 
+## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Since we used the log link, our model results are in the log metric, too. If you’d like them in the metric of the data, you’d work directly with the poster samples and exponentiate.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;post &amp;lt;- 
+  posterior_samples(fit1) %&amp;gt;% 
+  mutate(`beta_0 (i.e., low)`                       = exp(b_intercept),
+         `beta_1 (i.e., difference score for high)` = exp(b_high))&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We can then just summarize our parameters of interest.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;post %&amp;gt;% 
+  select(starts_with(&amp;quot;beta_&amp;quot;)) %&amp;gt;% 
+  gather() %&amp;gt;% 
+  group_by(key) %&amp;gt;% 
+  summarise(mean  = mean(value),
+            lower = quantile(value, prob = .025),
+            upper = quantile(value, prob = .975))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 2 x 4
+##   key                                       mean lower upper
+##   &amp;lt;chr&amp;gt;                                    &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
+## 1 beta_0 (i.e., low)                        1.81  1.45  2.24
+## 2 beta_1 (i.e., difference score for high)  3.58  2.78  4.50&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;For the sake of simulation, it’ll be easier if we press on with evaluating the parameters on the log metric, though. If you’re working within a null-hypothesis oriented power paradigm, you’ll be happy to know zero is still the number to beat for evaluating our 95% intervals for &lt;span class=&#34;math inline&#34;&gt;\(\beta_1\)&lt;/span&gt;, even when that parameter is in the log metric. Here it is, again.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(broom)
+
+tidy(fit1, prob = .95) %&amp;gt;% 
+  filter(term == &amp;quot;b_high&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##     term estimate std.error   lower    upper
+## 1 b_high 1.266527 0.1232635 1.02143 1.504801&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;So our first fit suggests we’re on good footing to run a quick power simulation holding &lt;span class=&#34;math inline&#34;&gt;\(n = 50\)&lt;/span&gt;. As in the prior blog posts, our lives will be simpler if we set up a custom simulation function. Since we’ll be using it to simulate the data and fit the model in one step, let’s call it &lt;code&gt;sim_data_fit()&lt;/code&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim_data_fit &amp;lt;- function(seed, n) {
+  
+  # define our mus in the function
+  mu_7 &amp;lt;- 2.17
+  mu_8 &amp;lt;- 6.25
+
+  # make your results reproducible
+  set.seed(seed)
+  
+  # simulate the data
+  d &amp;lt;-
+    tibble(high  = rep(0:1, each = n),
+           count = c(rpois(n = n, lambda = mu_7),
+                     rpois(n = n, lambda = mu_8)))
+  
+  # fit and summarise
+  update(fit1,
+         newdata = d,
+         seed = seed) %&amp;gt;% 
+  tidy(prob = .95) %&amp;gt;% 
+  filter(term == &amp;quot;b_high&amp;quot;) %&amp;gt;% 
+  select(lower:upper)
+  
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Here’s the simulation for a simple 100 iterations.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim1 &amp;lt;-
+  tibble(seed = 1:100) %&amp;gt;% 
+  mutate(ci = map(seed, sim_data_fit, n = 50)) %&amp;gt;% 
+  unnest()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;That went quick–less than 3 minutes on my old laptop. Here’s what those 100 &lt;span class=&#34;math inline&#34;&gt;\(\beta_1\)&lt;/span&gt; intervals look like in bulk.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim1 %&amp;gt;% 
+  
+  ggplot(aes(x = seed, ymin = lower, ymax = upper)) +
+  geom_hline(yintercept = 0, color = &amp;quot;white&amp;quot;) +
+  geom_linerange() +
+  labs(x = &amp;quot;seed (i.e., simulation index)&amp;quot;,
+       y = expression(beta[1]))&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-08-11-bayesian-power-analysis-part-iii-a_files/figure-html/unnamed-chunk-10-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;None of them are anywhere near the null value 0. So it appears we’re well above .8 power to reject the typical &lt;span class=&#34;math inline&#34;&gt;\(H_0\)&lt;/span&gt; with &lt;span class=&#34;math inline&#34;&gt;\(n = 50\)&lt;/span&gt;. Switching to the precision orientation, here’s the distribution of their widths.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim1 %&amp;gt;% 
+  mutate(width = upper - lower) %&amp;gt;% 
+  
+  ggplot(aes(x = width)) +
+  geom_histogram(binwidth = 0.01)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-08-11-bayesian-power-analysis-part-iii-a_files/figure-html/unnamed-chunk-11-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;What if we wanted a mean width of 0.25 on the log scale? We might try the simulation with &lt;span class=&#34;math inline&#34;&gt;\(n = 150\)&lt;/span&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim2 &amp;lt;-
+  tibble(seed = 1:100) %&amp;gt;% 
+  mutate(ci = map(seed, sim_data_fit, n = 150)) %&amp;gt;% 
+  unnest()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Here we’ll summarize the widths both in terms of their mean and what proportion were smaller than 0.25.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim2 %&amp;gt;% 
+  mutate(width = upper - lower) %&amp;gt;% 
+  summarise(`mean width` = mean(width),
+            `below 0.25` = mean(width &amp;lt; 0.25))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 1 x 2
+##   `mean width` `below 0.25`
+##          &amp;lt;dbl&amp;gt;        &amp;lt;dbl&amp;gt;
+## 1        0.253          0.4&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;If we wanted to focus on the mean, we did pretty good. Perhaps set the &lt;span class=&#34;math inline&#34;&gt;\(n = 155\)&lt;/span&gt; and simulate a full 1000+ iterations for a serious power analysis. But if we wanted to make the stricter criteria of all below 0.25, we’d need to up the &lt;span class=&#34;math inline&#34;&gt;\(n\)&lt;/span&gt; quite a bit more. And of course, once you have a little experience working with Poisson models, you might do the power simulations with more ambitious priors. For example, if your count values are lower than like 1000, there’s a good chance a &lt;code&gt;normal(0, 6)&lt;/code&gt; prior on your &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; parameters will be nearly flat within the reasonable neighborhoods of the parameter space.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;but-logs-are-hard.&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;But logs are hard.&lt;/h2&gt;
+&lt;p&gt;If we approach our Bayesian power analysis from a precision perspective, it can be difficult to settle on a reasonable interval width when they’re on the log scale. So let’s modify our simulation flow so it converts the width summaries back into the natural metric. Before we go big, let’s practice with a single iteration.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;seed &amp;lt;- 0
+set.seed(seed)
+
+# simulate the data
+d &amp;lt;-
+  tibble(high  = rep(0:1, each = n),
+         count = c(rpois(n = n, lambda = mu_7),
+                   rpois(n = n, lambda = mu_8)))
+
+# fit the model
+fit2 &amp;lt;-
+  update(fit1,
+       newdata = d,
+       seed = seed) &lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now summarize.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidybayes)
+
+fit2 %&amp;gt;% 
+  posterior_samples() %&amp;gt;% 
+  transmute(`beta_1` = exp(b_high)) %&amp;gt;% 
+  mean_qi()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;##     beta_1   .lower   .upper .width .point .interval
+## 1 2.686121 2.195825 3.299118   0.95   mean        qi&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Before we used the handy &lt;code&gt;broom::tidy()&lt;/code&gt; function to extract our intervals, which took the brms fit object as input. Here we took a different approach. Because we are transforming &lt;span class=&#34;math inline&#34;&gt;\(\beta_1\)&lt;/span&gt;, we used the &lt;code&gt;posterior_samples()&lt;/code&gt; function to work directly with the posterior draws. We then exponentiated within &lt;code&gt;transmute()&lt;/code&gt;, which returned a single-column tibble, not a brms fit object. So instead of &lt;code&gt;broom::tidy()&lt;/code&gt;, it’s easier to get our summary statistics with the &lt;code&gt;tidybayes::mean_qi()&lt;/code&gt; function. Do note that now our lower and upper levels are named &lt;code&gt;.lower&lt;/code&gt; and &lt;code&gt;.upper&lt;/code&gt;, respectively (i.e., they now have a &lt;code&gt;.&lt;/code&gt; prefix).&lt;/p&gt;
+&lt;p&gt;Now we’ve practiced with the new flow, let’s redefine our simulation function.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim_data_fit &amp;lt;- function(seed, n) {
+  
+  # define our mus in the function
+  mu_7 &amp;lt;- 2.17
+  mu_8 &amp;lt;- 6.25
+
+  # make your results reproducible
+  set.seed(seed)
+  
+  # simulate the data
+  d &amp;lt;-
+    tibble(high  = rep(0:1, each = n),
+           count = c(rpois(n = n, lambda = mu_7),
+                     rpois(n = n, lambda = mu_8)))
+  
+  # fit and summarize
+  update(fit1,
+         newdata = d,
+         seed = seed) %&amp;gt;% 
+  posterior_samples() %&amp;gt;% 
+  transmute(`beta_1` = exp(b_high)) %&amp;gt;% 
+  mean_qi()
+  
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Simulate.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim3 &amp;lt;-
+  tibble(seed = 1:100) %&amp;gt;% 
+  mutate(ci = map(seed, sim_data_fit, n = 50)) %&amp;gt;% 
+  unnest()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Here’s what those 100 &lt;span class=&#34;math inline&#34;&gt;\(\beta_1\)&lt;/span&gt; intervals look like in bulk.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim3 %&amp;gt;% 
+  ggplot(aes(x = seed, y = beta_1, ymin = .lower, ymax = .upper)) +
+  geom_hline(yintercept = 0, color = &amp;quot;white&amp;quot;) +
+  geom_pointrange(fatten = 1) +
+  labs(x = &amp;quot;seed (i.e., simulation index)&amp;quot;,
+       y = expression(beta[1]))&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-08-11-bayesian-power-analysis-part-iii-a_files/figure-html/unnamed-chunk-17-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Inspect the distribution of their widths.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim3 %&amp;gt;% 
+  mutate(width = .upper - .lower) %&amp;gt;% 
+  
+  ggplot(aes(x = width)) +
+  geom_histogram(binwidth = 0.05)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-08-11-bayesian-power-analysis-part-iii-a_files/figure-html/unnamed-chunk-18-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;What if we wanted a mean 95% interval width of 1? Let’s run the simulation again, this time with &lt;span class=&#34;math inline&#34;&gt;\(n = 100\)&lt;/span&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim4 &amp;lt;-
+  tibble(seed = 1:100) %&amp;gt;% 
+  mutate(ci = map(seed, sim_data_fit, n = 100)) %&amp;gt;% 
+  unnest() %&amp;gt;% 
+  mutate(width = .upper - .lower)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Here’s the new width distribution.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim4 %&amp;gt;% 
+  ggplot(aes(x = width)) +
+  geom_histogram(binwidth = 0.05)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-08-11-bayesian-power-analysis-part-iii-a_files/figure-html/unnamed-chunk-19-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;And the mean width is:&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim4 %&amp;gt;% 
+  summarise(mean_width = mean(width))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 1 x 1
+##   mean_width
+##        &amp;lt;dbl&amp;gt;
+## 1      0.912&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Nice! If we want a mean width of 1, it looks like we’re a little &lt;em&gt;overpowered&lt;/em&gt; with &lt;span class=&#34;math inline&#34;&gt;\(n = 100\)&lt;/span&gt;. The next step would be to up your iterations to 1000 or so to do a proper simulation.&lt;/p&gt;
+&lt;p&gt;Now you’ve got a sense of how to work with the Poisson likelihood, next time we’ll play with binary data.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;session-info&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Session info&lt;/h2&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## R version 3.6.0 (2019-04-26)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS High Sierra 10.13.6
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] tidybayes_1.1.0 broom_0.5.2     brms_2.9.0      Rcpp_1.0.1     
+##  [5] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.1     purrr_0.3.2    
+##  [9] readr_1.3.1     tidyr_0.8.3     tibble_2.1.3    ggplot2_3.2.0  
+## [13] tidyverse_1.2.1
+## 
+## loaded via a namespace (and not attached):
+##   [1] colorspace_1.4-1          ggridges_0.5.1           
+##   [3] rsconnect_0.8.13          ggstance_0.3.2           
+##   [5] markdown_1.0              base64enc_0.1-3          
+##   [7] rstudioapi_0.10           rstan_2.18.2             
+##   [9] svUnit_0.7-12             DT_0.7                   
+##  [11] fansi_0.4.0               mvtnorm_1.0-11           
+##  [13] lubridate_1.7.4           xml2_1.2.0               
+##  [15] bridgesampling_0.6-0      codetools_0.2-16         
+##  [17] knitr_1.23                shinythemes_1.1.2        
+##  [19] zeallot_0.1.0             bayesplot_1.7.0          
+##  [21] jsonlite_1.6              shiny_1.3.2              
+##  [23] compiler_3.6.0            httr_1.4.0               
+##  [25] backports_1.1.4           assertthat_0.2.1         
+##  [27] Matrix_1.2-17             lazyeval_0.2.2           
+##  [29] cli_1.1.0                 later_0.8.0              
+##  [31] htmltools_0.3.6           prettyunits_1.0.2        
+##  [33] tools_3.6.0               igraph_1.2.4.1           
+##  [35] coda_0.19-2               gtable_0.3.0             
+##  [37] glue_1.3.1                reshape2_1.4.3           
+##  [39] cellranger_1.1.0          vctrs_0.1.0              
+##  [41] nlme_3.1-139              blogdown_0.14            
+##  [43] crosstalk_1.0.0           xfun_0.8                 
+##  [45] ps_1.3.0                  rvest_0.3.4              
+##  [47] mime_0.7                  miniUI_0.1.1.1           
+##  [49] gtools_3.8.1              zoo_1.8-6                
+##  [51] scales_1.0.0              colourpicker_1.0         
+##  [53] hms_0.4.2                 promises_1.0.1           
+##  [55] Brobdingnag_1.2-6         parallel_3.6.0           
+##  [57] inline_0.3.15             shinystan_2.5.0          
+##  [59] yaml_2.2.0                gridExtra_2.3            
+##  [61] loo_2.1.0                 StanHeaders_2.18.1-10    
+##  [63] stringi_1.4.3             dygraphs_1.1.1.6         
+##  [65] pkgbuild_1.0.3            rlang_0.4.0              
+##  [67] pkgconfig_2.0.2           matrixStats_0.54.0       
+##  [69] evaluate_0.14             lattice_0.20-38          
+##  [71] rstantools_1.5.1          htmlwidgets_1.3          
+##  [73] labeling_0.3              tidyselect_0.2.5         
+##  [75] processx_3.3.1            plyr_1.8.4               
+##  [77] magrittr_1.5              bookdown_0.12            
+##  [79] R6_2.4.0                  generics_0.0.2           
+##  [81] pillar_1.4.1              haven_2.1.0              
+##  [83] withr_2.1.2               xts_0.11-2               
+##  [85] abind_1.4-5               modelr_0.1.4             
+##  [87] crayon_1.3.4              arrayhelpers_1.0-20160527
+##  [89] utf8_1.1.4                rmarkdown_1.13           
+##  [91] grid_3.6.0                readxl_1.3.1             
+##  [93] callr_3.2.0               threejs_0.3.1            
+##  [95] digest_0.6.19             xtable_1.8-4             
+##  [97] httpuv_1.5.1              stats4_3.6.0             
+##  [99] munsell_0.5.0             shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;footnote&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Footnote&lt;/h2&gt;
+&lt;/div&gt;
+&lt;div class=&#34;footnotes&#34;&gt;
+&lt;hr /&gt;
+&lt;ol&gt;
+&lt;li id=&#34;fn1&#34;&gt;&lt;p&gt;Yes, one can smoke half a cigarette or drink 1/3 of a drink. Ideally, we’d have the exact amount of nicotine in your blood at a given moment and over time and the same for the amount of alcohol in your system relative to your blood volume and such. But in practice, substance use researchers just don’t tend to have access to data of that quality. Instead, we’re typically stuck with simple counts. And I look forward to the day the right team of engineers, computer scientists, and substance use researchers (and whoever else I forgot to mention) release the cheap, non-invasive technology we need to passively measure these things. Until then: &lt;em&gt;How many standard servings of alcohol did you drink, last night?&lt;/em&gt;&lt;a href=&#34;#fnref1&#34; class=&#34;footnote-back&#34;&gt;↩&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Bayesian power analysis: Part II. Some might prefer precision to power</title>
       <link>/post/bayesian-power-analysis-part-ii/</link>
       <pubDate>Wed, 24 Jul 2019 00:00:00 +0000</pubDate>
@@ -4661,189 +5039,6 @@ b14.6 %&amp;gt;%
       
       <guid>/privacy/</guid>
       <description>&lt;p&gt;&amp;hellip;&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Slides</title>
-      <link>/slides/example-slides/</link>
-      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
-      
-      <guid>/slides/example-slides/</guid>
-      <description>
-
-&lt;h1 id=&#34;welcome-to-slides&#34;&gt;Welcome to Slides&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://sourcethemes.com/academic/&#34; target=&#34;_blank&#34;&gt;Academic&lt;/a&gt;&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&#34;features&#34;&gt;Features&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Efficiently write slides in Markdown&lt;/li&gt;
-&lt;li&gt;3-in-1: Create, Present, and Publish your slides&lt;/li&gt;
-&lt;li&gt;Supports speaker notes&lt;/li&gt;
-&lt;li&gt;Mobile friendly slides&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&#34;controls&#34;&gt;Controls&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;Next: &lt;code&gt;Right Arrow&lt;/code&gt; or &lt;code&gt;Space&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;Previous: &lt;code&gt;Left Arrow&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;Start: &lt;code&gt;Home&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;Finish: &lt;code&gt;End&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;Overview: &lt;code&gt;Esc&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;Speaker notes: &lt;code&gt;S&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;Fullscreen: &lt;code&gt;F&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;Zoom: &lt;code&gt;Alt + Click&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href=&#34;https://github.com/hakimel/reveal.js#pdf-export&#34; target=&#34;_blank&#34;&gt;PDF Export&lt;/a&gt;: &lt;code&gt;E&lt;/code&gt;&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&#34;code-highlighting&#34;&gt;Code Highlighting&lt;/h2&gt;
-
-&lt;p&gt;Inline code: &lt;code&gt;variable&lt;/code&gt;&lt;/p&gt;
-
-&lt;p&gt;Code block:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-python&#34;&gt;porridge = &amp;quot;blueberry&amp;quot;
-if porridge == &amp;quot;blueberry&amp;quot;:
-    print(&amp;quot;Eating...&amp;quot;)
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&#34;math&#34;&gt;Math&lt;/h2&gt;
-
-&lt;p&gt;In-line math: $x + y = z$&lt;/p&gt;
-
-&lt;p&gt;Block math:&lt;/p&gt;
-
-&lt;p&gt;$$
-f\left( x \right) = \;\frac{{2\left( {x + 4} \right)\left( {x - 4} \right)}}{{\left( {x + 4} \right)\left( {x + 1} \right)}}
-$$&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&#34;fragments&#34;&gt;Fragments&lt;/h2&gt;
-
-&lt;p&gt;Make content appear incrementally&lt;/p&gt;
-
-&lt;pre&gt;&lt;code&gt;{{% fragment %}} One {{% /fragment %}}
-{{% fragment %}} **Two** {{% /fragment %}}
-{{% fragment %}} Three {{% /fragment %}}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Press &lt;code&gt;Space&lt;/code&gt; to play!&lt;/p&gt;
-
-&lt;p&gt;&lt;span class=&#34;fragment &#34; &gt;
-  One
-&lt;/span&gt;
-&lt;span class=&#34;fragment &#34; &gt;
-  &lt;strong&gt;Two&lt;/strong&gt;
-&lt;/span&gt;
-&lt;span class=&#34;fragment &#34; &gt;
-  Three
-&lt;/span&gt;&lt;/p&gt;
-
-&lt;hr /&gt;
-
-&lt;p&gt;A fragment can accept two optional parameters:&lt;/p&gt;
-
-&lt;ul&gt;
-&lt;li&gt;&lt;code&gt;class&lt;/code&gt;: use a custom style (requires definition in custom CSS)&lt;/li&gt;
-&lt;li&gt;&lt;code&gt;weight&lt;/code&gt;: sets the order in which a fragment appears&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&#34;speaker-notes&#34;&gt;Speaker Notes&lt;/h2&gt;
-
-&lt;p&gt;Add speaker notes to your presentation&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-markdown&#34;&gt;{{% speaker_note %}}
-- Only the speaker can read these notes
-- Press `S` key to view
-{{% /speaker_note %}}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;p&gt;Press the &lt;code&gt;S&lt;/code&gt; key to view the speaker notes!&lt;/p&gt;
-
-&lt;aside class=&#34;notes&#34;&gt;
-  &lt;ul&gt;
-&lt;li&gt;Only the speaker can read these notes&lt;/li&gt;
-&lt;li&gt;Press &lt;code&gt;S&lt;/code&gt; key to view&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;/aside&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&#34;themes&#34;&gt;Themes&lt;/h2&gt;
-
-&lt;ul&gt;
-&lt;li&gt;black: Black background, white text, blue links (default)&lt;/li&gt;
-&lt;li&gt;white: White background, black text, blue links&lt;/li&gt;
-&lt;li&gt;league: Gray background, white text, blue links&lt;/li&gt;
-&lt;li&gt;beige: Beige background, dark text, brown links&lt;/li&gt;
-&lt;li&gt;sky: Blue background, thin dark text, blue links&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-&lt;ul&gt;
-&lt;li&gt;night: Black background, thick white text, orange links&lt;/li&gt;
-&lt;li&gt;serif: Cappuccino background, gray text, brown links&lt;/li&gt;
-&lt;li&gt;simple: White background, black text, blue links&lt;/li&gt;
-&lt;li&gt;solarized: Cream-colored background, dark green text, blue links&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;hr /&gt;
-
-
-&lt;section data-noprocess data-shortcode-slide
-  
-      
-      data-background-image=&#34;/img/boards.jpg&#34;
-  &gt;
-
-
-&lt;h2 id=&#34;custom-slide&#34;&gt;Custom Slide&lt;/h2&gt;
-
-&lt;p&gt;Customize the slide style and background&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-markdown&#34;&gt;{{&amp;lt; slide background-image=&amp;quot;/img/boards.jpg&amp;quot; &amp;gt;}}
-{{&amp;lt; slide background-color=&amp;quot;#0000FF&amp;quot; &amp;gt;}}
-{{&amp;lt; slide class=&amp;quot;my-style&amp;quot; &amp;gt;}}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;hr /&gt;
-
-&lt;h2 id=&#34;custom-css-example&#34;&gt;Custom CSS Example&lt;/h2&gt;
-
-&lt;p&gt;Let&amp;rsquo;s make headers navy colored.&lt;/p&gt;
-
-&lt;p&gt;Create &lt;code&gt;assets/css/reveal_custom.css&lt;/code&gt; with:&lt;/p&gt;
-
-&lt;pre&gt;&lt;code class=&#34;language-css&#34;&gt;.reveal section h1,
-.reveal section h2,
-.reveal section h3 {
-  color: navy;
-}
-&lt;/code&gt;&lt;/pre&gt;
-
-&lt;hr /&gt;
-
-&lt;h1 id=&#34;questions&#34;&gt;Questions?&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://discourse.gohugo.io&#34; target=&#34;_blank&#34;&gt;Ask&lt;/a&gt;&lt;/p&gt;
-
-&lt;p&gt;&lt;a href=&#34;https://sourcethemes.com/academic/docs/&#34; target=&#34;_blank&#34;&gt;Documentation&lt;/a&gt;&lt;/p&gt;
 </description>
     </item>
     

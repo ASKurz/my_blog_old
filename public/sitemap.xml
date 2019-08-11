@@ -20,6 +20,22 @@
     
     <url>
     
+      <loc>/conflicts_of_interest/</loc>
+      <lastmod>2016-04-20T00:00:00-05:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/post/bayesian-power-analysis-part-iii-a/</loc>
+      <lastmod>2019-08-11T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/post/bayesian-power-analysis-part-ii/</loc>
       <lastmod>2019-07-24T00:00:00+00:00</lastmod>
     </url>
@@ -166,7 +182,7 @@
     <url>
     
       <loc>/tags/bayesian/</loc>
-      <lastmod>2019-07-24T00:00:00+00:00</lastmod>
+      <lastmod>2019-08-11T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -272,7 +288,7 @@
     <url>
     
       <loc>/tags/r/</loc>
-      <lastmod>2019-07-24T00:00:00+00:00</lastmod>
+      <lastmod>2019-08-11T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -305,7 +321,7 @@
     <url>
     
       <loc>/tags/</loc>
-      <lastmod>2019-07-24T00:00:00+00:00</lastmod>
+      <lastmod>2019-08-11T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -395,7 +411,7 @@
     <url>
     
       <loc>/tags/power/</loc>
-      <lastmod>2019-07-24T00:00:00+00:00</lastmod>
+      <lastmod>2019-08-11T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -440,7 +456,7 @@
     <url>
     
       <loc>/tags/tidyverse/</loc>
-      <lastmod>2019-07-24T00:00:00+00:00</lastmod>
+      <lastmod>2019-08-11T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -449,7 +465,7 @@
     <url>
     
       <loc>/tags/tutorial/</loc>
-      <lastmod>2019-07-24T00:00:00+00:00</lastmod>
+      <lastmod>2019-08-11T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
