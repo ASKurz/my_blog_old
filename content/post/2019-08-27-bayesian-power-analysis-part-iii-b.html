@@ -22,8 +22,8 @@ header:
 
 <div id="version-1.0.0" class="section level2">
 <h2>Version 1.0.0</h2>
-<p>In the <a href="https://solomonkurz.netlify.com/post/bayesian-power-analysis-part-iii-a/">last post</a>, we covered how the Poisson distribution is handy for modeling count data. Binary data are even weirder than counts. They typically only take on two values: 0 and 1. Sometimes 0 is a stand-in for “no” and 1 for “yes” (e.g., <em>Are you an expert in Bayesian power analysis?</em> For me that would be <code>0</code>). You can also have data of this kind if you asked people whether they’d like to choose option A or B. With those kinds of data, you might arbitrarily code A as 0 and B as 1. Binomial data also often stand in for trials where 0 = “fail” and 1 = “success.” For example, if you answered “Yes” to the question <em>Are all data normally distributed?</em> we’d mark your answer down as a <code>0</code>.</p>
-<p>Though 0s and 1s are popular, sometimes binomial data appear in their aggregated form. Let’s say I gave you 10 algebra questions and you got 7 of them right. Here’s one way to encode those data.</p>
+<p>In the <a href="https://solomonkurz.netlify.com/post/bayesian-power-analysis-part-iii-a/">last post</a>, we covered how the Poisson distribution is handy for modeling count data. Binary data are even weirder than counts. They typically only take on two values: 0 and 1. Sometimes 0 is a stand-in for “no” and 1 for “yes” (e.g., <em>Are you an expert in Bayesian power analysis?</em> For me that would be <code>0</code>). You can also have data of this kind if you asked people whether they’d like to choose option A or B. With those kinds of data, you might arbitrarily code A as 0 and B as 1. Binary data also often stand in for trials where 0 = “fail” and 1 = “success.” For example, if you answered “Yes” to the question <em>Are all data normally distributed?</em> we’d mark your answer down as a <code>0</code>.</p>
+<p>Though 0s and 1s are popular, sometimes binary data appear in their aggregated form. Let’s say I gave you 10 algebra questions and you got 7 of them right. Here’s one way to encode those data.</p>
 <pre class="r"><code>n &lt;- 10
 z &lt;- 7
 
@@ -53,11 +53,11 @@ tibble(id = letters[1:5],
 ## 4 d         4    10
 ## 5 e         5    10</code></pre>
 <p>If you were <code>b</code>, you’d be the smart one in the group.</p>
-<p>Anyway, whether working with binomial or aggregated binomial data, we’re interested in the probability a given trial will be 1.</p>
+<p>Anyway, whether working with binary or aggregated binary data, we’re interested in the probability a given trial will be 1.</p>
 </div>
-<div id="logistic-regression-with-binary-data." class="section level2">
-<h2>Logistic regression with binary data.</h2>
-<p>Taking binary data as a starting point, given <span class="math inline">\(d\)</span> data that includes a variable <span class="math inline">\(y\)</span> where the value in the <span class="math inline">\(i^\text{th}\)</span> row is a 0 or a 1, we’d like to know the probability a given trial would be 1, given <span class="math inline">\(d\)</span> [i.e., <span class="math inline">\(p(y_i = 1 | d)\)</span>]. The binomial distribution will help us get that estimate for <span class="math inline">\(p\)</span>. We’ll do so within the context of a logistic regression model following the form</p>
+<div id="logistic-regression-with-unaggregated-binary-data." class="section level2">
+<h2>Logistic regression with unaggregated binary data.</h2>
+<p>Taking unaggregated binary data as a starting point, given <span class="math inline">\(d\)</span> data that includes a variable <span class="math inline">\(y\)</span> where the value in the <span class="math inline">\(i^\text{th}\)</span> row is a 0 or a 1, we’d like to know the probability a given trial would be 1, given <span class="math inline">\(d\)</span> [i.e., <span class="math inline">\(p(y_i = 1 | d)\)</span>]. The binomial distribution will help us get that estimate for <span class="math inline">\(p\)</span>. We’ll do so within the context of a logistic regression model following the form</p>
 <p><span class="math display">\[
 \begin{align*}
 y_i                        &amp; \sim \text{Binomial} (n = 1, p_i) \\
@@ -68,12 +68,14 @@ y_i                        &amp; \sim \text{Binomial} (n = 1, p_i) \\
 <p><span class="math display">\[
 \operatorname{logit} (p_i) = \operatorname{log} \bigg (\frac{p_i}{1 - p_i} \bigg),
 \]</span></p>
-<p>and thus</p>
+<p>which also means that</p>
 <p><span class="math display">\[
 \operatorname{log} \bigg (\frac{p_i}{1 - p_i} \bigg) = \beta_0.
 \]</span></p>
-<p>In those formulas, <span class="math inline">\(\beta_0\)</span> is the intercept. In a binomial model with no predictors <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, the intercept <span class="math inline">\(\beta_0\)</span> is just the estimate for <span class="math inline">\(p\)</span>, but in the log-odds metric. So yes, similar to the Poisson models from the last post, we typically use a link function with our binomial models. Instead of the log link, we use the logit because constrains the posterior for <span class="math inline">\(p\)</span> to values between 0 and 1. Just as the null value for a probability is .5, the null value for the parameters within a logistic regression model is typically 0.</p>
+<p>In those formulas, <span class="math inline">\(\beta_0\)</span> is the intercept. In a binomial model with no predictors <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, the intercept <span class="math inline">\(\beta_0\)</span> is just the estimate for <span class="math inline">\(p\)</span>, but in the log-odds metric. So yes, similar to the Poisson models from the last post, we typically use a link function with our binomial models. Instead of the log link, we use the logit because it constrains the posterior for <span class="math inline">\(p\)</span> to values between 0 and 1. Just as the null value for a probability is .5, the null value for the parameters within a logistic regression model is typically 0.</p>
 <p>As with the Poisson, I’m not going to go into a full-blown tutorial on the binomial distribution or on logistic regression. For more thorough introductions, check out chapters 9 through 10 in McElreath’s <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical Rethinking</em></a> or Agresti’s <a href="https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034"><em>Foundations of Linear and Generalized Linear Models</em></a>.</p>
+<div id="we-need-data." class="section level3">
+<h3>We need data.</h3>
 <p>Time to simulate some data. Let’s say we’d like to estimate the probability someone will hit a ball in a baseball game. Nowadays, batting averages for professional baseball players tend around .25 (see <a href="http://www.baseball-almanac.com/hitting/hibavg4.shtml">here</a>). So if we wanted to simulate 50 at-bats, we might do so like this.</p>
 <pre class="r"><code>set.seed(3)
 
@@ -91,21 +93,24 @@ d %&gt;%
   ggplot(aes(x = y)) +
   geom_bar()</code></pre>
 <p><img src="/post/2019-08-27-bayesian-power-analysis-part-iii-b_files/figure-html/unnamed-chunk-5-1.png" width="288" /></p>
+</div>
+<div id="time-to-model." class="section level3">
+<h3>Time to model.</h3>
 <p>To practice modeling those data, we’ll want to fire up the <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong> package</a>.</p>
 <pre class="r"><code>library(brms)</code></pre>
-<p>Here’s the <strong>brms</strong> default for our intercept-only logistic regression model.</p>
+<p>We can use the <code>get_prior()</code> function to get the <strong>brms</strong> default for our intercept-only logistic regression model.</p>
 <pre class="r"><code>get_prior(data = d, 
           family = binomial,
           y | trials(1) ~ 1)</code></pre>
 <pre><code>## Intercept ~ student_t(3, 0, 10)</code></pre>
-<p>As it turns out, that’s a really liberal prior. We might be a little more gutsy and put a more skeptical <code>normal(0, 2)</code> prior on that intercept. With the context of our logit link, that still puts a 95% probability that the <span class="math inline">\(p\)</span> is between .02 and .98, which is almost the entire parameter space. Here’s how to fit the model with the <code>brm()</code> function.</p>
+<p>As it turns out, that’s a really liberal prior. We might step up a bit and put a more skeptical <code>normal(0, 2)</code> prior on that intercept. With the context of our logit link, that still puts a 95% probability that the <span class="math inline">\(p\)</span> is between .02 and .98, which is almost the entire parameter space. Here’s how to fit the model with the <code>brm()</code> function.</p>
 <pre class="r"><code>fit1 &lt;-
   brm(data = d, 
       family = binomial,
       y | trials(1) ~ 1,
       prior(normal(0, 2), class = Intercept),
       seed = 3)</code></pre>
-<p>In the <code>brm()</code> formula syntax, including a <code>|</code> bar on the left side of a formula indicates we have extra supplementary information about our criterion variable. In this case, that information is that each <code>y</code> value corresponds to a single trial (i.e., <code>trials(1)</code>), which itself corresponds to the <span class="math inline">\(n = 1\)</span> portion of the statistical formula, above. Here are the results.</p>
+<p>In the <code>brm()</code> formula syntax, including a <code>|</code> bar on the left side of a formula indicates we have extra supplementary information about our criterion variable. In this case, that information is that each <code>y</code> value corresponds to a single trial [i.e., <code>trials(1)</code>], which itself corresponds to the <span class="math inline">\(n = 1\)</span> portion of the statistical formula, above. Here are the results.</p>
 <pre class="r"><code>print(fit1)</code></pre>
 <pre><code>##  Family: binomial 
 ##   Links: mu = logit 
@@ -125,10 +130,13 @@ d %&gt;%
 <pre class="r"><code>fixef(fit1)[&quot;Intercept&quot;, 1] %&gt;% 
   inv_logit_scaled()</code></pre>
 <pre><code>## [1] 0.1991036</code></pre>
-<p>If we want the full posterior distribution, we’ll need to work with the posterior draws themselves.</p>
-<pre class="r"><code>posterior_samples(fit1) %&gt;% 
+<p>If we’d like to view the full posterior distribution, we’ll need to work with the posterior draws themselves. Then we’ll plot.</p>
+<pre class="r"><code># extract the posterior draws
+posterior_samples(fit1) %&gt;% 
+  # transform from the log-odds to a probability metric
   transmute(p = inv_logit_scaled(b_Intercept)) %&gt;% 
   
+  # plot!
   ggplot(aes(x = p)) +
   geom_density(fill = &quot;grey25&quot;, size = 0) +
   scale_x_continuous(&quot;probability of a hit&quot;, limits = c(0, 1)) +
@@ -142,7 +150,11 @@ posterior_samples(fit1) %&gt;%
   median_qi()</code></pre>
 <pre><code>##           p    .lower    .upper .width .point .interval
 ## 1 0.2011897 0.1076116 0.3252849   0.95 median        qi</code></pre>
-<p>Yep, .5 was not within those intervals. Let’s see what happens when we do a mini power analysis with 100 iterations. First we set up our simulation function.</p>
+<p>Yep, .5 was not within those intervals.</p>
+</div>
+<div id="but-what-about-power" class="section level3">
+<h3>But what about power?</h3>
+<p>That’s enough preliminary work. Let’s see what happens when we do a mini power analysis with 100 iterations. First we set up our simulation function using the same methods we introduced in earlier blog posts.</p>
 <pre class="r"><code>sim_data_fit &lt;- function(seed, n_player) {
   
   n_trials &lt;- 1
@@ -186,9 +198,10 @@ posterior_samples(fit1) %&gt;%
 ##   `conventional power` `mean width` `width below .25`
 ##                  &lt;dbl&gt;        &lt;dbl&gt;             &lt;dbl&gt;
 ## 1                 0.95        0.231               0.8</code></pre>
-<p>Depending on your study needs, you’d adjust your sample size accordingly, do a mini simulation or two first, and then follow up with a proper 1000+ power simulation.</p>
+<p>Depending on your study needs, you’d adjust your sample size accordingly, do a mini simulation or two first, and then follow up with a proper power simulation with 1000+ iterations.</p>
 <p>I should point out that whereas in the last post we evaluated the power of the Poisson model with the parameters on the scale of the link function, here we evaluated the power for our logistic regression model after transforming the intercept back into the probability metric. Both methods are fine. I recommend you run your power simulation based on how you want to interpret and report your results.</p>
 <p>We should also acknowledge that this was our first example of a power simulation that wasn’t based on some group comparison. Comparing groups is fine and normal and important. And it’s also the case that we can care about power and/or parameter precision for more than group-based analyses. Our simulation-based approach is fine for both.</p>
+</div>
 </div>
 <div id="aggregated-binomial-regression." class="section level2">
 <h2>Aggregated binomial regression.</h2>
