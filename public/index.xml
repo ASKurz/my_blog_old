@@ -51,8 +51,8 @@ tibble(id = letters[1:5],
 &lt;p&gt;If you were &lt;code&gt;b&lt;/code&gt;, you’d be the smart one in the group.&lt;/p&gt;
 &lt;p&gt;Anyway, whether working with binary or aggregated binary data, we’re interested in the probability a given trial will be 1.&lt;/p&gt;
 &lt;/div&gt;
-&lt;div id=&#34;logistic-regression-with-unaggregated-binary-data.&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Logistic regression with unaggregated binary data.&lt;/h2&gt;
+&lt;div id=&#34;logistic-regression-with-unaggregated-binary-data&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Logistic regression with unaggregated binary data&lt;/h2&gt;
 &lt;p&gt;Taking unaggregated binary data as a starting point, given &lt;span class=&#34;math inline&#34;&gt;\(d\)&lt;/span&gt; data that includes a variable &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; where the value in the &lt;span class=&#34;math inline&#34;&gt;\(i^\text{th}\)&lt;/span&gt; row is a 0 or a 1, we’d like to know the probability a given trial would be 1, given &lt;span class=&#34;math inline&#34;&gt;\(d\)&lt;/span&gt; [i.e., &lt;span class=&#34;math inline&#34;&gt;\(p(y_i = 1 | d)\)&lt;/span&gt;]. The binomial distribution will help us get that estimate for &lt;span class=&#34;math inline&#34;&gt;\(p\)&lt;/span&gt;. We’ll do so within the context of a logistic regression model following the form&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
 \begin{align*}
@@ -199,8 +199,8 @@ posterior_samples(fit1) %&amp;gt;%
 &lt;p&gt;We should also acknowledge that this was our first example of a power simulation that wasn’t based on some group comparison. Comparing groups is fine and normal and important. And it’s also the case that we can care about power and/or parameter precision for more than group-based analyses. Our simulation-based approach is fine for both.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
-&lt;div id=&#34;aggregated-binomial-regression.&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Aggregated binomial regression.&lt;/h2&gt;
+&lt;div id=&#34;aggregated-binomial-regression&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Aggregated binomial regression&lt;/h2&gt;
 &lt;p&gt;It’s no more difficult to simulate and work with aggregated binomial data. But since the mechanics for &lt;code&gt;brms::brm()&lt;/code&gt; and thus the down-the-road simulation setup are a little different, we should practice. With our new setup, we’ll consider a new example. Since .25 is the typical batting average, it might better sense to define the null hypothesis like this:&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[H_0 \text{: } p = .25.\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;Consider a case where we had some intervention where we expected a new batting average of .35. How many trials would we need, then, to either reject &lt;span class=&#34;math inline&#34;&gt;\(H_0\)&lt;/span&gt; or perhaps estimate &lt;span class=&#34;math inline&#34;&gt;\(p\)&lt;/span&gt; with a satisfactory degree of precision? Here’s what the statistical formula for the implied aggregated binomial model might look like:&lt;/p&gt;

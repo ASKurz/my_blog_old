@@ -373,8 +373,8 @@ tibble(id = letters[1:5],
 <p>If you were <code>b</code>, you’d be the smart one in the group.</p>
 <p>Anyway, whether working with binary or aggregated binary data, we’re interested in the probability a given trial will be 1.</p>
 </div>
-<div id="logistic-regression-with-unaggregated-binary-data." class="section level2">
-<h2>Logistic regression with unaggregated binary data.</h2>
+<div id="logistic-regression-with-unaggregated-binary-data" class="section level2">
+<h2>Logistic regression with unaggregated binary data</h2>
 <p>Taking unaggregated binary data as a starting point, given <span class="math inline">\(d\)</span> data that includes a variable <span class="math inline">\(y\)</span> where the value in the <span class="math inline">\(i^\text{th}\)</span> row is a 0 or a 1, we’d like to know the probability a given trial would be 1, given <span class="math inline">\(d\)</span> [i.e., <span class="math inline">\(p(y_i = 1 | d)\)</span>]. The binomial distribution will help us get that estimate for <span class="math inline">\(p\)</span>. We’ll do so within the context of a logistic regression model following the form</p>
 <p><span class="math display">\[
 \begin{align*}
@@ -521,8 +521,8 @@ posterior_samples(fit1) %&gt;%
 <p>We should also acknowledge that this was our first example of a power simulation that wasn’t based on some group comparison. Comparing groups is fine and normal and important. And it’s also the case that we can care about power and/or parameter precision for more than group-based analyses. Our simulation-based approach is fine for both.</p>
 </div>
 </div>
-<div id="aggregated-binomial-regression." class="section level2">
-<h2>Aggregated binomial regression.</h2>
+<div id="aggregated-binomial-regression" class="section level2">
+<h2>Aggregated binomial regression</h2>
 <p>It’s no more difficult to simulate and work with aggregated binomial data. But since the mechanics for <code>brms::brm()</code> and thus the down-the-road simulation setup are a little different, we should practice. With our new setup, we’ll consider a new example. Since .25 is the typical batting average, it might better sense to define the null hypothesis like this:</p>
 <p><span class="math display">\[H_0 \text{: } p = .25.\]</span></p>
 <p>Consider a case where we had some intervention where we expected a new batting average of .35. How many trials would we need, then, to either reject <span class="math inline">\(H_0\)</span> or perhaps estimate <span class="math inline">\(p\)</span> with a satisfactory degree of precision? Here’s what the statistical formula for the implied aggregated binomial model might look like:</p>

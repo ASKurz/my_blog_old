@@ -54,7 +54,7 @@ If you were `b`, you'd be the smart one in the group.
 
 Anyway, whether working with binary or aggregated binary data, we're interested in the probability a given trial will be 1.
 
-## Logistic regression with unaggregated binary data.
+## Logistic regression with unaggregated binary data
 
 Taking unaggregated binary data as a starting point, given $d$ data that includes a variable $y$ where the value in the $i^\text{th}$ row is a 0 or a 1, we'd like to know the probability a given trial would be 1, given $d$ [i.e., $p(y_i = 1 | d)$]. The binomial distribution will help us get that estimate for $p$. We'll do so within the context of a logistic regression model following the form
 
@@ -240,7 +240,7 @@ I should point out that whereas in the last post we evaluated the power of the P
 
 We should also acknowledge that this was our first example of a power simulation that wasn't based on some group comparison. Comparing groups is fine and normal and important. And it's also the case that we can care about power and/or parameter precision for more than group-based analyses. Our simulation-based approach is fine for both.
 
-## Aggregated binomial regression.
+## Aggregated binomial regression
 
 It's no more difficult to simulate and work with aggregated binomial data. But since the mechanics for `brms::brm()` and thus the down-the-road simulation setup are a little different, we should practice. With our new setup, we'll consider a new example. Since .25 is the typical batting average, it might better sense to define the null hypothesis like this:
 
