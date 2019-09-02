@@ -10,7 +10,7 @@ tags:
   - power
   - R
   - tutorial
-  - tydiverse
+  - tidyverse
 authors: []
 header:
   caption: ''
