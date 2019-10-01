@@ -11,6 +11,20 @@
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
+      <title>&#34;How to Survive a Plague&#34;: Part 2/$n$ of a premature book report</title>
+      <link>/post/how-to-survive-a-plague-part-2-n-of-a-premature-book-report/</link>
+      <pubDate>Mon, 30 Sep 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/how-to-survive-a-plague-part-2-n-of-a-premature-book-report/</guid>
+      <description>&lt;div id=&#34;hit-the-pause&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Hit the pause&lt;/h2&gt;
+&lt;p&gt;I started this series intending to add semiregular installments. Perhaps I’d add one every other month or so. It turns out I’m just not up to it, right now.&lt;/p&gt;
+&lt;p&gt;Someone important to me died during this plague. Reading and blogging on this book was and has been a way to connect with them—to honor their life. The experience has been rich and raw and meaningful. I hope that not too far off in the future, I’ll be in a better place to take up this task. Until then, take care of you and, to the extent you can bear, look upon those around you with kindness in your heart.&lt;/p&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Bayesian power analysis: Part III.b. What about 0/1 data?</title>
       <link>/post/bayesian-power-analysis-part-iii-b/</link>
       <pubDate>Tue, 27 Aug 2019 00:00:00 +0000</pubDate>
@@ -116,8 +130,8 @@ d %&amp;gt;%
 ##          total post-warmup samples = 4000
 ## 
 ## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## Intercept    -1.39      0.36    -2.12    -0.73       1462 1.00
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -1.39      0.36    -2.12    -0.73 1.00     1527     1358
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -144,8 +158,10 @@ posterior_samples(fit1) %&amp;gt;%
 posterior_samples(fit1) %&amp;gt;% 
   transmute(p = inv_logit_scaled(b_Intercept)) %&amp;gt;% 
   median_qi()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##           p    .lower    .upper .width .point .interval
-## 1 0.2011897 0.1076116 0.3252849   0.95 median        qi&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 1 x 6
+##       p .lower .upper .width .point .interval
+##   &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt; &amp;lt;chr&amp;gt;  &amp;lt;chr&amp;gt;    
+## 1 0.201  0.108  0.325   0.95 median qi&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Yep, .5 was not within those intervals.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;but-what-about-power&#34; class=&#34;section level3&#34;&gt;
@@ -245,8 +261,8 @@ d&lt;/code&gt;&lt;/pre&gt;
 ##          total post-warmup samples = 4000
 ## 
 ## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## Intercept    -0.81      0.20    -1.19    -0.42       1396 1.00
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -0.81      0.20    -1.19    -0.42 1.00     1398     1843
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -326,61 +342,62 @@ d&lt;/code&gt;&lt;/pre&gt;
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] tidybayes_1.1.0 brms_2.9.0      Rcpp_1.0.1      forcats_0.4.0  
-##  [5] stringr_1.4.0   dplyr_0.8.1     purrr_0.3.2     readr_1.3.1    
-##  [9] tidyr_0.8.3     tibble_2.1.3    ggplot2_3.2.0   tidyverse_1.2.1
+##  [1] tidybayes_1.1.0 brms_2.10.0     Rcpp_1.0.2      forcats_0.4.0  
+##  [5] stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2     readr_1.3.1    
+##  [9] tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] nlme_3.1-139              matrixStats_0.54.0       
-##   [3] xts_0.11-2                lubridate_1.7.4          
-##   [5] threejs_0.3.1             httr_1.4.0               
-##   [7] rstan_2.18.2              tools_3.6.0              
-##   [9] backports_1.1.4           utf8_1.1.4               
-##  [11] R6_2.4.0                  DT_0.7                   
-##  [13] lazyeval_0.2.2            colorspace_1.4-1         
-##  [15] withr_2.1.2               prettyunits_1.0.2        
-##  [17] processx_3.3.1            tidyselect_0.2.5         
-##  [19] gridExtra_2.3             Brobdingnag_1.2-6        
-##  [21] compiler_3.6.0            cli_1.1.0                
-##  [23] rvest_0.3.4               arrayhelpers_1.0-20160527
-##  [25] shinyjs_1.0               xml2_1.2.0               
-##  [27] labeling_0.3              colourpicker_1.0         
-##  [29] bookdown_0.12             scales_1.0.0             
-##  [31] dygraphs_1.1.1.6          mvtnorm_1.0-11           
-##  [33] callr_3.2.0               ggridges_0.5.1           
-##  [35] StanHeaders_2.18.1-10     digest_0.6.19            
-##  [37] rmarkdown_1.13            base64enc_0.1-3          
-##  [39] pkgconfig_2.0.2           htmltools_0.3.6          
-##  [41] htmlwidgets_1.3           rlang_0.4.0              
-##  [43] readxl_1.3.1              rstudioapi_0.10          
-##  [45] shiny_1.3.2               svUnit_0.7-12            
-##  [47] generics_0.0.2            zoo_1.8-6                
-##  [49] jsonlite_1.6              crosstalk_1.0.0          
-##  [51] gtools_3.8.1              inline_0.3.15            
-##  [53] magrittr_1.5              loo_2.1.0                
-##  [55] bayesplot_1.7.0           Matrix_1.2-17            
-##  [57] munsell_0.5.0             fansi_0.4.0              
-##  [59] abind_1.4-5               stringi_1.4.3            
-##  [61] yaml_2.2.0                ggstance_0.3.2           
-##  [63] pkgbuild_1.0.3            plyr_1.8.4               
-##  [65] grid_3.6.0                parallel_3.6.0           
-##  [67] promises_1.0.1            crayon_1.3.4             
-##  [69] miniUI_0.1.1.1            lattice_0.20-38          
-##  [71] haven_2.1.0               hms_0.4.2                
-##  [73] ps_1.3.0                  zeallot_0.1.0            
-##  [75] knitr_1.23                pillar_1.4.1             
-##  [77] igraph_1.2.4.1            markdown_1.0             
-##  [79] shinystan_2.5.0           stats4_3.6.0             
-##  [81] reshape2_1.4.3            rstantools_1.5.1         
-##  [83] glue_1.3.1                evaluate_0.14            
-##  [85] blogdown_0.14             modelr_0.1.4             
-##  [87] vctrs_0.1.0               httpuv_1.5.1             
-##  [89] cellranger_1.1.0          gtable_0.3.0             
-##  [91] assertthat_0.2.1          xfun_0.8                 
-##  [93] mime_0.7                  xtable_1.8-4             
-##  [95] broom_0.5.2               coda_0.19-2              
-##  [97] later_0.8.0               rsconnect_0.8.13         
-##  [99] shinythemes_1.1.2         bridgesampling_0.6-0&lt;/code&gt;&lt;/pre&gt;
+##   [1] colorspace_1.4-1          ggridges_0.5.1           
+##   [3] rsconnect_0.8.13          ggstance_0.3.2           
+##   [5] markdown_1.0              base64enc_0.1-3          
+##   [7] rstudioapi_0.10           rstan_2.19.2             
+##   [9] svUnit_0.7-12             DT_0.7                   
+##  [11] fansi_0.4.0               mvtnorm_1.0-11           
+##  [13] lubridate_1.7.4           xml2_1.2.0               
+##  [15] bridgesampling_0.6-0      knitr_1.23               
+##  [17] shinythemes_1.1.2         zeallot_0.1.0            
+##  [19] bayesplot_1.7.0           jsonlite_1.6             
+##  [21] broom_0.5.2               shiny_1.3.2              
+##  [23] compiler_3.6.0            httr_1.4.0               
+##  [25] backports_1.1.4           assertthat_0.2.1         
+##  [27] Matrix_1.2-17             lazyeval_0.2.2           
+##  [29] cli_1.1.0                 later_0.8.0              
+##  [31] htmltools_0.3.6           prettyunits_1.0.2        
+##  [33] tools_3.6.0               igraph_1.2.4.1           
+##  [35] coda_0.19-2               gtable_0.3.0             
+##  [37] glue_1.3.1                reshape2_1.4.3           
+##  [39] cellranger_1.1.0          vctrs_0.2.0              
+##  [41] nlme_3.1-139              blogdown_0.14            
+##  [43] crosstalk_1.0.0           xfun_0.8                 
+##  [45] ps_1.3.0                  rvest_0.3.4              
+##  [47] mime_0.7                  miniUI_0.1.1.1           
+##  [49] lifecycle_0.1.0           gtools_3.8.1             
+##  [51] zoo_1.8-6                 scales_1.0.0             
+##  [53] colourpicker_1.0          hms_0.4.2                
+##  [55] promises_1.0.1            Brobdingnag_1.2-6        
+##  [57] parallel_3.6.0            inline_0.3.15            
+##  [59] shinystan_2.5.0           yaml_2.2.0               
+##  [61] gridExtra_2.3             loo_2.1.0                
+##  [63] StanHeaders_2.18.1-10     stringi_1.4.3            
+##  [65] dygraphs_1.1.1.6          pkgbuild_1.0.3           
+##  [67] rlang_0.4.0               pkgconfig_2.0.2          
+##  [69] matrixStats_0.54.0        evaluate_0.14            
+##  [71] lattice_0.20-38           rstantools_1.5.1         
+##  [73] htmlwidgets_1.3           labeling_0.3             
+##  [75] tidyselect_0.2.5          processx_3.3.1           
+##  [77] plyr_1.8.4                magrittr_1.5             
+##  [79] bookdown_0.12             R6_2.4.0                 
+##  [81] generics_0.0.2            pillar_1.4.2             
+##  [83] haven_2.1.0               withr_2.1.2              
+##  [85] xts_0.11-2                abind_1.4-5              
+##  [87] modelr_0.1.4              crayon_1.3.4             
+##  [89] arrayhelpers_1.0-20160527 utf8_1.1.4               
+##  [91] rmarkdown_1.13            grid_3.6.0               
+##  [93] readxl_1.3.1              callr_3.2.0              
+##  [95] threejs_0.3.1             digest_0.6.20            
+##  [97] xtable_1.8-4              httpuv_1.5.1             
+##  [99] stats4_3.6.0              munsell_0.5.0            
+## [101] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;footnote&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Footnote&lt;/h2&gt;
@@ -498,9 +515,9 @@ get_prior(data = d,
 ##          total post-warmup samples = 4000
 ## 
 ## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## intercept     0.59      0.11     0.37     0.81        984 1.00
-## high          1.27      0.12     1.02     1.50       1003 1.00
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## intercept     0.59      0.11     0.37     0.81 1.00      988     1225
+## high          1.27      0.12     1.02     1.50 1.00     1005     1078
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -616,8 +633,10 @@ fit2 %&amp;gt;%
   posterior_samples() %&amp;gt;% 
   transmute(`beta_1` = exp(b_high)) %&amp;gt;% 
   mean_qi()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##     beta_1   .lower   .upper .width .point .interval
-## 1 2.686121 2.195825 3.299118   0.95   mean        qi&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 1 x 6
+##   beta_1 .lower .upper .width .point .interval
+##    &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt; &amp;lt;chr&amp;gt;  &amp;lt;chr&amp;gt;    
+## 1   2.69   2.16   3.32   0.95 mean   qi&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Before we used the handy &lt;code&gt;broom::tidy()&lt;/code&gt; function to extract our intervals, which took the brms fit object as input. Here we took a different approach. Because we are transforming &lt;span class=&#34;math inline&#34;&gt;\(\beta_1\)&lt;/span&gt;, we used the &lt;code&gt;posterior_samples()&lt;/code&gt; function to work directly with the posterior draws. We then exponentiated within &lt;code&gt;transmute()&lt;/code&gt;, which returned a single-column tibble, not a brms fit object. So instead of &lt;code&gt;broom::tidy()&lt;/code&gt;, it’s easier to get our summary statistics with the &lt;code&gt;tidybayes::mean_qi()&lt;/code&gt; function. Do note that now our lower and upper levels are named &lt;code&gt;.lower&lt;/code&gt; and &lt;code&gt;.upper&lt;/code&gt;, respectively (i.e., they now have a &lt;code&gt;.&lt;/code&gt; prefix).&lt;/p&gt;
 &lt;p&gt;Now we’ve practiced with the new flow, let’s redefine our simulation function.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sim_data_fit &amp;lt;- function(seed, n) {
@@ -703,62 +722,63 @@ fit2 %&amp;gt;%
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] tidybayes_1.1.0 broom_0.5.2     brms_2.9.0      Rcpp_1.0.1     
-##  [5] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.1     purrr_0.3.2    
-##  [9] readr_1.3.1     tidyr_0.8.3     tibble_2.1.3    ggplot2_3.2.0  
+##  [1] tidybayes_1.1.0 broom_0.5.2     brms_2.10.0     Rcpp_1.0.2     
+##  [5] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2    
+##  [9] readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
 ## [13] tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] colorspace_1.4-1          ggridges_0.5.1           
-##   [3] rsconnect_0.8.13          ggstance_0.3.2           
-##   [5] markdown_1.0              base64enc_0.1-3          
-##   [7] rstudioapi_0.10           rstan_2.18.2             
-##   [9] svUnit_0.7-12             DT_0.7                   
-##  [11] fansi_0.4.0               mvtnorm_1.0-11           
-##  [13] lubridate_1.7.4           xml2_1.2.0               
-##  [15] bridgesampling_0.6-0      codetools_0.2-16         
-##  [17] knitr_1.23                shinythemes_1.1.2        
-##  [19] zeallot_0.1.0             bayesplot_1.7.0          
-##  [21] jsonlite_1.6              shiny_1.3.2              
-##  [23] compiler_3.6.0            httr_1.4.0               
-##  [25] backports_1.1.4           assertthat_0.2.1         
-##  [27] Matrix_1.2-17             lazyeval_0.2.2           
-##  [29] cli_1.1.0                 later_0.8.0              
-##  [31] htmltools_0.3.6           prettyunits_1.0.2        
-##  [33] tools_3.6.0               igraph_1.2.4.1           
-##  [35] coda_0.19-2               gtable_0.3.0             
-##  [37] glue_1.3.1                reshape2_1.4.3           
-##  [39] cellranger_1.1.0          vctrs_0.1.0              
-##  [41] nlme_3.1-139              blogdown_0.14            
-##  [43] crosstalk_1.0.0           xfun_0.8                 
-##  [45] ps_1.3.0                  rvest_0.3.4              
-##  [47] mime_0.7                  miniUI_0.1.1.1           
-##  [49] gtools_3.8.1              zoo_1.8-6                
-##  [51] scales_1.0.0              colourpicker_1.0         
-##  [53] hms_0.4.2                 promises_1.0.1           
-##  [55] Brobdingnag_1.2-6         parallel_3.6.0           
-##  [57] inline_0.3.15             shinystan_2.5.0          
-##  [59] yaml_2.2.0                gridExtra_2.3            
-##  [61] loo_2.1.0                 StanHeaders_2.18.1-10    
-##  [63] stringi_1.4.3             dygraphs_1.1.1.6         
-##  [65] pkgbuild_1.0.3            rlang_0.4.0              
-##  [67] pkgconfig_2.0.2           matrixStats_0.54.0       
-##  [69] evaluate_0.14             lattice_0.20-38          
-##  [71] rstantools_1.5.1          htmlwidgets_1.3          
-##  [73] labeling_0.3              tidyselect_0.2.5         
-##  [75] processx_3.3.1            plyr_1.8.4               
-##  [77] magrittr_1.5              bookdown_0.12            
-##  [79] R6_2.4.0                  generics_0.0.2           
-##  [81] pillar_1.4.1              haven_2.1.0              
-##  [83] withr_2.1.2               xts_0.11-2               
-##  [85] abind_1.4-5               modelr_0.1.4             
-##  [87] crayon_1.3.4              arrayhelpers_1.0-20160527
-##  [89] utf8_1.1.4                rmarkdown_1.13           
-##  [91] grid_3.6.0                readxl_1.3.1             
-##  [93] callr_3.2.0               threejs_0.3.1            
-##  [95] digest_0.6.19             xtable_1.8-4             
-##  [97] httpuv_1.5.1              stats4_3.6.0             
-##  [99] munsell_0.5.0             shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##   [1] colorspace_1.4-1          ellipsis_0.2.0.1         
+##   [3] ggridges_0.5.1            rsconnect_0.8.13         
+##   [5] ggstance_0.3.2            markdown_1.0             
+##   [7] base64enc_0.1-3           rstudioapi_0.10          
+##   [9] rstan_2.19.2              svUnit_0.7-12            
+##  [11] DT_0.7                    fansi_0.4.0              
+##  [13] mvtnorm_1.0-11            lubridate_1.7.4          
+##  [15] xml2_1.2.0                bridgesampling_0.6-0     
+##  [17] codetools_0.2-16          knitr_1.23               
+##  [19] shinythemes_1.1.2         zeallot_0.1.0            
+##  [21] bayesplot_1.7.0           jsonlite_1.6             
+##  [23] shiny_1.3.2               compiler_3.6.0           
+##  [25] httr_1.4.0                backports_1.1.4          
+##  [27] assertthat_0.2.1          Matrix_1.2-17            
+##  [29] lazyeval_0.2.2            cli_1.1.0                
+##  [31] later_0.8.0               htmltools_0.3.6          
+##  [33] prettyunits_1.0.2         tools_3.6.0              
+##  [35] igraph_1.2.4.1            coda_0.19-2              
+##  [37] gtable_0.3.0              glue_1.3.1               
+##  [39] reshape2_1.4.3            cellranger_1.1.0         
+##  [41] vctrs_0.2.0               nlme_3.1-139             
+##  [43] blogdown_0.14             crosstalk_1.0.0          
+##  [45] xfun_0.8                  ps_1.3.0                 
+##  [47] rvest_0.3.4               mime_0.7                 
+##  [49] miniUI_0.1.1.1            lifecycle_0.1.0          
+##  [51] gtools_3.8.1              zoo_1.8-6                
+##  [53] scales_1.0.0              colourpicker_1.0         
+##  [55] hms_0.4.2                 promises_1.0.1           
+##  [57] Brobdingnag_1.2-6         parallel_3.6.0           
+##  [59] inline_0.3.15             shinystan_2.5.0          
+##  [61] yaml_2.2.0                gridExtra_2.3            
+##  [63] loo_2.1.0                 StanHeaders_2.18.1-10    
+##  [65] stringi_1.4.3             dygraphs_1.1.1.6         
+##  [67] pkgbuild_1.0.3            rlang_0.4.0              
+##  [69] pkgconfig_2.0.2           matrixStats_0.54.0       
+##  [71] evaluate_0.14             lattice_0.20-38          
+##  [73] rstantools_1.5.1          htmlwidgets_1.3          
+##  [75] labeling_0.3              tidyselect_0.2.5         
+##  [77] processx_3.3.1            plyr_1.8.4               
+##  [79] magrittr_1.5              bookdown_0.12            
+##  [81] R6_2.4.0                  generics_0.0.2           
+##  [83] pillar_1.4.2              haven_2.1.0              
+##  [85] withr_2.1.2               xts_0.11-2               
+##  [87] abind_1.4-5               modelr_0.1.4             
+##  [89] crayon_1.3.4              arrayhelpers_1.0-20160527
+##  [91] utf8_1.1.4                rmarkdown_1.13           
+##  [93] grid_3.6.0                readxl_1.3.1             
+##  [95] callr_3.2.0               threejs_0.3.1            
+##  [97] digest_0.6.20             xtable_1.8-4             
+##  [99] httpuv_1.5.1              stats4_3.6.0             
+## [101] munsell_0.5.0             shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;footnote&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Footnote&lt;/h2&gt;
@@ -1090,14 +1110,14 @@ s8 &amp;lt;-
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] broom_0.5.2     brms_2.9.0      Rcpp_1.0.1      forcats_0.4.0  
-##  [5] stringr_1.4.0   dplyr_0.8.1     purrr_0.3.2     readr_1.3.1    
-##  [9] tidyr_0.8.3     tibble_2.1.3    ggplot2_3.2.0   tidyverse_1.2.1
+##  [1] broom_0.5.2     brms_2.10.0     Rcpp_1.0.2      forcats_0.4.0  
+##  [5] stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2     readr_1.3.1    
+##  [9] tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] nlme_3.1-139          matrixStats_0.54.0    xts_0.11-2           
 ##  [4] lubridate_1.7.4       threejs_0.3.1         httr_1.4.0           
-##  [7] rstan_2.18.2          tools_3.6.0           backports_1.1.4      
+##  [7] rstan_2.19.2          tools_3.6.0           backports_1.1.4      
 ## [10] utf8_1.1.4            R6_2.4.0              DT_0.7               
 ## [13] lazyeval_0.2.2        colorspace_1.4-1      withr_2.1.2          
 ## [16] prettyunits_1.0.2     processx_3.3.1        tidyselect_0.2.5     
@@ -1106,7 +1126,7 @@ s8 &amp;lt;-
 ## [25] shinyjs_1.0           labeling_0.3          colourpicker_1.0     
 ## [28] bookdown_0.12         scales_1.0.0          dygraphs_1.1.1.6     
 ## [31] mvtnorm_1.0-11        callr_3.2.0           ggridges_0.5.1       
-## [34] StanHeaders_2.18.1-10 digest_0.6.19         rmarkdown_1.13       
+## [34] StanHeaders_2.18.1-10 digest_0.6.20         rmarkdown_1.13       
 ## [37] base64enc_0.1-3       pkgconfig_2.0.2       htmltools_0.3.6      
 ## [40] htmlwidgets_1.3       rlang_0.4.0           readxl_1.3.1         
 ## [43] rstudioapi_0.10       shiny_1.3.2           generics_0.0.2       
@@ -1114,19 +1134,20 @@ s8 &amp;lt;-
 ## [49] gtools_3.8.1          inline_0.3.15         magrittr_1.5         
 ## [52] loo_2.1.0             bayesplot_1.7.0       Matrix_1.2-17        
 ## [55] fansi_0.4.0           munsell_0.5.0         abind_1.4-5          
-## [58] stringi_1.4.3         yaml_2.2.0            pkgbuild_1.0.3       
-## [61] plyr_1.8.4            grid_3.6.0            parallel_3.6.0       
-## [64] promises_1.0.1        crayon_1.3.4          miniUI_0.1.1.1       
-## [67] lattice_0.20-38       haven_2.1.0           hms_0.4.2            
-## [70] zeallot_0.1.0         ps_1.3.0              knitr_1.23           
-## [73] pillar_1.4.1          igraph_1.2.4.1        markdown_1.0         
-## [76] shinystan_2.5.0       stats4_3.6.0          reshape2_1.4.3       
-## [79] rstantools_1.5.1      glue_1.3.1            evaluate_0.14        
-## [82] blogdown_0.14         modelr_0.1.4          vctrs_0.1.0          
-## [85] httpuv_1.5.1          cellranger_1.1.0      gtable_0.3.0         
-## [88] assertthat_0.2.1      xfun_0.8              mime_0.7             
-## [91] xtable_1.8-4          coda_0.19-2           later_0.8.0          
-## [94] rsconnect_0.8.13      shinythemes_1.1.2     bridgesampling_0.6-0&lt;/code&gt;&lt;/pre&gt;
+## [58] lifecycle_0.1.0       stringi_1.4.3         yaml_2.2.0           
+## [61] pkgbuild_1.0.3        plyr_1.8.4            grid_3.6.0           
+## [64] parallel_3.6.0        promises_1.0.1        crayon_1.3.4         
+## [67] miniUI_0.1.1.1        lattice_0.20-38       haven_2.1.0          
+## [70] hms_0.4.2             ps_1.3.0              zeallot_0.1.0        
+## [73] knitr_1.23            pillar_1.4.2          igraph_1.2.4.1       
+## [76] markdown_1.0          shinystan_2.5.0       stats4_3.6.0         
+## [79] reshape2_1.4.3        rstantools_1.5.1      glue_1.3.1           
+## [82] evaluate_0.14         blogdown_0.14         modelr_0.1.4         
+## [85] vctrs_0.2.0           httpuv_1.5.1          cellranger_1.1.0     
+## [88] gtable_0.3.0          assertthat_0.2.1      xfun_0.8             
+## [91] mime_0.7              xtable_1.8-4          coda_0.19-2          
+## [94] later_0.8.0           rsconnect_0.8.13      shinythemes_1.1.2    
+## [97] bridgesampling_0.6-0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div id=&#34;footnote&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Footnote&lt;/h2&gt;
@@ -1293,13 +1314,13 @@ glimpse(d)&lt;/code&gt;&lt;/pre&gt;
 ##          total post-warmup samples = 4000
 ## 
 ## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## intercept     0.10      0.13    -0.16     0.36       2002 1.00
-## treatment     0.52      0.18     0.16     0.89       2100 1.00
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## intercept     0.10      0.13    -0.16     0.36 1.00     2047     1943
+## treatment     0.52      0.18     0.16     0.89 1.00     2149     1874
 ## 
 ## Family Specific Parameters: 
-##       Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma     0.91      0.07     0.80     1.05       2957 1.00
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.91      0.07     0.80     1.05 1.00     2971     2371
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -1420,15 +1441,15 @@ t2 &amp;lt;- Sys.time()&lt;/code&gt;&lt;/pre&gt;
   unnest(treatment) %&amp;gt;% 
   filter(term == &amp;quot;b_treatment&amp;quot;) %&amp;gt;% 
   head()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 6
-##    seed term        estimate std.error   lower upper
-##   &amp;lt;int&amp;gt; &amp;lt;chr&amp;gt;          &amp;lt;dbl&amp;gt;     &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
-## 1     1 b_treatment    0.518     0.184  0.159  0.892
-## 2     2 b_treatment    0.297     0.237 -0.176  0.765
-## 3     3 b_treatment    0.641     0.178  0.296  0.982
-## 4     4 b_treatment    0.224     0.178 -0.124  0.582
-## 5     5 b_treatment    0.436     0.190  0.0560 0.796
-## 6     6 b_treatment    0.300     0.206 -0.106  0.694&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 8
+##    seed d               fit      term      estimate std.error   lower upper
+##   &amp;lt;int&amp;gt; &amp;lt;list&amp;gt;          &amp;lt;list&amp;gt;   &amp;lt;chr&amp;gt;        &amp;lt;dbl&amp;gt;     &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
+## 1     1 &amp;lt;tibble [100 ×… &amp;lt;brmsfi… b_treatm…    0.518     0.184  0.159  0.892
+## 2     2 &amp;lt;tibble [100 ×… &amp;lt;brmsfi… b_treatm…    0.297     0.237 -0.176  0.765
+## 3     3 &amp;lt;tibble [100 ×… &amp;lt;brmsfi… b_treatm…    0.641     0.178  0.296  0.982
+## 4     4 &amp;lt;tibble [100 ×… &amp;lt;brmsfi… b_treatm…    0.224     0.178 -0.124  0.582
+## 5     5 &amp;lt;tibble [100 ×… &amp;lt;brmsfi… b_treatm…    0.436     0.190  0.0560 0.796
+## 6     6 &amp;lt;tibble [100 ×… &amp;lt;brmsfi… b_treatm…    0.300     0.206 -0.106  0.694&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;As an aside, I know I’m moving kinda fast with all this wacky &lt;code&gt;purrr::map()&lt;/code&gt;/&lt;code&gt;purrr::map2()&lt;/code&gt; stuff. If you’re new to using the &lt;strong&gt;tidyverse&lt;/strong&gt; for iterating and saving the results in nested data structures, I recommend fixing an adult beverage and cozying up with Hadley Wickham’s presentation, &lt;a href=&#34;https://www.youtube.com/watch?v=rz3_FDVt9eg&#34;&gt;&lt;em&gt;Managing many models&lt;/em&gt;&lt;/a&gt;. And if you really hate it, both Kruschke and McElreath texts contain many examples of how to iterate in a more base &lt;strong&gt;R&lt;/strong&gt; sort of way.&lt;/p&gt;
 &lt;p&gt;Anyway, here’s what those 100 &lt;span class=&#34;math inline&#34;&gt;\(\beta_1\)&lt;/span&gt; summaries look like in bulk.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;s %&amp;gt;% 
@@ -1629,14 +1650,14 @@ t6 &amp;lt;- Sys.time()&lt;/code&gt;&lt;/pre&gt;
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] broom_0.5.2     brms_2.9.0      Rcpp_1.0.2      forcats_0.4.0  
-##  [5] stringr_1.4.0   dplyr_0.8.1     purrr_0.3.2     readr_1.3.1    
-##  [9] tidyr_0.8.3     tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1
+##  [1] broom_0.5.2     brms_2.10.0     Rcpp_1.0.2      forcats_0.4.0  
+##  [5] stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2     readr_1.3.1    
+##  [9] tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] nlme_3.1-139          matrixStats_0.54.0    xts_0.11-2           
 ##  [4] lubridate_1.7.4       threejs_0.3.1         httr_1.4.0           
-##  [7] rstan_2.18.2          tools_3.6.0           backports_1.1.4      
+##  [7] rstan_2.19.2          tools_3.6.0           backports_1.1.4      
 ## [10] utf8_1.1.4            R6_2.4.0              DT_0.7               
 ## [13] lazyeval_0.2.2        colorspace_1.4-1      withr_2.1.2          
 ## [16] prettyunits_1.0.2     processx_3.3.1        tidyselect_0.2.5     
@@ -1653,19 +1674,20 @@ t6 &amp;lt;- Sys.time()&lt;/code&gt;&lt;/pre&gt;
 ## [49] gtools_3.8.1          inline_0.3.15         magrittr_1.5         
 ## [52] loo_2.1.0             bayesplot_1.7.0       Matrix_1.2-17        
 ## [55] fansi_0.4.0           munsell_0.5.0         abind_1.4-5          
-## [58] stringi_1.4.3         yaml_2.2.0            pkgbuild_1.0.3       
-## [61] plyr_1.8.4            grid_3.6.0            parallel_3.6.0       
-## [64] promises_1.0.1        crayon_1.3.4          miniUI_0.1.1.1       
-## [67] lattice_0.20-38       haven_2.1.0           hms_0.4.2            
-## [70] zeallot_0.1.0         ps_1.3.0              knitr_1.23           
-## [73] pillar_1.4.2          igraph_1.2.4.1        markdown_1.0         
-## [76] shinystan_2.5.0       stats4_3.6.0          reshape2_1.4.3       
-## [79] rstantools_1.5.1      glue_1.3.1            evaluate_0.14        
-## [82] blogdown_0.14         modelr_0.1.4          vctrs_0.2.0          
-## [85] httpuv_1.5.1          cellranger_1.1.0      gtable_0.3.0         
-## [88] assertthat_0.2.1      xfun_0.8              mime_0.7             
-## [91] xtable_1.8-4          coda_0.19-2           later_0.8.0          
-## [94] rsconnect_0.8.13      shinythemes_1.1.2     bridgesampling_0.6-0&lt;/code&gt;&lt;/pre&gt;
+## [58] lifecycle_0.1.0       stringi_1.4.3         yaml_2.2.0           
+## [61] pkgbuild_1.0.3        plyr_1.8.4            grid_3.6.0           
+## [64] parallel_3.6.0        promises_1.0.1        crayon_1.3.4         
+## [67] miniUI_0.1.1.1        lattice_0.20-38       haven_2.1.0          
+## [70] hms_0.4.2             ps_1.3.0              zeallot_0.1.0        
+## [73] knitr_1.23            pillar_1.4.2          igraph_1.2.4.1       
+## [76] markdown_1.0          shinystan_2.5.0       stats4_3.6.0         
+## [79] reshape2_1.4.3        rstantools_1.5.1      glue_1.3.1           
+## [82] evaluate_0.14         blogdown_0.14         modelr_0.1.4         
+## [85] vctrs_0.2.0           httpuv_1.5.1          cellranger_1.1.0     
+## [88] gtable_0.3.0          assertthat_0.2.1      xfun_0.8             
+## [91] mime_0.7              xtable_1.8-4          coda_0.19-2          
+## [94] later_0.8.0           rsconnect_0.8.13      shinythemes_1.1.2    
+## [97] bridgesampling_0.6-0&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# for the hard-core scrollers:
 # if you increase n to 65, the power becomes about .84
 n_sim &amp;lt;- 100
@@ -1999,19 +2021,19 @@ head(posts)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;We have a 3-row nested tibble. The first column, &lt;code&gt;name&lt;/code&gt; is just a character vector with the names of the fits. The next column isn’t necessary, but it nicely explicates the main difference in the models: the prior we used on the intercept. It’s in the &lt;code&gt;map()&lt;/code&gt; functions within the two &lt;code&gt;mutate()&lt;/code&gt;lines where all the magic happens. With the first, we used the &lt;code&gt;get()&lt;/code&gt; function to snatch up the &lt;strong&gt;brms&lt;/strong&gt; fit objects matching the names in the &lt;code&gt;name&lt;/code&gt; column. In the second, we used the &lt;code&gt;posterior_samples()&lt;/code&gt; function to extract the posterior draws from each of the fits saved in &lt;code&gt;fit&lt;/code&gt;. Do you see how each for in the &lt;code&gt;post&lt;/code&gt; column contains an entire &lt;span class=&#34;math inline&#34;&gt;\(4,000 \times 3\)&lt;/span&gt; data frame? That’s why we refer to this as a nested tibble. We have data frames compressed within data frames. If you’d like to access the data within the &lt;code&gt;post&lt;/code&gt; column, just &lt;code&gt;unnest()&lt;/code&gt;.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;posts %&amp;gt;% 
   unnest(post)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## # A tibble: 12,000 x 5
-##    name  prior         b_Intercept sigma  lp__
-##    &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt;               &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
-##  1 fit1  normal(0, 10)    -0.0522  0.857 -204.
-##  2 fit1  normal(0, 10)     0.125   0.898 -204.
-##  3 fit1  normal(0, 10)    -0.00629 0.948 -204.
-##  4 fit1  normal(0, 10)     0.0609  0.941 -204.
-##  5 fit1  normal(0, 10)     0.178   0.946 -205.
-##  6 fit1  normal(0, 10)     0.135   0.927 -204.
-##  7 fit1  normal(0, 10)    -0.0777  0.874 -204.
-##  8 fit1  normal(0, 10)     0.116   0.973 -205.
-##  9 fit1  normal(0, 10)     0.134   0.852 -205.
-## 10 fit1  normal(0, 10)     0.0197  0.929 -203.
+&lt;pre&gt;&lt;code&gt;## # A tibble: 12,000 x 6
+##    name  prior         fit       b_Intercept sigma  lp__
+##    &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt;         &amp;lt;list&amp;gt;          &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
+##  1 fit1  normal(0, 10) &amp;lt;brmsfit&amp;gt;    -0.0522  0.857 -204.
+##  2 fit1  normal(0, 10) &amp;lt;brmsfit&amp;gt;     0.125   0.898 -204.
+##  3 fit1  normal(0, 10) &amp;lt;brmsfit&amp;gt;    -0.00629 0.948 -204.
+##  4 fit1  normal(0, 10) &amp;lt;brmsfit&amp;gt;     0.0609  0.941 -204.
+##  5 fit1  normal(0, 10) &amp;lt;brmsfit&amp;gt;     0.178   0.946 -205.
+##  6 fit1  normal(0, 10) &amp;lt;brmsfit&amp;gt;     0.135   0.927 -204.
+##  7 fit1  normal(0, 10) &amp;lt;brmsfit&amp;gt;    -0.0777  0.874 -204.
+##  8 fit1  normal(0, 10) &amp;lt;brmsfit&amp;gt;     0.116   0.973 -205.
+##  9 fit1  normal(0, 10) &amp;lt;brmsfit&amp;gt;     0.134   0.852 -205.
+## 10 fit1  normal(0, 10) &amp;lt;brmsfit&amp;gt;     0.0197  0.929 -203.
 ## # … with 11,990 more rows&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;After un-nesting, we can remake the plot from above.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;posts %&amp;gt;% 
@@ -2040,44 +2062,44 @@ head(posts)&lt;/code&gt;&lt;/pre&gt;
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] tidybayes_1.1.0 brms_2.9.0      Rcpp_1.0.1      forcats_0.4.0   stringr_1.4.0   dplyr_0.8.1    
-##  [7] purrr_0.3.2     readr_1.3.1     tidyr_0.8.3     tibble_2.1.3    ggplot2_3.2.0   tidyverse_1.2.1
+##  [1] tidybayes_1.1.0 brms_2.10.0     Rcpp_1.0.2      forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3    
+##  [7] purrr_0.3.2     readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] colorspace_1.4-1          ggridges_0.5.1            rsconnect_0.8.13         
-##   [4] ggstance_0.3.2            markdown_1.0              base64enc_0.1-3          
-##   [7] rstudioapi_0.10           rstan_2.18.2              svUnit_0.7-12            
-##  [10] DT_0.7                    fansi_0.4.0               mvtnorm_1.0-11           
-##  [13] lubridate_1.7.4           xml2_1.2.0                bridgesampling_0.6-0     
-##  [16] knitr_1.23                shinythemes_1.1.2         zeallot_0.1.0            
-##  [19] bayesplot_1.7.0           jsonlite_1.6              broom_0.5.2              
-##  [22] shiny_1.3.2               compiler_3.6.0            httr_1.4.0               
-##  [25] backports_1.1.4           assertthat_0.2.1          Matrix_1.2-17            
-##  [28] lazyeval_0.2.2            cli_1.1.0                 later_0.8.0              
-##  [31] htmltools_0.3.6           prettyunits_1.0.2         tools_3.6.0              
-##  [34] igraph_1.2.4.1            coda_0.19-2               gtable_0.3.0             
-##  [37] glue_1.3.1                reshape2_1.4.3            cellranger_1.1.0         
-##  [40] vctrs_0.1.0               nlme_3.1-139              blogdown_0.14            
-##  [43] crosstalk_1.0.0           xfun_0.8                  ps_1.3.0                 
-##  [46] rvest_0.3.4               mime_0.7                  miniUI_0.1.1.1           
-##  [49] gtools_3.8.1              zoo_1.8-6                 scales_1.0.0             
-##  [52] colourpicker_1.0          hms_0.4.2                 promises_1.0.1           
-##  [55] Brobdingnag_1.2-6         parallel_3.6.0            inline_0.3.15            
-##  [58] shinystan_2.5.0           yaml_2.2.0                gridExtra_2.3            
-##  [61] loo_2.1.0                 StanHeaders_2.18.1-10     stringi_1.4.3            
-##  [64] dygraphs_1.1.1.6          pkgbuild_1.0.3            rlang_0.4.0              
-##  [67] pkgconfig_2.0.2           matrixStats_0.54.0        evaluate_0.14            
-##  [70] lattice_0.20-38           labeling_0.3              rstantools_1.5.1         
-##  [73] htmlwidgets_1.3           tidyselect_0.2.5          processx_3.3.1           
-##  [76] plyr_1.8.4                magrittr_1.5              bookdown_0.12            
-##  [79] R6_2.4.0                  generics_0.0.2            pillar_1.4.1             
-##  [82] haven_2.1.0               withr_2.1.2               xts_0.11-2               
-##  [85] abind_1.4-5               modelr_0.1.4              crayon_1.3.4             
-##  [88] arrayhelpers_1.0-20160527 utf8_1.1.4                rmarkdown_1.13           
-##  [91] grid_3.6.0                readxl_1.3.1              callr_3.2.0              
-##  [94] threejs_0.3.1             digest_0.6.19             xtable_1.8-4             
-##  [97] httpuv_1.5.1              stats4_3.6.0              munsell_0.5.0            
-## [100] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##   [1] colorspace_1.4-1          ellipsis_0.2.0.1          ggridges_0.5.1           
+##   [4] rsconnect_0.8.13          ggstance_0.3.2            markdown_1.0             
+##   [7] base64enc_0.1-3           rstudioapi_0.10           rstan_2.19.2             
+##  [10] svUnit_0.7-12             DT_0.7                    fansi_0.4.0              
+##  [13] mvtnorm_1.0-11            lubridate_1.7.4           xml2_1.2.0               
+##  [16] bridgesampling_0.6-0      knitr_1.23                shinythemes_1.1.2        
+##  [19] zeallot_0.1.0             bayesplot_1.7.0           jsonlite_1.6             
+##  [22] broom_0.5.2               shiny_1.3.2               compiler_3.6.0           
+##  [25] httr_1.4.0                backports_1.1.4           assertthat_0.2.1         
+##  [28] Matrix_1.2-17             lazyeval_0.2.2            cli_1.1.0                
+##  [31] later_0.8.0               htmltools_0.3.6           prettyunits_1.0.2        
+##  [34] tools_3.6.0               igraph_1.2.4.1            coda_0.19-2              
+##  [37] gtable_0.3.0              glue_1.3.1                reshape2_1.4.3           
+##  [40] cellranger_1.1.0          vctrs_0.2.0               nlme_3.1-139             
+##  [43] blogdown_0.14             crosstalk_1.0.0           xfun_0.8                 
+##  [46] ps_1.3.0                  rvest_0.3.4               mime_0.7                 
+##  [49] miniUI_0.1.1.1            lifecycle_0.1.0           gtools_3.8.1             
+##  [52] zoo_1.8-6                 scales_1.0.0              colourpicker_1.0         
+##  [55] hms_0.4.2                 promises_1.0.1            Brobdingnag_1.2-6        
+##  [58] parallel_3.6.0            inline_0.3.15             shinystan_2.5.0          
+##  [61] yaml_2.2.0                gridExtra_2.3             loo_2.1.0                
+##  [64] StanHeaders_2.18.1-10     stringi_1.4.3             dygraphs_1.1.1.6         
+##  [67] pkgbuild_1.0.3            rlang_0.4.0               pkgconfig_2.0.2          
+##  [70] matrixStats_0.54.0        evaluate_0.14             lattice_0.20-38          
+##  [73] labeling_0.3              rstantools_1.5.1          htmlwidgets_1.3          
+##  [76] tidyselect_0.2.5          processx_3.3.1            plyr_1.8.4               
+##  [79] magrittr_1.5              bookdown_0.12             R6_2.4.0                 
+##  [82] generics_0.0.2            pillar_1.4.2              haven_2.1.0              
+##  [85] withr_2.1.2               xts_0.11-2                abind_1.4-5              
+##  [88] modelr_0.1.4              crayon_1.3.4              arrayhelpers_1.0-20160527
+##  [91] utf8_1.1.4                rmarkdown_1.13            grid_3.6.0               
+##  [94] readxl_1.3.1              callr_3.2.0               threejs_0.3.1            
+##  [97] digest_0.6.20             xtable_1.8-4              httpuv_1.5.1             
+## [100] stats4_3.6.0              munsell_0.5.0             shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>
@@ -2302,10 +2324,7 @@ baseball %&amp;gt;%
 &lt;p&gt;The James-Stein estimator works because of its shrinkage. The shrinkage factor is &lt;span class=&#34;math inline&#34;&gt;\(c\)&lt;/span&gt;. In the first parts of the paper, Efron and Morris just told us &lt;span class=&#34;math inline&#34;&gt;\(c = .212\)&lt;/span&gt;. A little later in the paper, they gave the actual formula for &lt;span class=&#34;math inline&#34;&gt;\(c\)&lt;/span&gt;. If you let &lt;span class=&#34;math inline&#34;&gt;\(k\)&lt;/span&gt; be the number of means (i.e., the number of clusters), then:&lt;/p&gt;
 &lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[c = 1 - \frac{(k - 3)\sigma^2}{\sum (y - \overline y)^2}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;The difficulty of that formula is we don’t know the value for &lt;span class=&#34;math inline&#34;&gt;\(\sigma^2\)&lt;/span&gt;. It’s not the simple variance of &lt;span class=&#34;math inline&#34;&gt;\(y\)&lt;/span&gt; (i.e., &lt;code&gt;var(y)&lt;/code&gt;). An &lt;a href=&#34;https://stats.stackexchange.com/questions/5727/james-stein-estimator-how-did-efron-and-morris-calculate-sigma2-in-shrinkag&#34;&gt;answer to this stackexchange question&lt;/a&gt; appears to have uncovered the method Efron and Morris used in the paper. I’ll reproduce it in detail:&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/answer.PNG&#34; style=&#34;width:100.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/answer.PNG&#34; style=&#34;width:100.0%&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;Following along, we can compute &lt;code&gt;sigma_squared&lt;/code&gt; like so:&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;(sigma_squared &amp;lt;- mean(baseball$y) * (1 - mean(baseball$y)) / 45)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## [1] 0.004332842&lt;/code&gt;&lt;/pre&gt;
@@ -2574,14 +2593,19 @@ grid.arrange(p3, p4, ncol = 2)&lt;/code&gt;&lt;/pre&gt;
 &lt;div id=&#34;session-info&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Session info&lt;/h2&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## R version 3.5.1 (2018-07-02)
+&lt;pre&gt;&lt;code&gt;## R version 3.6.0 (2019-04-26)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
 ## 
 ## Matrix products: default
-## BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
 ## 
+## Random number generation:
+##  RNG:     Mersenne-Twister 
+##  Normal:  Inversion 
+##  Sample:  Rounding 
+##  
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
@@ -2589,45 +2613,45 @@ grid.arrange(p3, p4, ncol = 2)&lt;/code&gt;&lt;/pre&gt;
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] gridExtra_2.3   brms_2.7.0      Rcpp_1.0.0      bindrcpp_0.2.2  tidybayes_1.0.3 forcats_0.3.0  
-##  [7] stringr_1.3.1   dplyr_0.7.6     purrr_0.2.5     readr_1.1.1     tidyr_0.8.1     tibble_2.0.1   
-## [13] ggplot2_3.1.0   tidyverse_1.2.1
+##  [1] gridExtra_2.3   brms_2.10.0     Rcpp_1.0.2      tidybayes_1.1.0 forcats_0.4.0   stringr_1.4.0  
+##  [7] dplyr_0.8.3     purrr_0.3.2     readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
+## [13] tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] colorspace_1.3-2          ggridges_0.5.0            rsconnect_0.8.8          
-##   [4] rprojroot_1.3-2           ggstance_0.3              markdown_0.8             
-##   [7] base64enc_0.1-3           rstudioapi_0.7            rstan_2.18.2             
-##  [10] svUnit_0.7-12             DT_0.4                    fansi_0.4.0              
-##  [13] mvtnorm_1.0-8             lubridate_1.7.4           xml2_1.2.0               
-##  [16] bridgesampling_0.4-0      knitr_1.20                shinythemes_1.1.1        
-##  [19] bayesplot_1.6.0           jsonlite_1.5              broom_0.5.1              
-##  [22] shiny_1.1.0               compiler_3.5.1            httr_1.3.1               
-##  [25] backports_1.1.2           assertthat_0.2.0          Matrix_1.2-14            
-##  [28] lazyeval_0.2.1            cli_1.0.1                 later_0.7.3              
-##  [31] prettyunits_1.0.2         htmltools_0.3.6           tools_3.5.1              
-##  [34] igraph_1.2.1              coda_0.19-2               gtable_0.2.0             
-##  [37] glue_1.3.0                reshape2_1.4.3            cellranger_1.1.0         
-##  [40] nlme_3.1-137              blogdown_0.8              crosstalk_1.0.0          
-##  [43] xfun_0.3                  ps_1.2.1                  rvest_0.3.2              
-##  [46] mime_0.5                  miniUI_0.1.1.1            gtools_3.8.1             
-##  [49] MASS_7.3-50               zoo_1.8-2                 scales_1.0.0             
-##  [52] colourpicker_1.0          hms_0.4.2                 promises_1.0.1           
-##  [55] Brobdingnag_1.2-5         parallel_3.5.1            inline_0.3.15            
-##  [58] shinystan_2.5.0           yaml_2.1.19               StanHeaders_2.18.0-1     
-##  [61] loo_2.0.0                 stringi_1.2.3             dygraphs_1.1.1.5         
-##  [64] pkgbuild_1.0.2            rlang_0.3.1               pkgconfig_2.0.2          
-##  [67] matrixStats_0.54.0        evaluate_0.10.1           lattice_0.20-35          
-##  [70] bindr_0.1.1               rstantools_1.5.0          htmlwidgets_1.2          
-##  [73] labeling_0.3              processx_3.2.1            tidyselect_0.2.4         
-##  [76] plyr_1.8.4                magrittr_1.5              bookdown_0.7             
-##  [79] R6_2.3.0                  generics_0.0.2            pillar_1.3.1             
-##  [82] haven_1.1.2               withr_2.1.2               xts_0.10-2               
-##  [85] abind_1.4-5               modelr_0.1.2              crayon_1.3.4             
-##  [88] arrayhelpers_1.0-20160527 utf8_1.1.4                rmarkdown_1.10           
-##  [91] grid_3.5.1                readxl_1.1.0              callr_3.1.0              
-##  [94] threejs_0.3.1             digest_0.6.18             xtable_1.8-2             
-##  [97] httpuv_1.4.4.2            stats4_3.5.1              munsell_0.5.0            
-## [100] viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##   [1] colorspace_1.4-1          ellipsis_0.2.0.1          ggridges_0.5.1           
+##   [4] rsconnect_0.8.13          ggstance_0.3.2            markdown_1.0             
+##   [7] base64enc_0.1-3           rstudioapi_0.10           rstan_2.19.2             
+##  [10] svUnit_0.7-12             DT_0.7                    fansi_0.4.0              
+##  [13] mvtnorm_1.0-11            lubridate_1.7.4           xml2_1.2.0               
+##  [16] bridgesampling_0.6-0      knitr_1.23                shinythemes_1.1.2        
+##  [19] zeallot_0.1.0             bayesplot_1.7.0           jsonlite_1.6             
+##  [22] broom_0.5.2               shiny_1.3.2               compiler_3.6.0           
+##  [25] httr_1.4.0                backports_1.1.4           assertthat_0.2.1         
+##  [28] Matrix_1.2-17             lazyeval_0.2.2            cli_1.1.0                
+##  [31] later_0.8.0               prettyunits_1.0.2         htmltools_0.3.6          
+##  [34] tools_3.6.0               igraph_1.2.4.1            coda_0.19-2              
+##  [37] gtable_0.3.0              glue_1.3.1                reshape2_1.4.3           
+##  [40] cellranger_1.1.0          vctrs_0.2.0               nlme_3.1-139             
+##  [43] blogdown_0.14             crosstalk_1.0.0           xfun_0.8                 
+##  [46] ps_1.3.0                  rvest_0.3.4               mime_0.7                 
+##  [49] miniUI_0.1.1.1            lifecycle_0.1.0           gtools_3.8.1             
+##  [52] zoo_1.8-6                 scales_1.0.0              colourpicker_1.0         
+##  [55] hms_0.4.2                 promises_1.0.1            Brobdingnag_1.2-6        
+##  [58] parallel_3.6.0            inline_0.3.15             shinystan_2.5.0          
+##  [61] yaml_2.2.0                StanHeaders_2.18.1-10     loo_2.1.0                
+##  [64] stringi_1.4.3             dygraphs_1.1.1.6          pkgbuild_1.0.3           
+##  [67] rlang_0.4.0               pkgconfig_2.0.2           matrixStats_0.54.0       
+##  [70] evaluate_0.14             lattice_0.20-38           rstantools_1.5.1         
+##  [73] htmlwidgets_1.3           labeling_0.3              processx_3.3.1           
+##  [76] tidyselect_0.2.5          plyr_1.8.4                magrittr_1.5             
+##  [79] bookdown_0.12             R6_2.4.0                  generics_0.0.2           
+##  [82] pillar_1.4.2              haven_2.1.0               withr_2.1.2              
+##  [85] xts_0.11-2                abind_1.4-5               modelr_0.1.4             
+##  [88] crayon_1.3.4              arrayhelpers_1.0-20160527 utf8_1.1.4               
+##  [91] rmarkdown_1.13            grid_3.6.0                readxl_1.3.1             
+##  [94] callr_3.2.0               threejs_0.3.1             digest_0.6.20            
+##  [97] xtable_1.8-4              httpuv_1.5.1              stats4_3.6.0             
+## [100] munsell_0.5.0             viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>
@@ -2696,14 +2720,14 @@ d %&amp;gt;%
 
 head(d)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 6
-##        x     y      z    x_s      y_s    z_s
-##    &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt;    &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt;
-## 1   3.90  11.5  -6.90 -0.723 -0.308   -0.928
-## 2  17.7   29.5   4.01  0.758  0.653   -0.512
-## 3  20.4   33.8  41.5   1.05   0.886    0.917
-## 4  20.3   42.1  34.8   1.04   1.33     0.663
-## 5  -3.64 -26.8  43.5  -1.53  -2.36     0.994
-## 6  13.9   17.3  47.6   0.347  0.00255  1.15&lt;/code&gt;&lt;/pre&gt;
+##       x     y     z    x_s      y_s    z_s
+##   &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt;    &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt;
+## 1  3.90  11.5 -6.90 -0.723 -0.308   -0.928
+## 2 17.7   29.5  4.01  0.758  0.653   -0.512
+## 3 20.4   33.8 41.5   1.05   0.886    0.917
+## 4 20.3   42.1 34.8   1.04   1.33     0.663
+## 5 -3.64 -26.8 43.5  -1.53  -2.36     0.994
+## 6 13.9   17.3 47.6   0.347  0.00255  1.15&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;There are at least two broad ways to get correlations out of standardized data in brms. One way uses the typical univariate syntax. The other way is an extension of the multivariate &lt;code&gt;cbind()&lt;/code&gt; approach. Let’s start univariate.&lt;/p&gt;
 &lt;p&gt;And for a point of clarification, we’re presuming the Gaussian likelihood for all the examples in this post.&lt;/p&gt;
 &lt;/div&gt;
@@ -2729,13 +2753,13 @@ head(d)&lt;/code&gt;&lt;/pre&gt;
 ##          total post-warmup samples = 4000
 ## 
 ## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## Intercept     0.00      0.06    -0.12     0.12       3602 1.00
-## x_s           0.91      0.06     0.78     1.03       3324 1.00
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     0.00      0.06    -0.11     0.12 1.00     3782     2599
+## x_s           0.91      0.06     0.79     1.02 1.00     3847     2946
 ## 
 ## Family Specific Parameters: 
-##       Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma     0.42      0.04     0.35     0.52       3492 1.00
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.42      0.04     0.35     0.52 1.00     3811     2729
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -2756,10 +2780,10 @@ f3 &amp;lt;-
 &lt;p&gt;With the &lt;code&gt;fixef()&lt;/code&gt; function, we can easily isolate the &lt;span class=&#34;math inline&#34;&gt;\(\beta\)&lt;/span&gt; estimates.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fixef(f2)[2, ]&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##  Estimate Est.Error      Q2.5     Q97.5 
-## 0.5857431 0.1200180 0.3491512 0.8181209&lt;/code&gt;&lt;/pre&gt;
+## 0.5836596 0.1155676 0.3569717 0.8123137&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fixef(f3)[2, ]&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##   Estimate  Est.Error       Q2.5      Q97.5 
-## 0.31295659 0.13847579 0.03713735 0.58539395&lt;/code&gt;&lt;/pre&gt;
+## 0.31047431 0.13742697 0.03672921 0.57820500&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;There’s another thing I’d like to point out. Plotting the model results will help make the point.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# define the predictor values you&amp;#39;d like the fitted values for
 nd &amp;lt;- tibble(x_s = seq(from = -3, to = 3, length.out = d %&amp;gt;% nrow()))
@@ -2785,13 +2809,13 @@ fitted(f1,
 &lt;p&gt;The blue line is the posterior mean and the surrounding gray ribbon depicts the 95% posterior interval. Notice how the data and their respective fitted lines pass through [0, 0]? This is a consequence of modeling standardized data. We should always expect the intercept of a model like this to be 0. Here are the intercept summaries for all three models.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fixef(f1)[&amp;quot;Intercept&amp;quot;, ] %&amp;gt;% round(3)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##  Estimate Est.Error      Q2.5     Q97.5 
-##     0.001     0.061    -0.120     0.119&lt;/code&gt;&lt;/pre&gt;
+##     0.001     0.060    -0.114     0.119&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fixef(f2)[&amp;quot;Intercept&amp;quot;, ] %&amp;gt;% round(3)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##  Estimate Est.Error      Q2.5     Q97.5 
-##    -0.001     0.117    -0.227     0.223&lt;/code&gt;&lt;/pre&gt;
+##     0.002     0.117    -0.226     0.233&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fixef(f3)[&amp;quot;Intercept&amp;quot;, ] %&amp;gt;% round(3)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##  Estimate Est.Error      Q2.5     Q97.5 
-##    -0.003     0.140    -0.282     0.267&lt;/code&gt;&lt;/pre&gt;
+##     0.000     0.134    -0.261     0.266&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Within simulation error, they’re all centered on zero. So instead of estimating the intercept, why not just bake that into the models? Here we refit the models by fixing the intercept for each to zero.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;f4 &amp;lt;-
   update(f1,
@@ -2816,12 +2840,12 @@ f6 &amp;lt;-
 ##          total post-warmup samples = 4000
 ## 
 ## Population-Level Effects: 
-##     Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## x_s     0.91      0.06     0.79     1.03       2562 1.00
+##     Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## x_s     0.91      0.06     0.79     1.03 1.00     2390     2083
 ## 
 ## Family Specific Parameters: 
-##       Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma     0.42      0.04     0.35     0.52       2440 1.00
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.42      0.04     0.35     0.51 1.00     2791     2916
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -2849,13 +2873,13 @@ fitted(f4,
 &lt;p&gt;Here are the correlation summaries for those last three models.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fixef(f4) %&amp;gt;% round(3)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##     Estimate Est.Error  Q2.5 Q97.5
-## x_s    0.907     0.062 0.786 1.029&lt;/code&gt;&lt;/pre&gt;
+## x_s    0.909      0.06 0.789 1.033&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fixef(f5) %&amp;gt;% round(3)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##     Estimate Est.Error  Q2.5 Q97.5
-## x_s    0.584     0.122 0.352 0.823&lt;/code&gt;&lt;/pre&gt;
+## x_s    0.581     0.117 0.356 0.809&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fixef(f6) %&amp;gt;% round(3)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##     Estimate Est.Error  Q2.5 Q97.5
-## y_s    0.316     0.137 0.052 0.583&lt;/code&gt;&lt;/pre&gt;
+## y_s    0.311     0.137 0.047 0.585&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;But anyway, you get the idea. If you want to estimate a correlation in brms using simple univariate syntax, just (a) standardize the data and (b) fit a univariate model with or without an intercept. The slop will be in a correlation-like metric.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;lets-go-multivariate.&#34; class=&#34;section level2&#34;&gt;
@@ -2891,22 +2915,22 @@ fitted(f4,
 ##          total post-warmup samples = 4000
 ## 
 ## Population-Level Effects: 
-##              Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## xs_Intercept    -0.01      0.13    -0.27     0.24       2318 1.00
-## ys_Intercept    -0.01      0.13    -0.28     0.25       2500 1.00
-## zs_Intercept    -0.00      0.14    -0.28     0.28       3068 1.00
+##              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## xs_Intercept    -0.01      0.13    -0.27     0.24 1.00     2359     2462
+## ys_Intercept    -0.01      0.13    -0.28     0.25 1.00     2538     2458
+## zs_Intercept    -0.00      0.14    -0.28     0.28 1.00     3096     2643
 ## 
 ## Family Specific Parameters: 
-##          Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_xs     0.99      0.10     0.82     1.19       2222 1.00
-## sigma_ys     1.00      0.10     0.83     1.23       2158 1.00
-## sigma_zs     1.02      0.10     0.84     1.25       3043 1.00
+##          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_xs     0.99      0.10     0.82     1.19 1.00     2273     2300
+## sigma_ys     1.00      0.10     0.83     1.23 1.00     2294     2296
+## sigma_zs     1.02      0.10     0.84     1.25 1.00     3161     2751
 ## 
 ## Residual Correlations: 
-##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(xs,ys)     0.90      0.03     0.83     0.94       2344 1.00
-## rescor(xs,zs)     0.55      0.09     0.35     0.71       3114 1.00
-## rescor(ys,zs)     0.25      0.12     0.01     0.48       2908 1.00
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(xs,ys)     0.90      0.03     0.83     0.94 1.00     2432     2598
+## rescor(xs,zs)     0.55      0.09     0.35     0.71 1.00     3190     2990
+## rescor(ys,zs)     0.25      0.12     0.01     0.48 1.00     2919     2686
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -2936,16 +2960,16 @@ fitted(f4,
 ##          total post-warmup samples = 4000
 ## 
 ## Family Specific Parameters: 
-##          Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_xs     0.98      0.09     0.81     1.19       1768 1.00
-## sigma_ys     0.99      0.10     0.82     1.20       1775 1.00
-## sigma_zs     1.02      0.10     0.84     1.24       2642 1.00
+##          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_xs     0.98      0.09     0.81     1.19 1.00     1906     1751
+## sigma_ys     0.99      0.10     0.82     1.20 1.00     1948     1975
+## sigma_zs     1.02      0.10     0.84     1.24 1.00     2842     2253
 ## 
 ## Residual Correlations: 
-##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(xs,ys)     0.90      0.03     0.83     0.94       2491 1.00
-## rescor(xs,zs)     0.55      0.10     0.35     0.71       2661 1.00
-## rescor(ys,zs)     0.26      0.13     0.01     0.50       2615 1.00
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(xs,ys)     0.90      0.03     0.83     0.94 1.00     2399     2234
+## rescor(xs,zs)     0.55      0.10     0.35     0.71 1.00     2631     2324
+## rescor(ys,zs)     0.26      0.13     0.01     0.50 1.00     2567     1730
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -2980,10 +3004,10 @@ fitted(f4,
 ##          total post-warmup samples = 4000
 ## 
 ## Residual Correlations: 
-##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(xs,ys)     0.91      0.02     0.87     0.93       2640 1.00
-## rescor(xs,zs)     0.57      0.07     0.42     0.69       3109 1.00
-## rescor(ys,zs)     0.29      0.09     0.11     0.47       3098 1.00
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(xs,ys)     0.91      0.02     0.87     0.93 1.00     2621     2710
+## rescor(xs,zs)     0.57      0.07     0.42     0.69 1.00     3307     2727
+## rescor(ys,zs)     0.29      0.09     0.11     0.47 1.00     3095     2393
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -3015,22 +3039,22 @@ fitted(f4,
 ##          total post-warmup samples = 4000
 ## 
 ## Population-Level Effects: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## x_Intercept     9.64      1.20     7.29    12.00       1821 1.00
-## y_Intercept    15.57      2.47    10.69    20.34       2032 1.00
-## z_Intercept    14.85      3.38     8.00    21.42       2760 1.00
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## x_Intercept     9.64      1.20     7.29    12.00 1.00     1864     2582
+## y_Intercept    15.57      2.47    10.69    20.34 1.00     2079     2631
+## z_Intercept    14.85      3.38     8.00    21.42 1.00     2780     2773
 ## 
 ## Family Specific Parameters: 
-##         Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_x     8.99      0.87     7.50    10.91       2005 1.00
-## sigma_y    18.24      1.81    15.18    22.05       1981 1.00
-## sigma_z    26.09      2.62    21.58    31.77       3011 1.00
+##         Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_x     8.99      0.87     7.50    10.91 1.00     2108     2278
+## sigma_y    18.24      1.81    15.18    22.05 1.00     2114     2240
+## sigma_z    26.09      2.62    21.58    31.77 1.00     3099     2736
 ## 
 ## Residual Correlations: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(x,y)     0.89      0.03     0.83     0.94       2301 1.00
-## rescor(x,z)     0.54      0.09     0.34     0.70       3046 1.00
-## rescor(y,z)     0.24      0.12    -0.00     0.47       2830 1.00
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(x,y)     0.89      0.03     0.83     0.94 1.00     2252     2314
+## rescor(x,z)     0.54      0.09     0.34     0.70 1.00     3067     2982
+## rescor(y,z)     0.24      0.12    -0.00     0.47 1.00     2826     2709
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -3105,14 +3129,19 @@ tibble(name = str_c(&amp;quot;f&amp;quot;, 1:6)) %&amp;gt;%
 &lt;p&gt;Both univariate and multivariate approaches appear to have their strengths and weaknesses. Choose which methods seems most appropriate for your correlation needs.&lt;/p&gt;
 &lt;p&gt;Happy modeling.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## R version 3.5.1 (2018-07-02)
+&lt;pre&gt;&lt;code&gt;## R version 3.6.0 (2019-04-26)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
 ## 
 ## Matrix products: default
-## BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
 ## 
+## Random number generation:
+##  RNG:     Mersenne-Twister 
+##  Normal:  Inversion 
+##  Sample:  Rounding 
+##  
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
@@ -3120,64 +3149,64 @@ tibble(name = str_c(&amp;quot;f&amp;quot;, 1:6)) %&amp;gt;%
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] tidybayes_1.0.3 bindrcpp_0.2.2  GGally_1.4.0    forcats_0.3.0  
-##  [5] stringr_1.3.1   dplyr_0.7.6     purrr_0.2.5     readr_1.1.1    
-##  [9] tidyr_0.8.1     tibble_2.0.1    tidyverse_1.2.1 brms_2.7.0     
-## [13] ggplot2_3.1.0   Rcpp_1.0.0      mvtnorm_1.0-8  
+##  [1] tidybayes_1.1.0 GGally_1.4.0    forcats_0.4.0   stringr_1.4.0  
+##  [5] dplyr_0.8.3     purrr_0.3.2     readr_1.3.1     tidyr_1.0.0    
+##  [9] tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1 brms_2.10.0    
+## [13] Rcpp_1.0.2      mvtnorm_1.0-11 
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] colorspace_1.3-2          ggridges_0.5.0           
-##   [3] rsconnect_0.8.8           rprojroot_1.3-2          
-##   [5] ggstance_0.3              markdown_0.8             
-##   [7] base64enc_0.1-3           rstudioapi_0.7           
-##   [9] rstan_2.18.2              svUnit_0.7-12            
-##  [11] DT_0.4                    fansi_0.4.0              
+##   [1] colorspace_1.4-1          ellipsis_0.2.0.1         
+##   [3] ggridges_0.5.1            rsconnect_0.8.13         
+##   [5] ggstance_0.3.2            markdown_1.0             
+##   [7] base64enc_0.1-3           rstudioapi_0.10          
+##   [9] rstan_2.19.2              svUnit_0.7-12            
+##  [11] DT_0.7                    fansi_0.4.0              
 ##  [13] lubridate_1.7.4           xml2_1.2.0               
-##  [15] bridgesampling_0.4-0      codetools_0.2-15         
-##  [17] knitr_1.20                shinythemes_1.1.1        
-##  [19] bayesplot_1.6.0           jsonlite_1.5             
-##  [21] broom_0.5.1               shiny_1.1.0              
-##  [23] compiler_3.5.1            httr_1.3.1               
-##  [25] backports_1.1.2           assertthat_0.2.0         
-##  [27] Matrix_1.2-14             lazyeval_0.2.1           
-##  [29] cli_1.0.1                 later_0.7.3              
-##  [31] htmltools_0.3.6           prettyunits_1.0.2        
-##  [33] tools_3.5.1               igraph_1.2.1             
-##  [35] coda_0.19-2               gtable_0.2.0             
-##  [37] glue_1.3.0                reshape2_1.4.3           
-##  [39] cellranger_1.1.0          nlme_3.1-137             
-##  [41] blogdown_0.8              crosstalk_1.0.0          
-##  [43] xfun_0.3                  ps_1.2.1                 
-##  [45] rvest_0.3.2               mime_0.5                 
-##  [47] miniUI_0.1.1.1            gtools_3.8.1             
-##  [49] MASS_7.3-50               zoo_1.8-2                
-##  [51] scales_1.0.0              colourpicker_1.0         
-##  [53] hms_0.4.2                 promises_1.0.1           
-##  [55] Brobdingnag_1.2-5         parallel_3.5.1           
-##  [57] inline_0.3.15             shinystan_2.5.0          
-##  [59] RColorBrewer_1.1-2        yaml_2.1.19              
-##  [61] gridExtra_2.3             loo_2.0.0                
-##  [63] StanHeaders_2.18.0-1      reshape_0.8.7            
-##  [65] stringi_1.2.3             dygraphs_1.1.1.5         
-##  [67] pkgbuild_1.0.2            rlang_0.3.1              
-##  [69] pkgconfig_2.0.2           matrixStats_0.54.0       
-##  [71] evaluate_0.10.1           lattice_0.20-35          
-##  [73] bindr_0.1.1               rstantools_1.5.0         
-##  [75] htmlwidgets_1.2           labeling_0.3             
-##  [77] processx_3.2.1            tidyselect_0.2.4         
-##  [79] plyr_1.8.4                magrittr_1.5             
-##  [81] bookdown_0.7              R6_2.3.0                 
-##  [83] generics_0.0.2            pillar_1.3.1             
-##  [85] haven_1.1.2               withr_2.1.2              
-##  [87] xts_0.10-2                abind_1.4-5              
-##  [89] modelr_0.1.2              crayon_1.3.4             
-##  [91] arrayhelpers_1.0-20160527 utf8_1.1.4               
-##  [93] rmarkdown_1.10            grid_3.5.1               
-##  [95] readxl_1.1.0              callr_3.1.0              
-##  [97] threejs_0.3.1             digest_0.6.18            
-##  [99] xtable_1.8-2              httpuv_1.4.4.2           
-## [101] stats4_3.5.1              munsell_0.5.0            
-## [103] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##  [15] bridgesampling_0.6-0      codetools_0.2-16         
+##  [17] knitr_1.23                shinythemes_1.1.2        
+##  [19] zeallot_0.1.0             bayesplot_1.7.0          
+##  [21] jsonlite_1.6              broom_0.5.2              
+##  [23] shiny_1.3.2               compiler_3.6.0           
+##  [25] httr_1.4.0                backports_1.1.4          
+##  [27] assertthat_0.2.1          Matrix_1.2-17            
+##  [29] lazyeval_0.2.2            cli_1.1.0                
+##  [31] later_0.8.0               htmltools_0.3.6          
+##  [33] prettyunits_1.0.2         tools_3.6.0              
+##  [35] igraph_1.2.4.1            coda_0.19-2              
+##  [37] gtable_0.3.0              glue_1.3.1               
+##  [39] reshape2_1.4.3            cellranger_1.1.0         
+##  [41] vctrs_0.2.0               nlme_3.1-139             
+##  [43] blogdown_0.14             crosstalk_1.0.0          
+##  [45] xfun_0.8                  ps_1.3.0                 
+##  [47] rvest_0.3.4               mime_0.7                 
+##  [49] miniUI_0.1.1.1            lifecycle_0.1.0          
+##  [51] gtools_3.8.1              zoo_1.8-6                
+##  [53] scales_1.0.0              colourpicker_1.0         
+##  [55] hms_0.4.2                 promises_1.0.1           
+##  [57] Brobdingnag_1.2-6         parallel_3.6.0           
+##  [59] inline_0.3.15             shinystan_2.5.0          
+##  [61] RColorBrewer_1.1-2        yaml_2.2.0               
+##  [63] gridExtra_2.3             loo_2.1.0                
+##  [65] StanHeaders_2.18.1-10     reshape_0.8.8            
+##  [67] stringi_1.4.3             dygraphs_1.1.1.6         
+##  [69] pkgbuild_1.0.3            rlang_0.4.0              
+##  [71] pkgconfig_2.0.2           matrixStats_0.54.0       
+##  [73] evaluate_0.14             lattice_0.20-38          
+##  [75] rstantools_1.5.1          htmlwidgets_1.3          
+##  [77] labeling_0.3              processx_3.3.1           
+##  [79] tidyselect_0.2.5          plyr_1.8.4               
+##  [81] magrittr_1.5              bookdown_0.12            
+##  [83] R6_2.4.0                  generics_0.0.2           
+##  [85] pillar_1.4.2              haven_2.1.0              
+##  [87] withr_2.1.2               xts_0.11-2               
+##  [89] abind_1.4-5               modelr_0.1.4             
+##  [91] crayon_1.3.4              arrayhelpers_1.0-20160527
+##  [93] utf8_1.1.4                rmarkdown_1.13           
+##  [95] grid_3.6.0                readxl_1.3.1             
+##  [97] callr_3.2.0               threejs_0.3.1            
+##  [99] digest_0.6.20             xtable_1.8-4             
+## [101] httpuv_1.5.1              stats4_3.6.0             
+## [103] munsell_0.5.0             shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>
@@ -3285,7 +3314,6 @@ x.clean %&amp;gt;%
 &lt;h2&gt;Bayesian correlations in brms&lt;/h2&gt;
 &lt;p&gt;&lt;a href=&#34;https://twitter.com/paulbuerkner&#34;&gt;Bürkner&lt;/a&gt;’s brms is a general purpose interface for fitting all manner of Bayesian regression models with &lt;a href=&#34;https://mc-stan.org&#34;&gt;Stan&lt;/a&gt; as the engine under the hood. It has popular &lt;a href=&#34;https://cran.r-project.org/web/packages/lme4/index.html&#34;&gt;lme4&lt;/a&gt;-like syntax and offers a variety of convenience functions for post processing. Let’s load it up.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## Warning: package &amp;#39;Rcpp&amp;#39; was built under R version 3.5.2&lt;/code&gt;&lt;/pre&gt;
 &lt;div id=&#34;first-with-the-gaussian-likelihood.&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;First with the Gaussian likelihood.&lt;/h3&gt;
 &lt;p&gt;I’m not going to spend a lot of time walking through the syntax in the main brms function, &lt;code&gt;brm()&lt;/code&gt;. You can learn all about that &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;here&lt;/a&gt; or with my project &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse#statistical-rethinking-with-brms-ggplot2-and-the-tidyverse&#34;&gt;&lt;em&gt;Statistical Rethinking with brms, ggplot2, and the tidyverse&lt;/em&gt;&lt;/a&gt;. But our particular use of &lt;code&gt;brm()&lt;/code&gt; requires we make a few fine points.&lt;/p&gt;
@@ -3314,18 +3342,18 @@ x.clean %&amp;gt;%
 ##          total post-warmup samples = 6000
 ## 
 ## Population-Level Effects: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## x_Intercept    -2.83      3.33    -9.33     3.69       2995 1.00
-## y_Intercept     3.55      6.65    -9.45    16.60       2972 1.00
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## x_Intercept    -2.83      3.33    -9.33     3.69 1.00     3000     3111
+## y_Intercept     3.55      6.65    -9.45    16.60 1.00     2978     2928
 ## 
 ## Family Specific Parameters: 
-##         Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_x    21.47      2.47    17.29    26.99       2453 1.00
-## sigma_y    42.93      4.86    34.55    53.51       2418 1.00
+##         Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_x    21.47      2.47    17.29    26.99 1.00     2514     3094
+## sigma_y    42.93      4.86    34.55    53.51 1.00     2477     3144
 ## 
 ## Residual Correlations: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(x,y)    -0.95      0.02    -0.98    -0.92       2636 1.00
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(x,y)    -0.95      0.02    -0.98    -0.92 1.00     2686     3218
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -3346,18 +3374,18 @@ x.clean %&amp;gt;%
 ##          total post-warmup samples = 6000
 ## 
 ## Population-Level Effects: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## x_Intercept    -2.95      3.75   -10.39     4.57       4477 1.00
-## y_Intercept     6.52      7.45    -8.31    20.98       4692 1.00
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## x_Intercept    -2.95      3.75   -10.39     4.57 1.00     4515     3963
+## y_Intercept     6.52      7.45    -8.31    20.98 1.00     4727     4057
 ## 
 ## Family Specific Parameters: 
-##         Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_x    23.65      2.76    18.97    29.83       4312 1.00
-## sigma_y    47.20      5.42    37.94    59.03       4332 1.00
+##         Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_x    23.65      2.76    18.97    29.83 1.00     4536     4351
+## sigma_y    47.20      5.42    37.94    59.03 1.00     4619     4222
 ## 
 ## Residual Correlations: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(x,y)    -0.61      0.10    -0.78    -0.39       4480 1.00
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(x,y)    -0.61      0.10    -0.78    -0.39 1.00     4344     4033
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -3402,19 +3430,19 @@ x.clean %&amp;gt;%
 ##          total post-warmup samples = 6000
 ## 
 ## Population-Level Effects: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## x_Intercept    -2.11      3.61    -9.22     4.96       2936 1.00
-## y_Intercept     1.93      7.12   -11.74    16.03       2949 1.00
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## x_Intercept    -2.11      3.61    -9.22     4.96 1.00     2964     3421
+## y_Intercept     1.93      7.12   -11.74    16.03 1.00     2973     3497
 ## 
 ## Family Specific Parameters: 
-##         Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_x    18.26      2.92    13.06    24.48       3188 1.00
-## sigma_y    36.31      5.79    26.08    48.60       3206 1.00
-## nu          2.65      1.00     1.36     5.13       3905 1.00
+##         Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_x    18.26      2.92    13.06    24.48 1.00     3231     3281
+## sigma_y    36.31      5.79    26.08    48.60 1.00     3214     3625
+## nu          2.65      1.00     1.36     5.13 1.00     3967     2851
 ## 
 ## Residual Correlations: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(x,y)    -0.93      0.03    -0.97    -0.84       3484 1.00
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(x,y)    -0.93      0.03    -0.97    -0.84 1.00     3896     3625
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -3436,19 +3464,19 @@ x.clean %&amp;gt;%
 ##          total post-warmup samples = 6000
 ## 
 ## Population-Level Effects: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## x_Intercept    -2.37      3.50    -9.20     4.39       2909 1.00
-## y_Intercept     2.71      6.98   -10.90    16.48       3032 1.00
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## x_Intercept    -2.37      3.50    -9.20     4.39 1.00     2931     3188
+## y_Intercept     2.71      6.98   -10.90    16.48 1.00     3067     3363
 ## 
 ## Family Specific Parameters: 
-##         Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sigma_x    20.79      2.60    16.28    26.60       2388 1.00
-## sigma_y    41.34      5.17    32.33    52.62       2417 1.00
-## nu         22.42     13.78     5.70    57.53       4384 1.00
+##         Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_x    20.79      2.60    16.28    26.60 1.00     2427     2778
+## sigma_y    41.34      5.17    32.33    52.62 1.00     2459     2863
+## nu         22.42     13.78     5.70    57.53 1.00     4146     3881
 ## 
 ## Residual Correlations: 
-##             Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## rescor(x,y)    -0.96      0.01    -0.98    -0.92       3045 1.00
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(x,y)    -0.96      0.01    -0.98    -0.92 1.00     3084     3577
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -3462,16 +3490,16 @@ x.clean %&amp;gt;%
   unnest(post)
 
 head(posts)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 8
-##   model b_x_Intercept b_y_Intercept sigma_x sigma_y rescor__x__y  lp__
-##   &amp;lt;chr&amp;gt;         &amp;lt;dbl&amp;gt;         &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt;        &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
-## 1 f0             1.31        -5.60     18.2    37.8       -0.947 -353.
-## 2 f0            -7.41        10.6      25.2    50.5       -0.941 -357.
-## 3 f0            -4.51         5.65     23.3    49.4       -0.975 -354.
-## 4 f0            -2.65        -0.597    18.3    37.3       -0.929 -354.
-## 5 f0            -2.76        -1.50     18.4    37.5       -0.923 -355.
-## 6 f0            -9.84        15.2      26.3    45.1       -0.953 -358.
-## # … with 1 more variable: nu &amp;lt;dbl&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 9
+##   model fit   b_x_Intercept b_y_Intercept sigma_x sigma_y rescor__x__y
+##   &amp;lt;chr&amp;gt; &amp;lt;lis&amp;gt;         &amp;lt;dbl&amp;gt;         &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt;   &amp;lt;dbl&amp;gt;        &amp;lt;dbl&amp;gt;
+## 1 f0    &amp;lt;brm…          1.31        -5.60     18.2    37.8       -0.947
+## 2 f0    &amp;lt;brm…         -7.41        10.6      25.2    50.5       -0.941
+## 3 f0    &amp;lt;brm…         -4.51         5.65     23.3    49.4       -0.975
+## 4 f0    &amp;lt;brm…         -2.65        -0.597    18.3    37.3       -0.929
+## 5 f0    &amp;lt;brm…         -2.76        -1.50     18.4    37.5       -0.923
+## 6 f0    &amp;lt;brm…         -9.84        15.2      26.3    45.1       -0.953
+## # … with 2 more variables: lp__ &amp;lt;dbl&amp;gt;, nu &amp;lt;dbl&amp;gt;&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;With the posterior draws in hand, we just need to wrangle a bit before showing the correlation posteriors in a coefficient plot. To make things easier, we’ll do so with a couple convenience functions from the &lt;a href=&#34;https://github.com/mjskay/tidybayes&#34;&gt;tidybayes&lt;/a&gt; package.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidybayes)
 
@@ -3499,14 +3527,19 @@ posts %&amp;gt;%
 &lt;p&gt;From our &lt;code&gt;tidybayes::median_qi()&lt;/code&gt; code, the dots are the posterior medians, the thick inner lines the 50% intervals, and the thinner outer lines the 95% intervals. The posteriors for the &lt;code&gt;x.noisy&lt;/code&gt; data are in red and those for the &lt;code&gt;x.clean&lt;/code&gt; data are in blue. If the data are clean multivariate normal Gaussian or if they’re dirty but fit with robust Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;, everything is pretty much alright. But whoa, if you fit a correlation with a combination of &lt;code&gt;family = gaussian&lt;/code&gt; and noisy outlier-laden data, man that’s just a mess.&lt;/p&gt;
 &lt;p&gt;Don’t let a few overly-influential outliers make a mess of your analyses. Try the robust Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt;.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## R version 3.5.1 (2018-07-02)
+&lt;pre&gt;&lt;code&gt;## R version 3.6.0 (2019-04-26)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
 ## 
 ## Matrix products: default
-## BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
 ## 
+## Random number generation:
+##  RNG:     Mersenne-Twister 
+##  Normal:  Inversion 
+##  Sample:  Rounding 
+##  
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
@@ -3514,74 +3547,75 @@ posts %&amp;gt;%
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] tidybayes_1.0.4 bindrcpp_0.2.2  brms_2.8.8      Rcpp_1.0.1     
-##  [5] ggthemes_4.0.1  forcats_0.3.0   stringr_1.4.0   dplyr_0.8.0.1  
-##  [9] purrr_0.2.5     readr_1.1.1     tidyr_0.8.1     tibble_2.1.1   
-## [13] ggplot2_3.1.1   tidyverse_1.2.1 mvtnorm_1.0-10 
+##  [1] tidybayes_1.1.0 brms_2.10.0     Rcpp_1.0.2      ggthemes_4.2.0 
+##  [5] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2    
+##  [9] readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
+## [13] tidyverse_1.2.1 mvtnorm_1.0-11 
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] readxl_1.1.0              backports_1.1.4          
-##   [3] Hmisc_4.1-1               plyr_1.8.4               
-##   [5] igraph_1.2.1              lazyeval_0.2.2           
-##   [7] splines_3.5.1             svUnit_0.7-12            
+##   [1] readxl_1.3.1              backports_1.1.4          
+##   [3] Hmisc_4.2-0               plyr_1.8.4               
+##   [5] igraph_1.2.4.1            lazyeval_0.2.2           
+##   [7] svUnit_0.7-12             splines_3.6.0            
 ##   [9] crosstalk_1.0.0           rstantools_1.5.1         
-##  [11] inline_0.3.15             digest_0.6.18            
-##  [13] htmltools_0.3.6           rsconnect_0.8.8          
-##  [15] fansi_0.4.0               gdata_2.18.0             
-##  [17] magrittr_1.5              checkmate_1.8.5          
-##  [19] cluster_2.0.7-1           modelr_0.1.2             
-##  [21] matrixStats_0.54.0        xts_0.10-2               
-##  [23] prettyunits_1.0.2         colorspace_1.3-2         
-##  [25] rvest_0.3.2               pan_1.6                  
-##  [27] haven_1.1.2               xfun_0.3                 
-##  [29] callr_3.1.0               crayon_1.3.4             
-##  [31] jsonlite_1.5              lme4_1.1-17              
-##  [33] bindr_0.1.1               survival_2.42-3          
-##  [35] zoo_1.8-2                 glue_1.3.1.9000          
-##  [37] gtable_0.3.0              pkgbuild_1.0.2           
-##  [39] weights_1.0               rstan_2.18.2             
-##  [41] jomo_2.6-2                abind_1.4-5              
+##  [11] inline_0.3.15             digest_0.6.20            
+##  [13] htmltools_0.3.6           rsconnect_0.8.13         
+##  [15] gdata_2.18.0              fansi_0.4.0              
+##  [17] magrittr_1.5              checkmate_1.9.3          
+##  [19] cluster_2.0.8             modelr_0.1.4             
+##  [21] matrixStats_0.54.0        xts_0.11-2               
+##  [23] prettyunits_1.0.2         colorspace_1.4-1         
+##  [25] rvest_0.3.4               haven_2.1.0              
+##  [27] pan_1.6                   xfun_0.8                 
+##  [29] callr_3.2.0               crayon_1.3.4             
+##  [31] jsonlite_1.6              lme4_1.1-21              
+##  [33] zeallot_0.1.0             survival_2.44-1.1        
+##  [35] zoo_1.8-6                 glue_1.3.1               
+##  [37] gtable_0.3.0              pkgbuild_1.0.3           
+##  [39] weights_1.0               rstan_2.19.2             
+##  [41] jomo_2.6-8                abind_1.4-5              
 ##  [43] scales_1.0.0              miniUI_0.1.1.1           
-##  [45] xtable_1.8-2              htmlTable_1.12           
-##  [47] ggstance_0.3              foreign_0.8-70           
-##  [49] Formula_1.2-3             stats4_3.5.1             
-##  [51] StanHeaders_2.18.0-1      DT_0.4                   
-##  [53] htmlwidgets_1.2           httr_1.3.1               
+##  [45] xtable_1.8-4              htmlTable_1.13.1         
+##  [47] ggstance_0.3.2            foreign_0.8-71           
+##  [49] Formula_1.2-3             stats4_3.6.0             
+##  [51] StanHeaders_2.18.1-10     DT_0.7                   
+##  [53] htmlwidgets_1.3           httr_1.4.0               
 ##  [55] threejs_0.3.1             arrayhelpers_1.0-20160527
 ##  [57] RColorBrewer_1.1-2        acepack_1.4.1            
-##  [59] mice_3.1.0                pkgconfig_2.0.2          
+##  [59] mice_3.5.0                pkgconfig_2.0.2          
 ##  [61] loo_2.1.0                 nnet_7.3-12              
 ##  [63] utf8_1.1.4                tidyselect_0.2.5         
-##  [65] labeling_0.3              rlang_0.3.4              
-##  [67] reshape2_1.4.3            later_0.7.3              
+##  [65] labeling_0.3              rlang_0.4.0              
+##  [67] reshape2_1.4.3            later_0.8.0              
 ##  [69] munsell_0.5.0             cellranger_1.1.0         
-##  [71] tools_3.5.1               cli_1.0.1                
-##  [73] generics_0.0.2            broom_0.5.1              
-##  [75] ggridges_0.5.0            evaluate_0.10.1          
-##  [77] yaml_2.1.19               processx_3.2.1           
-##  [79] knitr_1.20                mitml_0.3-6              
-##  [81] nlme_3.1-137              mime_0.5                 
-##  [83] xml2_1.2.0                compiler_3.5.1           
-##  [85] bayesplot_1.7.0           shinythemes_1.1.1        
-##  [87] rstudioapi_0.7            stringi_1.4.3            
-##  [89] ps_1.2.1                  blogdown_0.8             
-##  [91] Brobdingnag_1.2-6         lattice_0.20-35          
-##  [93] Matrix_1.2-14             nloptr_1.0.4             
-##  [95] markdown_0.8              shinyjs_1.0              
-##  [97] pillar_1.3.1              bridgesampling_0.6-0     
-##  [99] data.table_1.11.4         httpuv_1.4.4.2           
-## [101] R6_2.3.0                  latticeExtra_0.6-28      
-## [103] bookdown_0.9              promises_1.0.1           
-## [105] gridExtra_2.3             codetools_0.2-15         
-## [107] colourpicker_1.0          MASS_7.3-50              
-## [109] gtools_3.8.1              assertthat_0.2.0         
-## [111] rprojroot_1.3-2           withr_2.1.2              
-## [113] shinystan_2.5.0           parallel_3.5.1           
-## [115] hms_0.4.2                 grid_3.5.1               
-## [117] rpart_4.1-13              coda_0.19-2              
-## [119] minqa_1.2.4               rmarkdown_1.10           
-## [121] shiny_1.1.0               lubridate_1.7.4          
-## [123] base64enc_0.1-3           dygraphs_1.1.1.5&lt;/code&gt;&lt;/pre&gt;
+##  [71] tools_3.6.0               cli_1.1.0                
+##  [73] generics_0.0.2            broom_0.5.2              
+##  [75] ggridges_0.5.1            evaluate_0.14            
+##  [77] yaml_2.2.0                processx_3.3.1           
+##  [79] knitr_1.23                mitml_0.3-7              
+##  [81] nlme_3.1-139              mime_0.7                 
+##  [83] xml2_1.2.0                compiler_3.6.0           
+##  [85] bayesplot_1.7.0           shinythemes_1.1.2        
+##  [87] rstudioapi_0.10           stringi_1.4.3            
+##  [89] ps_1.3.0                  blogdown_0.14            
+##  [91] Brobdingnag_1.2-6         lattice_0.20-38          
+##  [93] Matrix_1.2-17             nloptr_1.2.1             
+##  [95] markdown_1.0              shinyjs_1.0              
+##  [97] vctrs_0.2.0               pillar_1.4.2             
+##  [99] lifecycle_0.1.0           bridgesampling_0.6-0     
+## [101] data.table_1.12.2         httpuv_1.5.1             
+## [103] R6_2.4.0                  latticeExtra_0.6-28      
+## [105] bookdown_0.12             promises_1.0.1           
+## [107] gridExtra_2.3             boot_1.3-22              
+## [109] colourpicker_1.0          MASS_7.3-51.4            
+## [111] gtools_3.8.1              assertthat_0.2.1         
+## [113] withr_2.1.2               shinystan_2.5.0          
+## [115] parallel_3.6.0            hms_0.4.2                
+## [117] grid_3.6.0                rpart_4.1-15             
+## [119] coda_0.19-2               minqa_1.2.4              
+## [121] rmarkdown_1.13            shiny_1.3.2              
+## [123] lubridate_1.7.4           base64enc_0.1-3          
+## [125] dygraphs_1.1.1.6&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 </description>
@@ -3955,7 +3989,7 @@ loo_b1 &amp;lt;- loo(b1)&lt;/code&gt;&lt;/pre&gt;
 ##  - attr(*, &amp;quot;yhash&amp;quot;)= chr &amp;quot;5cdc17bb2cb41f3e3f0a617f418fff3fbb8e1ebf&amp;quot;&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;For a detailed explanation of all those elements, see the &lt;a href=&#34;https://cran.r-project.org/web/packages/loo/loo.pdf&#34;&gt;reference manual&lt;/a&gt;. For our purposes, we’ll focus on the &lt;code&gt;pareto_k&lt;/code&gt;. Here’s a glimpse of what it contains for the &lt;code&gt;b1&lt;/code&gt; model.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;loo_b1$diagnostics$pareto_k %&amp;gt;% as_tibble()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## Warning: Calling `as_tibble()` on a vector is discouraged, because the behavior is likely to change in the future. Use `enframe(name = NULL)` instead.
+&lt;pre&gt;&lt;code&gt;## Warning: Calling `as_tibble()` on a vector is discouraged, because the behavior is likely to change in the future. Use `tibble::enframe(name = NULL)` instead.
 ## This warning is displayed once per session.&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## # A tibble: 100 x 1
 ##      value
@@ -4094,23 +4128,23 @@ tibble(x = seq(from = 0, to = 60, by = .1)) %&amp;gt;%
 &lt;p&gt;To get a sense of what we’ve done, let’s take a peek at our models tibble.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;b_estimates %&amp;gt;%
   mutate_if(is.double, round, digits = 2)  # This is just to round the numbers&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## # A tibble: 14 x 6
-##    model term        estimate std.error  lower upper
-##    &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt;          &amp;lt;dbl&amp;gt;     &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
-##  1 b0    b_Intercept    -0.01      0.09 -0.15   0.13
-##  2 b1    b_Intercept     0.12      0.11 -0.05   0.3 
-##  3 b1.1  b_Intercept     0.07      0.1  -0.09   0.23
-##  4 b1.2  b_Intercept     0.02      0.09 -0.12   0.16
-##  5 b2    b_Intercept     0.04      0.09 -0.11   0.2 
-##  6 b3    b_Intercept     0.04      0.09 -0.11   0.19
-##  7 b4    b_Intercept     0.04      0.09 -0.11   0.19
-##  8 b0    b_x             0.44      0.1   0.290  0.61
-##  9 b1    b_x             0.15      0.13 -0.05   0.36
-## 10 b1.1  b_x             0.28      0.12  0.09   0.47
-## 11 b1.2  b_x             0.4       0.1   0.23   0.56
-## 12 b2    b_x             0.35      0.11  0.17   0.53
-## 13 b3    b_x             0.36      0.1   0.19   0.53
-## 14 b4    b_x             0.37      0.1   0.2    0.54&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 14 x 7
+##    model fit       term        estimate std.error  lower upper
+##    &amp;lt;chr&amp;gt; &amp;lt;list&amp;gt;    &amp;lt;chr&amp;gt;          &amp;lt;dbl&amp;gt;     &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
+##  1 b0    &amp;lt;brmsfit&amp;gt; b_Intercept    -0.01      0.09 -0.15   0.13
+##  2 b1    &amp;lt;brmsfit&amp;gt; b_Intercept     0.12      0.11 -0.05   0.3 
+##  3 b1.1  &amp;lt;brmsfit&amp;gt; b_Intercept     0.07      0.1  -0.09   0.23
+##  4 b1.2  &amp;lt;brmsfit&amp;gt; b_Intercept     0.02      0.09 -0.12   0.16
+##  5 b2    &amp;lt;brmsfit&amp;gt; b_Intercept     0.04      0.09 -0.11   0.2 
+##  6 b3    &amp;lt;brmsfit&amp;gt; b_Intercept     0.04      0.09 -0.11   0.19
+##  7 b4    &amp;lt;brmsfit&amp;gt; b_Intercept     0.04      0.09 -0.11   0.19
+##  8 b0    &amp;lt;brmsfit&amp;gt; b_x             0.44      0.1   0.290  0.61
+##  9 b1    &amp;lt;brmsfit&amp;gt; b_x             0.15      0.13 -0.05   0.36
+## 10 b1.1  &amp;lt;brmsfit&amp;gt; b_x             0.28      0.12  0.09   0.47
+## 11 b1.2  &amp;lt;brmsfit&amp;gt; b_x             0.4       0.1   0.23   0.56
+## 12 b2    &amp;lt;brmsfit&amp;gt; b_x             0.35      0.11  0.17   0.53
+## 13 b3    &amp;lt;brmsfit&amp;gt; b_x             0.36      0.1   0.19   0.53
+## 14 b4    &amp;lt;brmsfit&amp;gt; b_x             0.37      0.1   0.2    0.54&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;The models differ by their intercepts, slopes, sigmas, and &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt;s. For the sake of this post, we’ll focus on the slopes. Here we compare the different Bayesian models’ slopes by their posterior means and 95% intervals in a coefficient plot.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;b_estimates %&amp;gt;%
   filter(term == &amp;quot;b_x&amp;quot;) %&amp;gt;% # b_Intercept b_x
@@ -4165,6 +4199,8 @@ tibble(name = str_c(&amp;quot;loo_b&amp;quot;, 1:4)) %&amp;gt;%
 &lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-28-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;Oh man, those Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt; models worked sweet! In a succession from &lt;code&gt;b2&lt;/code&gt; through &lt;code&gt;b4&lt;/code&gt;, each model looked better by &lt;code&gt;pareto_k&lt;/code&gt;. All were way better than the typical Gaussian model, &lt;code&gt;b1&lt;/code&gt;. While we’re at it, we might compare those by their LOO values.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;compare_ic(loo_b1, loo_b2, loo_b3, loo_b4)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning: &amp;#39;compare_ic&amp;#39; is deprecated and will be removed in the future.
+## Please use &amp;#39;loo_compare&amp;#39; instead.&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##          LOOIC    SE
 ## b1      311.26 31.09
 ## b2      289.97 23.07
@@ -4176,11 +4212,12 @@ tibble(name = str_c(&amp;quot;loo_b&amp;quot;, 1:4)) %&amp;gt;%
 ## b2 - b3   2.33  3.03
 ## b2 - b4   4.02  3.95
 ## b3 - b4   1.69  0.92&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;In terms of the LOO, &lt;code&gt;b2&lt;/code&gt; through &lt;code&gt;b4&lt;/code&gt; were about the same, but all looked better than &lt;code&gt;b1&lt;/code&gt;. In fairness, though, the standard errors for the difference scores were a bit on the wide side. If you’re new to using information criteria to compare models, you might sit down and soak in &lt;a href=&#34;https://www.youtube.com/watch?v=t0pRuy1_190&amp;amp;list=PLDcUM9US4XdM9_N6XUUFrhghGJ4K25bFc&amp;amp;index=8&#34;&gt;this lecture on the topic&lt;/a&gt; and &lt;a href=&#34;https://cran.r-project.org/web/packages/loo/vignettes/loo-example.html&#34;&gt;this vignette&lt;/a&gt; on the LOO in particular. For a more technical introduction, you might check out the references in the loo package’s &lt;a href=&#34;https://cran.r-project.org/web/packages/loo/loo.pdf&#34;&gt;reference manual&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;In terms of the LOO, &lt;code&gt;b2&lt;/code&gt; through &lt;code&gt;b4&lt;/code&gt; were about the same, but all looked better than &lt;code&gt;b1&lt;/code&gt;. In fairness, though, the standard errors for the difference scores were a bit on the wide side.
+If you’re new to using information criteria to compare models, you might sit down and soak in &lt;a href=&#34;https://www.youtube.com/watch?v=t0pRuy1_190&amp;amp;list=PLDcUM9US4XdM9_N6XUUFrhghGJ4K25bFc&amp;amp;index=8&#34;&gt;this lecture on the topic&lt;/a&gt; and &lt;a href=&#34;https://cran.r-project.org/web/packages/loo/vignettes/loo-example.html&#34;&gt;this vignette&lt;/a&gt; on the LOO in particular. For a more technical introduction, you might check out the references in the loo package’s &lt;a href=&#34;https://cran.r-project.org/web/packages/loo/loo.pdf&#34;&gt;reference manual&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;For one final LOO-related comparison, we can use the &lt;code&gt;brms::model_weights()&lt;/code&gt; function to see how much relative weight we might put on each of those four models if we were to use a model averaging approach. Here we use the default method, which is model averaging via posterior predictive stacking.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;model_weights(b1, b2, b3, b4)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;##           b1           b2           b3           b4 
-## 6.956356e-07 4.480928e-09 4.036950e-06 9.999953e-01&lt;/code&gt;&lt;/pre&gt;
+## 3.361150e-06 8.798859e-08 4.484138e-06 9.999921e-01&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;If you’re not a fan of scientific notation, just tack on &lt;code&gt;round(digits = 2)&lt;/code&gt;. The stacking method suggests that we should place virtually all the weight on &lt;code&gt;b4&lt;/code&gt;, the model in which we fixed our Student-&lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt; &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt; parameter at 4. To learn more about model stacking, check out Yao, Vehtari, Simpson, and Gelman’s (2018) paper, &lt;a href=&#34;https://projecteuclid.org/euclid.ba/1516093227&#34;&gt;&lt;em&gt;Using stacking to average Bayesian predictive distributions&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;lets-compare-a-few-bayesian-models.&#34; class=&#34;section level3&#34;&gt;
@@ -4216,14 +4253,19 @@ list(b0 = b0, b1 = b1, b3 = b3) %&amp;gt;%
 &lt;p&gt;&lt;img src=&#34;/post/2019-02-02-robust-linear-regression-with-the-robust-student-s-t-distribution_files/figure-html/unnamed-chunk-31-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;For each subplot, the gray band is the 95% interval band and the overlapping light gray line is the posterior mean. Model &lt;code&gt;b0&lt;/code&gt;, recall, is our baseline comparison model. This is of the well-behaved no-outlier data, &lt;code&gt;d&lt;/code&gt;, using the good old Gaussian likelihood. Model &lt;code&gt;b1&lt;/code&gt; is of the outlier data, &lt;code&gt;o&lt;/code&gt;, but still using the non-robust Gaussian likelihood. Model &lt;code&gt;b3&lt;/code&gt; uses a robust Student’s &lt;span class=&#34;math inline&#34;&gt;\(t\)&lt;/span&gt; likelihood with &lt;span class=&#34;math inline&#34;&gt;\(\nu\)&lt;/span&gt; estimated with the fairly narrow gamma(4, 1) prior. For my money, &lt;code&gt;b3&lt;/code&gt; did a pretty good job.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## R version 3.5.1 (2018-07-02)
+&lt;pre&gt;&lt;code&gt;## R version 3.6.0 (2019-04-26)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
 ## 
 ## Matrix products: default
-## BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
 ## 
+## Random number generation:
+##  RNG:     Mersenne-Twister 
+##  Normal:  Inversion 
+##  Sample:  Rounding 
+##  
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
@@ -4231,62 +4273,63 @@ list(b0 = b0, b1 = b1, b3 = b3) %&amp;gt;%
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] tidybayes_1.0.3 loo_2.0.0       brms_2.7.0      Rcpp_1.0.0     
-##  [5] gridExtra_2.3   broom_0.5.1     bindrcpp_0.2.2  forcats_0.3.0  
-##  [9] stringr_1.3.1   dplyr_0.7.6     purrr_0.2.5     readr_1.1.1    
-## [13] tidyr_0.8.1     tibble_2.0.1    ggplot2_3.1.0   tidyverse_1.2.1
+##  [1] tidybayes_1.1.0 loo_2.1.0       brms_2.10.0     Rcpp_1.0.2     
+##  [5] gridExtra_2.3   broom_0.5.2     forcats_0.4.0   stringr_1.4.0  
+##  [9] dplyr_0.8.3     purrr_0.3.2     readr_1.3.1     tidyr_1.0.0    
+## [13] tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] colorspace_1.3-2          ggridges_0.5.0           
-##   [3] rsconnect_0.8.8           rprojroot_1.3-2          
-##   [5] ggstance_0.3              markdown_0.8             
-##   [7] base64enc_0.1-3           rstudioapi_0.7           
-##   [9] rstan_2.18.2              svUnit_0.7-12            
-##  [11] DT_0.4                    fansi_0.4.0              
-##  [13] mvtnorm_1.0-8             lubridate_1.7.4          
-##  [15] xml2_1.2.0                bridgesampling_0.4-0     
-##  [17] knitr_1.20                shinythemes_1.1.1        
-##  [19] bayesplot_1.6.0           jsonlite_1.5             
-##  [21] shiny_1.1.0               compiler_3.5.1           
-##  [23] httr_1.3.1                backports_1.1.2          
-##  [25] assertthat_0.2.0          Matrix_1.2-14            
-##  [27] lazyeval_0.2.1            cli_1.0.1                
-##  [29] later_0.7.3               htmltools_0.3.6          
-##  [31] prettyunits_1.0.2         tools_3.5.1              
-##  [33] igraph_1.2.1              coda_0.19-2              
-##  [35] gtable_0.2.0              glue_1.3.0               
+##   [1] colorspace_1.4-1          ggridges_0.5.1           
+##   [3] rsconnect_0.8.13          ggstance_0.3.2           
+##   [5] markdown_1.0              base64enc_0.1-3          
+##   [7] rstudioapi_0.10           rstan_2.19.2             
+##   [9] svUnit_0.7-12             DT_0.7                   
+##  [11] fansi_0.4.0               mvtnorm_1.0-11           
+##  [13] lubridate_1.7.4           xml2_1.2.0               
+##  [15] bridgesampling_0.6-0      knitr_1.23               
+##  [17] shinythemes_1.1.2         zeallot_0.1.0            
+##  [19] bayesplot_1.7.0           jsonlite_1.6             
+##  [21] shiny_1.3.2               compiler_3.6.0           
+##  [23] httr_1.4.0                backports_1.1.4          
+##  [25] assertthat_0.2.1          Matrix_1.2-17            
+##  [27] lazyeval_0.2.2            cli_1.1.0                
+##  [29] later_0.8.0               htmltools_0.3.6          
+##  [31] prettyunits_1.0.2         tools_3.6.0              
+##  [33] igraph_1.2.4.1            coda_0.19-2              
+##  [35] gtable_0.3.0              glue_1.3.1               
 ##  [37] reshape2_1.4.3            cellranger_1.1.0         
-##  [39] nlme_3.1-137              blogdown_0.8             
-##  [41] crosstalk_1.0.0           xfun_0.3                 
-##  [43] ps_1.2.1                  rvest_0.3.2              
-##  [45] mime_0.5                  miniUI_0.1.1.1           
-##  [47] gtools_3.8.1              MASS_7.3-50              
-##  [49] zoo_1.8-2                 scales_1.0.0             
-##  [51] colourpicker_1.0          hms_0.4.2                
-##  [53] promises_1.0.1            Brobdingnag_1.2-5        
-##  [55] parallel_3.5.1            inline_0.3.15            
-##  [57] shinystan_2.5.0           yaml_2.1.19              
-##  [59] StanHeaders_2.18.0-1      stringi_1.2.3            
-##  [61] highr_0.7                 dygraphs_1.1.1.5         
-##  [63] pkgbuild_1.0.2            rlang_0.3.1              
-##  [65] pkgconfig_2.0.2           matrixStats_0.54.0       
-##  [67] evaluate_0.10.1           lattice_0.20-35          
-##  [69] bindr_0.1.1               rstantools_1.5.0         
-##  [71] htmlwidgets_1.2           labeling_0.3             
-##  [73] tidyselect_0.2.4          processx_3.2.1           
-##  [75] plyr_1.8.4                magrittr_1.5             
-##  [77] bookdown_0.7              R6_2.3.0                 
-##  [79] generics_0.0.2            pillar_1.3.1             
-##  [81] haven_1.1.2               withr_2.1.2              
-##  [83] xts_0.10-2                abind_1.4-5              
-##  [85] modelr_0.1.2              crayon_1.3.4             
-##  [87] arrayhelpers_1.0-20160527 utf8_1.1.4               
-##  [89] rmarkdown_1.10            grid_3.5.1               
-##  [91] readxl_1.1.0              callr_3.1.0              
-##  [93] threejs_0.3.1             digest_0.6.18            
-##  [95] xtable_1.8-2              httpuv_1.4.4.2           
-##  [97] stats4_3.5.1              munsell_0.5.0            
-##  [99] viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##  [39] vctrs_0.2.0               nlme_3.1-139             
+##  [41] blogdown_0.14             crosstalk_1.0.0          
+##  [43] xfun_0.8                  ps_1.3.0                 
+##  [45] rvest_0.3.4               mime_0.7                 
+##  [47] miniUI_0.1.1.1            lifecycle_0.1.0          
+##  [49] gtools_3.8.1              MASS_7.3-51.4            
+##  [51] zoo_1.8-6                 scales_1.0.0             
+##  [53] colourpicker_1.0          hms_0.4.2                
+##  [55] promises_1.0.1            Brobdingnag_1.2-6        
+##  [57] parallel_3.6.0            inline_0.3.15            
+##  [59] shinystan_2.5.0           yaml_2.2.0               
+##  [61] StanHeaders_2.18.1-10     stringi_1.4.3            
+##  [63] highr_0.8                 dygraphs_1.1.1.6         
+##  [65] pkgbuild_1.0.3            rlang_0.4.0              
+##  [67] pkgconfig_2.0.2           matrixStats_0.54.0       
+##  [69] evaluate_0.14             lattice_0.20-38          
+##  [71] rstantools_1.5.1          htmlwidgets_1.3          
+##  [73] labeling_0.3              tidyselect_0.2.5         
+##  [75] processx_3.3.1            plyr_1.8.4               
+##  [77] magrittr_1.5              bookdown_0.12            
+##  [79] R6_2.4.0                  generics_0.0.2           
+##  [81] pillar_1.4.2              haven_2.1.0              
+##  [83] withr_2.1.2               xts_0.11-2               
+##  [85] abind_1.4-5               modelr_0.1.4             
+##  [87] crayon_1.3.4              arrayhelpers_1.0-20160527
+##  [89] utf8_1.1.4                rmarkdown_1.13           
+##  [91] grid_3.6.0                readxl_1.3.1             
+##  [93] callr_3.2.0               threejs_0.3.1            
+##  [95] digest_0.6.20             xtable_1.8-4             
+##  [97] httpuv_1.5.1              stats4_3.6.0             
+##  [99] munsell_0.5.0             viridisLite_0.3.0        
+## [101] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 </description>
@@ -4641,6 +4684,8 @@ sd %&amp;gt;%
   mutate(density  = density * .75 / max(density)) %&amp;gt;% 
   
   glimpse()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning: `cols` is now required.
+## Please use `cols = c(response, density)`&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Observations: 20,000
 ## Variables: 12
 ## Groups: .draw [20]
@@ -4703,6 +4748,8 @@ sd %&amp;gt;%
   unnest() %&amp;gt;% 
   
   glimpse()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning: `cols` is now required.
+## Please use `cols = c(response, density)`&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Observations: 20,000
 ## Variables: 12
 ## Groups: condition, .row [5]
@@ -4729,9 +4776,10 @@ sd %&amp;gt;%
   mutate(density  = pmap(list(response, mu, sigma), dnorm)) %&amp;gt;% 
   unnest() %&amp;gt;% 
   group_by(.draw) %&amp;gt;% 
-  mutate(density  = density * .75 / max(density))
-
-glimpse(afd)&lt;/code&gt;&lt;/pre&gt;
+  mutate(density  = density * .75 / max(density))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning: `cols` is now required.
+## Please use `cols = c(response, density)`&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;glimpse(afd)&lt;/code&gt;&lt;/pre&gt;
 &lt;pre&gt;&lt;code&gt;## Observations: 20,000
 ## Variables: 12
 ## Groups: .draw [20]
@@ -4795,45 +4843,45 @@ glimpse(afd)&lt;/code&gt;&lt;/pre&gt;
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] ggridges_0.5.1  tidybayes_1.1.0 brms_2.9.0      Rcpp_1.0.1      forcats_0.4.0   stringr_1.4.0  
-##  [7] dplyr_0.8.1     purrr_0.3.2     readr_1.3.1     tidyr_0.8.3     tibble_2.1.3    ggplot2_3.2.0  
+##  [1] ggridges_0.5.1  tidybayes_1.1.0 brms_2.10.0     Rcpp_1.0.2      forcats_0.4.0   stringr_1.4.0  
+##  [7] dplyr_0.8.3     purrr_0.3.2     readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
 ## [13] tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] colorspace_1.4-1          rsconnect_0.8.13          ggstance_0.3.2           
-##   [4] markdown_1.0              base64enc_0.1-3           rstudioapi_0.10          
-##   [7] rstan_2.18.2              svUnit_0.7-12             DT_0.7                   
-##  [10] fansi_0.4.0               mvtnorm_1.0-11            lubridate_1.7.4          
-##  [13] xml2_1.2.0                bridgesampling_0.6-0      knitr_1.23               
-##  [16] shinythemes_1.1.2         zeallot_0.1.0             bayesplot_1.7.0          
-##  [19] jsonlite_1.6              broom_0.5.2               shiny_1.3.2              
-##  [22] compiler_3.6.0            httr_1.4.0                backports_1.1.4          
-##  [25] assertthat_0.2.1          Matrix_1.2-17             lazyeval_0.2.2           
-##  [28] cli_1.1.0                 later_0.8.0               htmltools_0.3.6          
-##  [31] prettyunits_1.0.2         tools_3.6.0               igraph_1.2.4.1           
-##  [34] coda_0.19-2               gtable_0.3.0              glue_1.3.1               
-##  [37] reshape2_1.4.3            cellranger_1.1.0          vctrs_0.1.0              
-##  [40] nlme_3.1-139              blogdown_0.14             crosstalk_1.0.0          
-##  [43] xfun_0.8                  ps_1.3.0                  rvest_0.3.4              
-##  [46] mime_0.7                  miniUI_0.1.1.1            gtools_3.8.1             
-##  [49] zoo_1.8-6                 scales_1.0.0              colourpicker_1.0         
-##  [52] hms_0.4.2                 promises_1.0.1            Brobdingnag_1.2-6        
-##  [55] parallel_3.6.0            inline_0.3.15             shinystan_2.5.0          
-##  [58] yaml_2.2.0                gridExtra_2.3             loo_2.1.0                
-##  [61] StanHeaders_2.18.1-10     stringi_1.4.3             dygraphs_1.1.1.6         
-##  [64] pkgbuild_1.0.3            rlang_0.4.0               pkgconfig_2.0.2          
-##  [67] matrixStats_0.54.0        evaluate_0.14             lattice_0.20-38          
-##  [70] rstantools_1.5.1          htmlwidgets_1.3           labeling_0.3             
-##  [73] tidyselect_0.2.5          processx_3.3.1            plyr_1.8.4               
-##  [76] magrittr_1.5              bookdown_0.12             R6_2.4.0                 
-##  [79] generics_0.0.2            pillar_1.4.1              haven_2.1.0              
-##  [82] withr_2.1.2               xts_0.11-2                abind_1.4-5              
-##  [85] modelr_0.1.4              crayon_1.3.4              arrayhelpers_1.0-20160527
-##  [88] utf8_1.1.4                rmarkdown_1.13            grid_3.6.0               
-##  [91] readxl_1.3.1              callr_3.2.0               threejs_0.3.1            
-##  [94] digest_0.6.19             xtable_1.8-4              httpuv_1.5.1             
-##  [97] stats4_3.6.0              munsell_0.5.0             viridisLite_0.3.0        
-## [100] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##   [1] colorspace_1.4-1          ellipsis_0.2.0.1          rsconnect_0.8.13         
+##   [4] ggstance_0.3.2            markdown_1.0              base64enc_0.1-3          
+##   [7] rstudioapi_0.10           rstan_2.19.2              svUnit_0.7-12            
+##  [10] DT_0.7                    fansi_0.4.0               mvtnorm_1.0-11           
+##  [13] lubridate_1.7.4           xml2_1.2.0                bridgesampling_0.6-0     
+##  [16] knitr_1.23                shinythemes_1.1.2         zeallot_0.1.0            
+##  [19] bayesplot_1.7.0           jsonlite_1.6              broom_0.5.2              
+##  [22] shiny_1.3.2               compiler_3.6.0            httr_1.4.0               
+##  [25] backports_1.1.4           assertthat_0.2.1          Matrix_1.2-17            
+##  [28] lazyeval_0.2.2            cli_1.1.0                 later_0.8.0              
+##  [31] htmltools_0.3.6           prettyunits_1.0.2         tools_3.6.0              
+##  [34] igraph_1.2.4.1            coda_0.19-2               gtable_0.3.0             
+##  [37] glue_1.3.1                reshape2_1.4.3            cellranger_1.1.0         
+##  [40] vctrs_0.2.0               nlme_3.1-139              blogdown_0.14            
+##  [43] crosstalk_1.0.0           xfun_0.8                  ps_1.3.0                 
+##  [46] rvest_0.3.4               mime_0.7                  miniUI_0.1.1.1           
+##  [49] lifecycle_0.1.0           gtools_3.8.1              zoo_1.8-6                
+##  [52] scales_1.0.0              colourpicker_1.0          hms_0.4.2                
+##  [55] promises_1.0.1            Brobdingnag_1.2-6         parallel_3.6.0           
+##  [58] inline_0.3.15             shinystan_2.5.0           yaml_2.2.0               
+##  [61] gridExtra_2.3             loo_2.1.0                 StanHeaders_2.18.1-10    
+##  [64] stringi_1.4.3             dygraphs_1.1.1.6          pkgbuild_1.0.3           
+##  [67] rlang_0.4.0               pkgconfig_2.0.2           matrixStats_0.54.0       
+##  [70] evaluate_0.14             lattice_0.20-38           rstantools_1.5.1         
+##  [73] htmlwidgets_1.3           labeling_0.3              tidyselect_0.2.5         
+##  [76] processx_3.3.1            plyr_1.8.4                magrittr_1.5             
+##  [79] bookdown_0.12             R6_2.4.0                  generics_0.0.2           
+##  [82] pillar_1.4.2              haven_2.1.0               withr_2.1.2              
+##  [85] xts_0.11-2                abind_1.4-5               modelr_0.1.4             
+##  [88] crayon_1.3.4              arrayhelpers_1.0-20160527 utf8_1.1.4               
+##  [91] rmarkdown_1.13            grid_3.6.0                readxl_1.3.1             
+##  [94] callr_3.2.0               threejs_0.3.1             digest_0.6.20            
+##  [97] xtable_1.8-4              httpuv_1.5.1              stats4_3.6.0             
+## [100] munsell_0.5.0             viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>
@@ -4870,7 +4918,8 @@ glimpse(afd)&lt;/code&gt;&lt;/pre&gt;
 &lt;blockquote&gt;
 &lt;p&gt;Around the world, most children (80%) are spanked or otherwise physically punished by their parents (&lt;a href=&#34;https://www.unicef.org/publications/index_74865.html&#34;&gt;UNICEF, 2014&lt;/a&gt;). The question of whether parents should spank their children to correct misbehaviors sits at a nexus of arguments from ethical, religious, and human rights perspectives both in the U.S. and around the world (&lt;a href=&#34;https://onlinelibrary.wiley.com/doi/abs/10.1111/cdep.12038&#34;&gt;Gershoff, 2013&lt;/a&gt;). Several hundred studies have been conducted on the associations between parents’ use of spanking or physical punishment and children’s behavioral, emotional, cognitive, and physical outcomes, making spanking one of the most studied aspects of parenting. What has been learned from these hundreds of studies? (p. 453)&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;p&gt;Our goal will be to learn Bayesian meta-analysis by answering part of that question. I’ve transcribed the values directly from Gershoff and Grogan-Kaylor’s paper and saved them as a file called &lt;code&gt;spank.xlsx&lt;/code&gt;. You can find the data in &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse&#34;&gt;this project’s GitHub repository&lt;/a&gt;. Let’s load them and &lt;code&gt;glimpse()&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Our goal will be to learn Bayesian meta-analysis by answering part of that question. I’ve transcribed the values directly from Gershoff and Grogan-Kaylor’s paper and saved them as a file called &lt;code&gt;spank.xlsx&lt;/code&gt;.
+You can find the data in &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse&#34;&gt;this project’s GitHub repository&lt;/a&gt;. Let’s load them and &lt;code&gt;glimpse()&lt;/code&gt;.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;spank &amp;lt;- readxl::read_excel(&amp;quot;spank.xlsx&amp;quot;)
 
 library(tidyverse)
@@ -4944,12 +4993,12 @@ glimpse(spank)&lt;/code&gt;&lt;/pre&gt;
 ## 
 ## Group-Level Effects: 
 ## ~study (Number of levels: 76) 
-##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sd(Intercept)     0.26      0.03     0.21     0.33        703 1.01
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.26      0.03     0.21     0.33 1.00      726      972
 ## 
 ## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## Intercept     0.37      0.04     0.30     0.44        397 1.01
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     0.37      0.04     0.30     0.44 1.01      419      843
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -5044,16 +5093,16 @@ glimpse(spank)&lt;/code&gt;&lt;/pre&gt;
 ## 
 ## Group-Level Effects: 
 ## ~outcome (Number of levels: 17) 
-##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sd(Intercept)     0.08      0.03     0.04     0.14        950 1.00
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.08      0.03     0.04     0.14 1.00      938     1642
 ## 
 ## ~study (Number of levels: 76) 
-##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sd(Intercept)     0.25      0.03     0.20     0.32        824 1.00
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.25      0.03     0.20     0.32 1.01      818     1458
 ## 
 ## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## Intercept     0.35      0.04     0.27     0.44        654 1.01
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     0.35      0.04     0.27     0.44 1.01      672     1128
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -5123,17 +5172,17 @@ b14.6 %&amp;gt;%
 ## 
 ## Group-Level Effects: 
 ## ~outcome (Number of levels: 17) 
-##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sd(Intercept)     0.08      0.02     0.04     0.14       1580 1.00
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.08      0.02     0.04     0.14 1.00     1589     2516
 ## 
 ## ~study (Number of levels: 76) 
-##               Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## sd(Intercept)     0.25      0.03     0.20     0.32       1186 1.00
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.25      0.03     0.20     0.32 1.00     1200     1875
 ## 
 ## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Eff.Sample Rhat
-## intercept     0.38      0.05     0.28     0.48       1052 1.00
-## between      -0.08      0.07    -0.22     0.07        979 1.00
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## intercept     0.38      0.05     0.28     0.48 1.00     1050     1621
+## between      -0.08      0.07    -0.22     0.07 1.00      986     1449
 ## 
 ## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
 ## is a crude measure of effective sample size, and Rhat is the potential 
@@ -5155,14 +5204,19 @@ b14.6 %&amp;gt;%
 &lt;div id=&#34;session-info&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Session info&lt;/h2&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## R version 3.5.1 (2018-07-02)
+&lt;pre&gt;&lt;code&gt;## R version 3.6.0 (2019-04-26)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
 ## 
 ## Matrix products: default
-## BLAS: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/3.5/Resources/lib/libRlapack.dylib
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
 ## 
+## Random number generation:
+##  RNG:     Mersenne-Twister 
+##  Normal:  Inversion 
+##  Sample:  Rounding 
+##  
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
@@ -5170,64 +5224,63 @@ b14.6 %&amp;gt;%
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] tidybayes_1.0.3 brms_2.7.0      Rcpp_1.0.0      bindrcpp_0.2.2 
-##  [5] forcats_0.3.0   stringr_1.3.1   dplyr_0.7.6     purrr_0.2.5    
-##  [9] readr_1.1.1     tidyr_0.8.1     tibble_2.0.1    ggplot2_3.1.0  
-## [13] tidyverse_1.2.1
+##  [1] tidybayes_1.1.0 brms_2.10.0     Rcpp_1.0.2      forcats_0.4.0  
+##  [5] stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2     readr_1.3.1    
+##  [9] tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] colorspace_1.3-2          ggridges_0.5.0           
-##   [3] rsconnect_0.8.8           rprojroot_1.3-2          
-##   [5] ggstance_0.3              markdown_0.8             
-##   [7] base64enc_0.1-3           rstudioapi_0.7           
-##   [9] rstan_2.18.2              svUnit_0.7-12            
-##  [11] DT_0.4                    fansi_0.4.0              
-##  [13] mvtnorm_1.0-8             lubridate_1.7.4          
-##  [15] xml2_1.2.0                bridgesampling_0.4-0     
-##  [17] knitr_1.20                shinythemes_1.1.1        
-##  [19] bayesplot_1.6.0           jsonlite_1.5             
-##  [21] broom_0.5.1               shiny_1.1.0              
-##  [23] compiler_3.5.1            httr_1.3.1               
-##  [25] backports_1.1.2           assertthat_0.2.0         
-##  [27] Matrix_1.2-14             lazyeval_0.2.1           
-##  [29] cli_1.0.1                 later_0.7.3              
-##  [31] htmltools_0.3.6           prettyunits_1.0.2        
-##  [33] tools_3.5.1               igraph_1.2.1             
-##  [35] coda_0.19-2               gtable_0.2.0             
-##  [37] glue_1.3.0                reshape2_1.4.3           
-##  [39] cellranger_1.1.0          nlme_3.1-137             
-##  [41] blogdown_0.8              crosstalk_1.0.0          
-##  [43] xfun_0.3                  ps_1.2.1                 
-##  [45] rvest_0.3.2               mime_0.5                 
-##  [47] miniUI_0.1.1.1            gtools_3.8.1             
-##  [49] MASS_7.3-50               zoo_1.8-2                
-##  [51] scales_1.0.0              colourpicker_1.0         
-##  [53] hms_0.4.2                 promises_1.0.1           
-##  [55] Brobdingnag_1.2-5         parallel_3.5.1           
-##  [57] inline_0.3.15             shinystan_2.5.0          
-##  [59] yaml_2.1.19               gridExtra_2.3            
-##  [61] loo_2.0.0                 StanHeaders_2.18.0-1     
-##  [63] stringi_1.2.3             highr_0.7                
-##  [65] dygraphs_1.1.1.5          pkgbuild_1.0.2           
-##  [67] rlang_0.3.1               pkgconfig_2.0.2          
-##  [69] matrixStats_0.54.0        evaluate_0.10.1          
-##  [71] lattice_0.20-35           bindr_0.1.1              
-##  [73] rstantools_1.5.0          htmlwidgets_1.2          
-##  [75] labeling_0.3              tidyselect_0.2.4         
-##  [77] processx_3.2.1            plyr_1.8.4               
-##  [79] magrittr_1.5              bookdown_0.7             
-##  [81] R6_2.3.0                  generics_0.0.2           
-##  [83] pillar_1.3.1              haven_1.1.2              
-##  [85] withr_2.1.2               xts_0.10-2               
-##  [87] abind_1.4-5               modelr_0.1.2             
-##  [89] crayon_1.3.4              arrayhelpers_1.0-20160527
-##  [91] utf8_1.1.4                rmarkdown_1.10           
-##  [93] grid_3.5.1                readxl_1.1.0             
-##  [95] callr_3.1.0               threejs_0.3.1            
-##  [97] digest_0.6.18             xtable_1.8-2             
-##  [99] httpuv_1.4.4.2            stats4_3.5.1             
-## [101] munsell_0.5.0             viridisLite_0.3.0        
-## [103] shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
+##   [1] colorspace_1.4-1          ellipsis_0.2.0.1         
+##   [3] ggridges_0.5.1            rsconnect_0.8.13         
+##   [5] ggstance_0.3.2            markdown_1.0             
+##   [7] base64enc_0.1-3           rstudioapi_0.10          
+##   [9] rstan_2.19.2              svUnit_0.7-12            
+##  [11] DT_0.7                    fansi_0.4.0              
+##  [13] mvtnorm_1.0-11            lubridate_1.7.4          
+##  [15] xml2_1.2.0                bridgesampling_0.6-0     
+##  [17] knitr_1.23                shinythemes_1.1.2        
+##  [19] zeallot_0.1.0             bayesplot_1.7.0          
+##  [21] jsonlite_1.6              broom_0.5.2              
+##  [23] shiny_1.3.2               compiler_3.6.0           
+##  [25] httr_1.4.0                backports_1.1.4          
+##  [27] assertthat_0.2.1          Matrix_1.2-17            
+##  [29] lazyeval_0.2.2            cli_1.1.0                
+##  [31] later_0.8.0               htmltools_0.3.6          
+##  [33] prettyunits_1.0.2         tools_3.6.0              
+##  [35] igraph_1.2.4.1            coda_0.19-2              
+##  [37] gtable_0.3.0              glue_1.3.1               
+##  [39] reshape2_1.4.3            cellranger_1.1.0         
+##  [41] vctrs_0.2.0               nlme_3.1-139             
+##  [43] blogdown_0.14             crosstalk_1.0.0          
+##  [45] xfun_0.8                  ps_1.3.0                 
+##  [47] rvest_0.3.4               mime_0.7                 
+##  [49] miniUI_0.1.1.1            lifecycle_0.1.0          
+##  [51] gtools_3.8.1              zoo_1.8-6                
+##  [53] scales_1.0.0              colourpicker_1.0         
+##  [55] hms_0.4.2                 promises_1.0.1           
+##  [57] Brobdingnag_1.2-6         parallel_3.6.0           
+##  [59] inline_0.3.15             shinystan_2.5.0          
+##  [61] yaml_2.2.0                gridExtra_2.3            
+##  [63] loo_2.1.0                 StanHeaders_2.18.1-10    
+##  [65] stringi_1.4.3             highr_0.8                
+##  [67] dygraphs_1.1.1.6          pkgbuild_1.0.3           
+##  [69] rlang_0.4.0               pkgconfig_2.0.2          
+##  [71] matrixStats_0.54.0        evaluate_0.14            
+##  [73] lattice_0.20-38           rstantools_1.5.1         
+##  [75] htmlwidgets_1.3           labeling_0.3             
+##  [77] tidyselect_0.2.5          processx_3.3.1           
+##  [79] plyr_1.8.4                magrittr_1.5             
+##  [81] bookdown_0.12             R6_2.4.0                 
+##  [83] generics_0.0.2            pillar_1.4.2             
+##  [85] haven_2.1.0               withr_2.1.2              
+##  [87] xts_0.11-2                abind_1.4-5              
+##  [89] modelr_0.1.4              crayon_1.3.4             
+##  [91] arrayhelpers_1.0-20160527 utf8_1.1.4               
+##  [93] rmarkdown_1.13            grid_3.6.0               
+##  [95] readxl_1.3.1              callr_3.2.0              
+##  [97] threejs_0.3.1             digest_0.6.20            
+##  [99] xtable_1.8-4              httpuv_1.5.1             
+## [101] stats4_3.6.0              munsell_0.5.0            
+## [103] viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>
@@ -5246,84 +5299,51 @@ b14.6 %&amp;gt;%
 &lt;div id=&#34;what&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;What?&lt;/h2&gt;
 &lt;p&gt;The &lt;a href=&#34;https://www.headspace.com/headspace-meditation-app&#34;&gt;Headspace app&lt;/a&gt; is popular and highly-rated. It’s free to download and has some nice features, like reminders to meditate. However, if you want full access to its library of guided meditation audio recordings, you’ll need to pay a fee at a monthly, yearly, or lifetime rate.&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/HS_subscription.PNG&#34; style=&#34;width:33.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/HS_subscription.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;Sam Harris’s &lt;a href=&#34;https://wakingup.com/home-reviews/?_ga=2.267492553.617729158.1538952176-2137086923.1448849490&amp;amp;utm_expid=.4j5YZcqhSKSYqCMuOBBY-A.1&amp;amp;utm_referrer=https%3A%2F%2Fsamharris.org%2F&#34;&gt;Waking Up app&lt;/a&gt; app is also free to download. It’s new and, in fairness, we’ll have to wait and see how its format will unfold. But at present it has more of a course-type format. The free version gives you access to five guided meditations and three lessons. But if you want full access to the app’s content, you also have to subscribe.&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/WU_subscribe.jpg&#34; style=&#34;width:33.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/WU_subscribe.jpg&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;I have no problem with the Headspace and Waking Up apps. They have many fine features. And I’m even a fan of a lot Harris’s work. But we have a cheaper, high-quality option:&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;consider-insight-timer&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Consider &lt;a href=&#34;https://insighttimer.com&#34;&gt;Insight Timer&lt;/a&gt;&lt;/h2&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_bowl.png&#34; style=&#34;width:50.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_bowl.png&#34; style=&#34;width:50.0%&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;&lt;a href=&#34;https://insighttimer.com&#34;&gt;Insight Timer&lt;/a&gt; comes with a free and pay versions, too. But just download the free version. It’s excellent and all you need for your meditation needs. Let me list the reasons why.&lt;/p&gt;
 &lt;div id=&#34;the-free-library-is-extensive.&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;The free library is extensive.&lt;/h3&gt;
 &lt;p&gt;At the time of this writing, my free subscription to Insight Timer gives me access to some 12,000 guided meditation audios. Most of them are in English. But many are offered in other languages, such as Hebrew, Malay, and Spanish.&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg&#34; style=&#34;width:33.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
 &lt;div id=&#34;duration.&#34; class=&#34;section level4&#34;&gt;
 &lt;h4&gt;Duration.&lt;/h4&gt;
 &lt;p&gt;Their durations vary. The bulk of the guided meditations seem to be in the 5-to-20-minute range. But some last more than an hour.&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_duration.PNG&#34; style=&#34;width:33.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_duration.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;people-and-their-voices.&#34; class=&#34;section level4&#34;&gt;
 &lt;h4&gt;People and their voices.&lt;/h4&gt;
 &lt;p&gt;Insight Timer’s deep library boasts an impressive cast of meditation teachers. I was happy to see some familiar high-profile meditation teachers, such as Tara Brach and Joseph Goldstein. But I have also discovered new favorites, like Stephen Pende Wormland and Dawn Mauricio. To be sure, the quality of the audio recordings varies. But more importantly, they also vary in terms of vocal tone and pacing. There should be a vocal style to suit just about everyone.&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_teachers.PNG&#34; style=&#34;width:33.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_teachers.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;emphasis.&#34; class=&#34;section level4&#34;&gt;
 &lt;h4&gt;Emphasis.&lt;/h4&gt;
 &lt;p&gt;I’m an academic and generally prefer meditations that are secular and connected to the clinical literature (e.g., &lt;a href=&#34;https://www.sciencedirect.com/science/article/pii/S0272735817303847?via%3Dihub&#34;&gt;this recent meta-analysis&lt;/a&gt;). Happily, the Insight Timer library contains offerings based on mindfulness-based stress reduction (&lt;a href=&#34;https://www.umassmed.edu/cfm/mindfulness-based-programs/mbsr-courses/about-mbsr/history-of-mbsr/&#34;&gt;MBSR&lt;/a&gt;) and its derivatives (e.g., &lt;a href=&#34;http://www.mbct.com&#34;&gt;mindfulness-based cognitive therapy&lt;/a&gt;, &lt;a href=&#34;https://www.mindfulrp.com&#34;&gt;mindfulness-based relapse prevention&lt;/a&gt;).&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_mindfulness.PNG&#34; style=&#34;width:33.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_mindfulness.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;But you can also find meditations grounded within a number of faith traditions.&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_faith.PNG&#34; style=&#34;width:33.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_faith.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;music.&#34; class=&#34;section level4&#34;&gt;
 &lt;h4&gt;Music.&lt;/h4&gt;
 &lt;p&gt;I’ve focused mainly on vocally-driven meditations. However, Insight Timer also contains music/sound-based recordings. I’m partial to recordings featuring Tibetan singing bowls.&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_bowls.PNG&#34; style=&#34;width:33.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_bowls.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;div id=&#34;its-a-timer-too.&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;It’s a timer, too.&lt;/h3&gt;
 &lt;p&gt;Sometimes you just want a silent meditation. For those occasions, Insight Timer offers a nice timer feature. You can set it like a stopwatch to whatever duration you prefer, and choose among an array of sounds to mark the beginning and end of your sit.&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_timer.PNG&#34; style=&#34;width:33.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_timer.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;it-tracks.&#34; class=&#34;section level3&#34;&gt;
 &lt;h3&gt;It tracks.&lt;/h3&gt;
 &lt;p&gt;If you go to the Profile section of the app, you’ll discover it keeps track of your use and displays various summaries in attractive bar plots.&lt;/p&gt;
-&lt;div class=&#34;figure&#34;&gt;
-&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_track.PNG&#34; style=&#34;width:33.0%&#34; /&gt;
-
-&lt;/div&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_track.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;[And yes, I generally agree with Richard McElreath: “The only problem with barplots is that they have bars” (p. 203, &lt;a href=&#34;https://bookdown.org/connect/#/apps/1850/access&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt;&lt;/a&gt;). You can’t have everything.]&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
@@ -5395,26 +5415,6 @@ b14.6 %&amp;gt;%
 &lt;li&gt;Pablo Casas’s &lt;a href=&#34;https://blog.datascienceheroes.com/how-to-self-publish-a-book/&#34;&gt;&lt;em&gt;How to self-publish a book: A handy list of resources&lt;/em&gt;&lt;/a&gt;.&lt;/li&gt;
 &lt;/ul&gt;
 &lt;/div&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Example Page</title>
-      <link>/tutorial/example/</link>
-      <pubDate>Sun, 09 Sep 2018 00:00:00 -0500</pubDate>
-      
-      <guid>/tutorial/example/</guid>
-      <description>
-
-&lt;p&gt;In this tutorial, I&amp;rsquo;ll share my top 10 tips for getting started with Academic:&lt;/p&gt;
-
-&lt;h2 id=&#34;tip-1&#34;&gt;Tip 1&lt;/h2&gt;
-
-&lt;p&gt;&amp;hellip;&lt;/p&gt;
-
-&lt;h2 id=&#34;tip-2&#34;&gt;Tip 2&lt;/h2&gt;
-
-&lt;p&gt;&amp;hellip;&lt;/p&gt;
 </description>
     </item>
     
