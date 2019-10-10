@@ -11,6 +11,145 @@
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
+      <title>Individuals are not small groups, I: Simpson&#39;s paradox</title>
+      <link>/post/individuals-are-not-small-groups-i-simpson-s-paradox/</link>
+      <pubDate>Wed, 09 Oct 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/individuals-are-not-small-groups-i-simpson-s-paradox/</guid>
+      <description>&lt;div id=&#34;tldr&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;tl;dr&lt;/h2&gt;
+&lt;p&gt;If you are under the impression group-level data and group-based data analysis will inform you about within-person processes, you would be wrong. Stick around to learn why.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;this-is-gonna-be-a-long-car-ride.&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;This is gonna be a long car ride.&lt;/h2&gt;
+&lt;p&gt;Earlier this year I published &lt;a href=&#34;https://www.sciencedirect.com/science/article/pii/S2212144718301807?via%3Dihub&#34;&gt;a tutorial&lt;/a&gt; &lt;a href=&#34;#fn1&#34; class=&#34;footnote-ref&#34; id=&#34;fnref1&#34;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/a&gt; on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method been around for a long time, since at least the 80s (&lt;a href=&#34;https://link.springer.com/article/10.1007/BF02294246&#34;&gt;Molenaar, 1985&lt;/a&gt;). The precursors to the dynamic p go back to at least the 40s (&lt;a href=&#34;https://link.springer.com/article/10.1007/BF02288941&#34;&gt;Cattell, Cattell, &amp;amp; Rhymer, 1947&lt;/a&gt;). In the age where it’s increasingly cheap and easy to collect data on large groups, on both one measurement occasion or over many, you might want to know why you might learn about a single-case statistical technique. Isn’t such a thing unneeded?&lt;/p&gt;
+&lt;p&gt;No. It is indeed needed. Unfortunately for me, the reasons why it’s needed aren’t intuitive or well understood. Luckily for us all, I’m a patient man. We’ll be covering the reasons step by step. Once we’re done covering reasons, we’ll switch into full-blown tutorial mode. In this first blog on the topic, we’ll cover reason #1. Simpson’s paradox is a thing and it’ll bite you hard it you’re not looking for it.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;simpsons-paradox&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Simpson’s paradox&lt;/h2&gt;
+&lt;p&gt;Simpson’s paradox officially made its way into the literature in &lt;a href=&#34;http://math.bme.hu/~marib/bsmeur/simpson.pdf&#34;&gt;this 1951 paper&lt;/a&gt; by Simpson. Rather than define it outright, I’m going to demonstrate it with a classic example. The data come from the 1973 University of California, Berkeley, graduate admissions. Based on a simple breakdown of the admission rates, 44% of the men who applied were admitted. In contrast, only 35% of the women who applied were admitted. The university was accused of sexism and the issue made its way into the courts.&lt;/p&gt;
+&lt;p&gt;However, when statisticians looked more closely at the data, it became apparent those data were not the compelling evidence of sexism they were initially made out to be. To see why, we’ll want to get into the data, ourselves. The admissions rates for the six largest departments have made their way into the peer-reviewed literature (&lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.9241&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;Bickel, Hammel, &amp;amp; O’Connell, 1975&lt;/a&gt;), into many textbooks (e.g., Danielle Navarro’s &lt;a href=&#34;https://learningstatisticswithr.com/lsr-0.6.pdf&#34;&gt;&lt;em&gt;Learning statistics with R&lt;/em&gt;&lt;/a&gt;), and are available in &lt;strong&gt;R&lt;/strong&gt; as the built-in data set &lt;code&gt;UCBAdmissions&lt;/code&gt;. Here we’ll call them, convert the data into a tidy format &lt;a href=&#34;#fn2&#34; class=&#34;footnote-ref&#34; id=&#34;fnref2&#34;&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/a&gt;, and add a variable.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)
+
+d &amp;lt;-
+  UCBAdmissions %&amp;gt;% 
+  as_tibble() %&amp;gt;% 
+  pivot_wider(id_cols = c(Dept, Gender),
+              names_from = Admit, 
+              values_from = n) %&amp;gt;% 
+  mutate(total = Admitted + Rejected)
+
+head(d)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 5
+##   Dept  Gender Admitted Rejected total
+##   &amp;lt;chr&amp;gt; &amp;lt;chr&amp;gt;     &amp;lt;dbl&amp;gt;    &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
+## 1 A     Male        512      313   825
+## 2 A     Female       89       19   108
+## 3 B     Male        353      207   560
+## 4 B     Female       17        8    25
+## 5 C     Male        120      205   325
+## 6 C     Female      202      391   593&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The identities of the departments have been anonymized, so we’re stuck with referring to them as A through F. Much like with the overall rates for graduate admissions, it appears that the admission rates for the six anonymized departments in the &lt;code&gt;UCBAdmissions&lt;/code&gt; data show higher a admission rate for men.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d %&amp;gt;% 
+  group_by(Gender) %&amp;gt;% 
+  summarise(percent_admitted = (100 * sum(Admitted) / sum(total)) %&amp;gt;% round(digits = 1))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 2 x 2
+##   Gender percent_admitted
+##   &amp;lt;chr&amp;gt;             &amp;lt;dbl&amp;gt;
+## 1 Female             30.4
+## 2 Male               44.5&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;A 14% difference seems large enough to make a stink. However, the plot thickens when we break the data down by department. For that, we’ll make a visual.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d %&amp;gt;%  
+  mutate(dept = str_c(&amp;quot;department &amp;quot;, Dept)) %&amp;gt;% 
+  pivot_longer(cols = Admitted:Rejected,
+               names_to = &amp;quot;admit&amp;quot;,
+               values_to = &amp;quot;n&amp;quot;) %&amp;gt;% 
+  
+  ggplot(aes(x = Gender, y = n, fill = admit)) +
+  geom_col(position = &amp;quot;dodge&amp;quot;) +
+  scale_fill_viridis_d(NULL, option = &amp;quot;A&amp;quot;, end = .6) +
+  xlab(NULL) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~dept)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-10-09-individuals-are-not-small-groups-i-simpson-s-paradox_files/figure-html/unnamed-chunk-3-1.png&#34; width=&#34;768&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;The problem with our initial analysis is it didn’t take into account how different departments might admit men/women at different rates. We also failed to consider whether men and women applied to those different departments at different rates. Take departments A and B. Both admitted the majority of applicants, regardless of gender. Now look at departments E and F. The supermajorities of applicants were rejected, both for men and women Also notice that whereas the departments where the supermajority of applicants were men (i.e., departments A and B) had generous admission rates, the departments with the largest proportion of women applicants (i.e., departments C and E) had rather high rejection rates.&lt;/p&gt;
+&lt;p&gt;It can be hard to juggle all this in your head at once, even with the aid of our figure. Let’s look at the data in a different way. This time we’ll summarize the admission rates in a probability metric where the probability of admission is &lt;code&gt;n / total&lt;/code&gt; (i.e., the number of successes divided by the total number of trials). We’ll compute those probabilities while grouping by &lt;code&gt;Gender&lt;/code&gt; and &lt;code&gt;Dept&lt;/code&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d %&amp;gt;%
+  mutate(p = Admitted / total) %&amp;gt;% 
+  
+  ggplot(aes(x = Dept, y = p)) +
+  geom_hline(yintercept = .5, color = &amp;quot;white&amp;quot;) +
+  geom_point(aes(color = Gender, size = total),
+             position = position_dodge(width = 0.3)) +
+  scale_color_manual(NULL, values = c(&amp;quot;red3&amp;quot;, &amp;quot;blue3&amp;quot;)) +
+  scale_y_continuous(&amp;quot;admission probability&amp;quot;, limits = 0:1) +
+  xlab(&amp;quot;department&amp;quot;) +
+  theme(panel.grid = element_blank())&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-10-09-individuals-are-not-small-groups-i-simpson-s-paradox_files/figure-html/unnamed-chunk-4-1.png&#34; width=&#34;576&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Several things pop out. For &lt;span class=&#34;math inline&#34;&gt;\(5/6\)&lt;/span&gt; of the departments (i.e., all but A), the admission probabilities were very similar for men and women–sometimes slightly higher for women, sometimes slightly higher for men. We also see a broad range overall admission rates across departments. Note how the dots are sized based on the &lt;code&gt;total&lt;/code&gt; number of applications, by &lt;code&gt;Gender&lt;/code&gt; and &lt;code&gt;Dept&lt;/code&gt;. Hopefully those sizes help show how women disproportionately applied to departments with low overall admission probabilities. Interestingly, the department with the largest gender bias was A, which showed a bias towards admitting women at &lt;em&gt;higher&lt;/em&gt; rates than men.&lt;/p&gt;
+&lt;p&gt;Let’s get formal. The paradox Simpson wrote about is that the simple association between two variables can disappear or even change sign when it is conditioned on a relevant third variable. The relevant third variable is typically a grouping variable. In the Berkeley admissions example, the seemingly alarming association between graduate admissions and gender disappeared when conditioned on department. If you’re still jarred by this, Navarro covered this in the opening chapter of her text. Richard McElreath covered it more extensively in chapters 10 and 13 of his (2015) text, &lt;a href=&#34;https://xcelab.net/rm/statistical-rethinking/&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt;&lt;/a&gt;. I’ve also worked through a similar example of Simpson’s paradox from the more recent literature, &lt;a href=&#34;https://bookdown.org/content/1850/adventures-in-covariance.html#summary-bonus-another-berkley-admissions-data-like-example&#34;&gt;here&lt;/a&gt;. Kievit, Frankenhuis, Waldorp, and Borsboom (2013) wrote a &lt;a href=&#34;https://www.frontiersin.org/articles/10.3389/fpsyg.2013.00513/full&#34;&gt;fine primer on the topic&lt;/a&gt;, too.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;wait.-what&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Wait. What?&lt;/h2&gt;
+&lt;p&gt;At this point you might be wondering what this has to do with the difference between groups and individuals. We’re slowly building a case step by step, remember? For this first installment, just notice how a simple bivariate analysis fell apart once we took an important third variable into account. In this case and in many others, it so happened that third variable was a grouping variable.&lt;/p&gt;
+&lt;p&gt;Stay tuned for the next post where well build on this with a related phenomenon: the ecological fallacy.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;session-info&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Session info&lt;/h2&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## R version 3.6.0 (2019-04-26)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS High Sierra 10.13.6
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2    
+## [5] readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
+## [9] tidyverse_1.2.1
+## 
+## loaded via a namespace (and not attached):
+##  [1] tidyselect_0.2.5  xfun_0.10         haven_2.1.0      
+##  [4] lattice_0.20-38   colorspace_1.4-1  vctrs_0.2.0      
+##  [7] generics_0.0.2    viridisLite_0.3.0 htmltools_0.4.0  
+## [10] yaml_2.2.0        utf8_1.1.4        rlang_0.4.0      
+## [13] pillar_1.4.2      glue_1.3.1        withr_2.1.2      
+## [16] modelr_0.1.4      readxl_1.3.1      lifecycle_0.1.0  
+## [19] munsell_0.5.0     blogdown_0.14     gtable_0.3.0     
+## [22] cellranger_1.1.0  rvest_0.3.4       evaluate_0.14    
+## [25] labeling_0.3      knitr_1.23        fansi_0.4.0      
+## [28] broom_0.5.2       Rcpp_1.0.2        scales_1.0.0     
+## [31] backports_1.1.5   jsonlite_1.6      hms_0.4.2        
+## [34] digest_0.6.21     stringi_1.4.3     bookdown_0.12    
+## [37] grid_3.6.0        cli_1.1.0         tools_3.6.0      
+## [40] magrittr_1.5      lazyeval_0.2.2    crayon_1.3.4     
+## [43] pkgconfig_2.0.3   zeallot_0.1.0     xml2_1.2.0       
+## [46] lubridate_1.7.4   assertthat_0.2.1  rmarkdown_1.13   
+## [49] httr_1.4.0        rstudioapi_0.10   R6_2.4.0         
+## [52] nlme_3.1-139      compiler_3.6.0&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;footnotes&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Footnotes&lt;/h2&gt;
+&lt;/div&gt;
+&lt;div class=&#34;footnotes&#34;&gt;
+&lt;hr /&gt;
+&lt;ol&gt;
+&lt;li id=&#34;fn1&#34;&gt;&lt;p&gt;You can find the preprint and supporting documents, including the data and code, &lt;a href=&#34;https://osf.io/cbyj3/&#34;&gt;here&lt;/a&gt;.&lt;a href=&#34;#fnref1&#34; class=&#34;footnote-back&#34;&gt;↩&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li id=&#34;fn2&#34;&gt;&lt;p&gt;Walking out the definition of &lt;em&gt;tidy data&lt;/em&gt; is beyond the scope of this post. It’s connected to the work of data scientist &lt;a href=&#34;http://hadley.nz&#34;&gt;Hadley Wickham&lt;/a&gt;, in particular, and the ethos behind the collection of &lt;strong&gt;R&lt;/strong&gt; packages called the &lt;a href=&#34;https://www.tidyverse.org&#34;&gt;&lt;strong&gt;tidyverse&lt;/strong&gt;&lt;/a&gt;, more generally. My &lt;strong&gt;R&lt;/strong&gt; code tends to follow the &lt;a href=&#34;https://style.tidyverse.org&#34;&gt;tidyverse style&lt;/a&gt;. If you’re new these ideas, it’ll help if you familiarize yourself with them a bit. For an introduction to the notion of tidy data, Wickham’s recent talk, &lt;a href=&#34;https://www.youtube.com/watch?v=9YTNYT1maa4&#34;&gt;&lt;em&gt;Data visualization and data science&lt;/em&gt;&lt;/a&gt;, is a fine place to start.&lt;a href=&#34;#fnref2&#34; class=&#34;footnote-back&#34;&gt;↩&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
       <title>&#34;How to Survive a Plague&#34;: Part 2/$n$ of a premature book report</title>
       <link>/post/how-to-survive-a-plague-part-2-n-of-a-premature-book-report/</link>
       <pubDate>Mon, 30 Sep 2019 00:00:00 +0000</pubDate>
@@ -5354,66 +5493,6 @@ b14.6 %&amp;gt;%
 &lt;div id=&#34;parting-thoughts&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Parting thoughts&lt;/h2&gt;
 &lt;p&gt;Insight Timer has other functions, such as social networking and dharma talks. I just don’t care about those things, so you can learn about them on your own. But if you’re interested in learning about meditation or even if you’re a veteran meditator looking for a convenient app to augment your practice with, do consider Insight Timer. There’s no reason to spend your money on the alternatives before you capitalize on such a powerful resource that’s available to you for free.&lt;/p&gt;
-&lt;/div&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>bookdown, My Process</title>
-      <link>/post/how-bookdown/</link>
-      <pubDate>Thu, 04 Oct 2018 00:00:00 +0000</pubDate>
-      
-      <guid>/post/how-bookdown/</guid>
-      <description>&lt;div id=&#34;tldr&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;tl;dr&lt;/h2&gt;
-&lt;p&gt;I just self-published a book-length version of my project &lt;a href=&#34;https://bookdown.org/connect/#/apps/1850/access&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt; with brms, ggplot2, and the tidyverse&lt;/a&gt;. By using Yihui Xie’s &lt;a href=&#34;https://bookdown.org&#34;&gt;bookdown package&lt;/a&gt;, I was able to do it for free. If you’ve never heard of it, bookdown enables &lt;a href=&#34;https://bookdown.org/rdpeng/rprogdatascience/history-and-overview-of-r.html#what-is-r&#34;&gt;R&lt;/a&gt; users to write books and other long-form articles with &lt;a href=&#34;https://rmarkdown.rstudio.com&#34;&gt;R Markdown&lt;/a&gt;. You can save your bookdown products in a variety of formats (e.g., PDF, HTML) and publish them in several ways, too. The purpose of this post is to give readers a sense of how I used bookdown to make my project. I propose there are three fundamental skill sets you need basic fluency in before playing with bookdown. Those three are&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;R and R Studio,&lt;/li&gt;
-&lt;li&gt;Scripts and R Markdown files, and&lt;/li&gt;
-&lt;li&gt;Git and GitHub.&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/div&gt;
-&lt;div id=&#34;start-with-r&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Start with &lt;a href=&#34;https://cran.r-project.org&#34;&gt;R&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;First things first. Since bookdown is a package for use in the R environment, you’re going to have to use R. If you’re unfamiliar with it, &lt;a href=&#34;https://bookdown.org/rdpeng/rprogdatascience/history-and-overview-of-r.html&#34;&gt;R is a freely-available programming language particularly well-suited for data analysis&lt;/a&gt;. If you’ve not used R before, learning how to self-publish books is a great incentive to start learning. But unless you already have a background in programming, I think bookdown is poorly-suited for novices. R newbies should check out Roger Peng’s &lt;a href=&#34;https://bookdown.org/rdpeng/rprogdatascience/&#34;&gt;&lt;em&gt;R Programming for Data Science&lt;/em&gt;&lt;/a&gt; or Grolemund and Wickham’s &lt;a href=&#34;http://r4ds.had.co.nz&#34;&gt;&lt;em&gt;R for Data Science&lt;/em&gt;&lt;/a&gt;. Both are freely available online and, as it would turn out, made with bookdown. Also, new users should be aware that although you can interact with R directly, there are a variety of other ways to interface with R. I recommend using &lt;a href=&#34;https://www.rstudio.com&#34;&gt;R Studio&lt;/a&gt;. You can find some nice reasons, &lt;a href=&#34;https://www.theanalysisfactor.com/the-advantages-of-rstudio/&#34;&gt;here&lt;/a&gt;. For basic instructions on how to install R and R Studio, you might start &lt;a href=&#34;http://r4ds.had.co.nz/introduction.html#prerequisites&#34;&gt;here&lt;/a&gt;. And if you prefer video tutorials to help you with the installation, just do a simple search in your favorite video-sharing website and several should pop up.&lt;/p&gt;
-&lt;p&gt;Personally, I started using R—via R Studio—during the 2015/2016 winter break before taking a spring semester statistics course based around an R package. [In case you’re curious, it was a structural equation modeling course based around a &lt;a href=&#34;https://blogs.baylor.edu/rlatentvariable/&#34;&gt;text by Beaujean&lt;/a&gt; which featured the &lt;a href=&#34;http://lavaan.ugent.be&#34;&gt;lavaan package&lt;/a&gt;]. At the time, I was already familiar with structural equation modeling, so the course was a nice opportunity to learn R. In addition, I was concurrently enrolled in a course on multilevel modeling based on &lt;a href=&#34;http://gseacademic.harvard.edu/alda/&#34;&gt;Singer and Willet’s classic text&lt;/a&gt;. The professor of that course primarily used SAS to teach the material, but he was flexible and allowed me to do the work with R, instead. So that was my introduction to R–a semester of immersion in &lt;a href=&#34;https://twitter.com/search?q=%23rstats&amp;amp;src=typd&#34;&gt;#rstats&lt;/a&gt;. Here are some other &lt;a href=&#34;https://www.r-bloggers.com/the-5-most-effective-ways-to-learn-r/&#34;&gt;tips on how to learn R&lt;/a&gt;.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;bookdown-uses-markdown&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;bookdown uses &lt;a href=&#34;https://daringfireball.net/projects/markdown/syntax&#34;&gt;Markdown&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;If you work with R through R Studio, you can do a handful of things through dropdowns. But really, if you’re going to be using R, you’re going to be coding. As it turns out, there are a variety of ways to code in R. One of the most basic ways is via the &lt;a href=&#34;https://support.rstudio.com/hc/en-us/articles/200404846-Working-in-the-Console&#34;&gt;console&lt;/a&gt;, which I’m not going to cover in any detail.&lt;/p&gt;
-&lt;p&gt;The console is fine for quick operations, but you’re going to want to do most of your coding in some kind of a script. R Studio allows users to save and execute code in script files, which you can learn more about &lt;a href=&#34;http://r4ds.had.co.nz/workflow-scripts.html&#34;&gt;here&lt;/a&gt;. Basic script files are nice in that they allow you to both save and annotate your code.&lt;/p&gt;
-&lt;p&gt;However, the annotation options in R Studio script files are limited. After using R Studio scripts for about a year, I learned about &lt;a href=&#34;https://rmarkdown.rstudio.com/r_notebooks&#34;&gt;R Notebooks&lt;/a&gt;. These are special files that allow you to intermingle your R code with prose and the results of the code. R Notebooks also allow users to transform the working documents into professional-looking reports in various formats (e.g., PDF, HTML). And unlike the primitive annotation options with simple script files, R Notebooks use Markdown to allow users to format their prose with things like headers, italicized font, insert hyperlinks, and even embed images. So &lt;a href=&#34;https://daringfireball.net/projects/markdown/&#34;&gt;Markdown&lt;/a&gt;, then, is a simple language that allows for many of those functions.&lt;/p&gt;
-&lt;p&gt;Within the R Studio environment, you can use Markdown with two basic file types: &lt;a href=&#34;https://rmarkdown.rstudio.com/lesson-1.html&#34;&gt;R Markdown&lt;/a&gt; files and &lt;a href=&#34;https://rmarkdown.rstudio.com/r_notebooks&#34;&gt;R Notebook&lt;/a&gt; files. R Notebook files are just special kinds of R Markdown files that have, IMO, a better interface. That is, R Notebooks are the newer nicer version of R Markdown files. The main point here is that when I say “bookdown uses Markdown”, I’m pointing out that one of the important skills you’ll want to develop before making content with bookdown is how to use Markdown within R Studio. It’s not terribly complicated to learn, and you can get an overview of the basics &lt;a href=&#34;https://www.rstudio.com/wp-content/uploads/2015/02/rmarkdown-cheatsheet.pdf&#34;&gt;here&lt;/a&gt; or &lt;a href=&#34;http://r4ds.had.co.nz/r-markdown.html&#34;&gt;here&lt;/a&gt; or &lt;a href=&#34;https://bookdown.org/yihui/bookdown/markdown-syntax.html&#34;&gt;here&lt;/a&gt;, or an exhaustive treatment &lt;a href=&#34;https://bookdown.org/yihui/rmarkdown/&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;If you’re a novice, it’ll take you a few days, weeks, or months to get a firm grasp of R. Not so with R Markdown files. You’ll have the basics of those down in an afternoon. That said, I had been an R Notebook user for more than a year before trying my hand at bookdown.&lt;/p&gt;
-&lt;p&gt;The first big edition of my &lt;a href=&#34;https://bookdown.org/connect/#/apps/1850/access&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt; with brms, ggplot2, and the tidyverse&lt;/a&gt; project came in the form of R Notebook files and their HTML counterparts stored in one of my projects on the &lt;a href=&#34;https://osf.io/?gclid=EAIaIQobChMI2ZDP9svj3QIVQ7nACh2rYQIHEAAYASAAEgL7avD_BwE&#34;&gt;Open Science Framework&lt;/a&gt;. I don’t update it very often, but you can still find it &lt;a href=&#34;https://osf.io/97t6w/&#34;&gt;here&lt;/a&gt;. If you’re not familiar with it, the OSF is a &lt;a href=&#34;https://osf.io/4znzp/wiki/home/&#34;&gt;“free, open source web application that connects and supports the research workflow, enabling scientists to increase the efficiency and effectiveness of their research.”&lt;/a&gt; In addition to their wiki, you might check out some of their &lt;a href=&#34;https://cos.io/our-services/training-services/cos-training-tutorials/&#34;&gt;video tutorials&lt;/a&gt;.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;youll-need-github-too&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;You’ll need &lt;a href=&#34;https://github.com&#34;&gt;GitHub&lt;/a&gt;, too&lt;/h2&gt;
-&lt;p&gt;I’m actually not sure whether you need to know how to use Git and GitHub to use bookdown. In his authoritative book, &lt;a href=&#34;https://bookdown.org/yihui/bookdown/&#34;&gt;&lt;em&gt;bookdown: Authoring Books and Technical Documents with R Markdown&lt;/em&gt;&lt;/a&gt;, Yihui Xie mentioned GitHub in every chapter. If you go to your favorite video-sharing website to look for instructional videos on bookdown, you’ll see the instructors take GitHub as a given, too. If you’re stubborn and have enough ingenuity, you might find a way to successfully use bookdown without GitHub, but you may as well go with the flow on this one.&lt;/p&gt;
-&lt;p&gt;If you’ve never heard of it before, &lt;a href=&#34;https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control&#34;&gt;Git is a system for version control&lt;/a&gt;. By version control, I mean a system by which you can keep track of changes to your code, over time. Even if you don’t have a background in programming, consider a scenario where you had to keep track of many versions of a writing project, perhaps saving your files as &lt;code&gt;first_draft.docx&lt;/code&gt;, &lt;code&gt;second_draft.docx&lt;/code&gt;, &lt;code&gt;final_draft.docx&lt;/code&gt;, &lt;code&gt;final_draft_2.docx&lt;/code&gt;… This was your own make-shift attempt at version control for writing. I’ve seen a lot of introductory material recommend Git and GitHub by leading with version control. And indeed, they do serve that purpose. But IMO, leading with version control is a rhetorical mistake when talking to non-programmers. I haven’t found Git and GitHub the most intuitive and if version control was the only benefit, they wouldn’t be worth the effort. But there are other good reasons to learn.&lt;/p&gt;
-&lt;p&gt;IMO, the best reason to learn Git and GitHub is because they allow you to make your work publically available. When you just use Git, the work stays on your computer. But GitHub allows you to save your files online, too. This makes it easy for others to review them and give you feedback. GitHub also allows you to save things like data files online. So if you’re a working scientist, Git and GitHub might allow you to make a site—a repository—to house the de-identified data and statistical code for one of your projects. It’s another way to do open science. In addition, you can repurpose GitHub to work as blog or an analytic portfolio. And if you’d like to use bookdown, Git and GitHub will be a part of how you manage the files for your projects and make your work more accessible to others.&lt;/p&gt;
-&lt;p&gt;If you’re new to all this, you could probably blindly follow along with the steps in Yihui Xie’s bookdown &lt;a href=&#34;https://bookdown.org/yihui/bookdown/&#34;&gt;manual&lt;/a&gt; or any of the online video tutorials. But I suspect that’d be pretty confusing. Before attempting a bookdown project, spend some time getting comfortable with Git and GitHub, first. The best introduction to the topic I’ve seen is Jenny Bryan’s &lt;a href=&#34;http://happygitwithr.com&#34;&gt;&lt;em&gt;Happy Git and GitHub for the useR&lt;/em&gt;&lt;/a&gt;, which, you guessed it, is also freely available and powered by bookdown.&lt;/p&gt;
-&lt;p&gt;As I hinted, I found Git and GitHub baffling, at first. I checked out a few online video tutorials, but found them of little help. It really was Bryan’s &lt;a href=&#34;http://happygitwithr.com&#34;&gt;book&lt;/a&gt; that finally got me going. And I’m glad I did. I’ve been slowly working with GitHub for about a year—here’s &lt;a href=&#34;https://github.com/ASKurz&#34;&gt;my profile&lt;/a&gt;—and my first major project was putting together the files for the individual chapters in the &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse&#34;&gt;Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse&lt;/a&gt; project. They originally lived as R Notebook files, eventually rendered in a &lt;a href=&#34;https://rmarkdown.rstudio.com/github_document_format.html&#34;&gt;GitHub-friendly .md file format&lt;/a&gt;. After a while, I started playing around with &lt;code&gt;README&lt;/code&gt;-only projects, which are basically a poor man’s GitHub version of blog posts (e.g., check out &lt;a href=&#34;https://github.com/ASKurz/James-Stein-and-Bayesian-partial-pooling&#34;&gt;this one&lt;/a&gt;). For me, and probably for your future bookdown projects, the most important GitHub skills to learn are commits, pushes, and forkes.&lt;/p&gt;
-&lt;p&gt;I’d fooled around with GitHub a tiny bit before launching my &lt;a href=&#34;https://bookdown.org/connect/#/apps/1850/access&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt; with brms, ggplot2, and the tidyverse&lt;/a&gt; project on the OSF. But it was confusing and after an hour or two of trying to make sense of it, I gave up and just figured the OSF would be good enough. After folks started noticing the project, I got a few comments that it’d be more accessible on GitHub. That was what finally influenced me to buckle down learn it in earnest. I’m still a little clunky with it, but I’m functional enough to do things like &lt;a href=&#34;https://bookdown.org/yihui/blogdown/&#34;&gt;make this blog&lt;/a&gt;. With a little patience and practice, you can get there, too.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;let-yihui-xie-guide-you&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Let Yihui Xie guide you&lt;/h2&gt;
-&lt;p&gt;So far we’ve covered&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;R and R Studio&lt;/li&gt;
-&lt;li&gt;Scripts and R Markdown files&lt;/li&gt;
-&lt;li&gt;Git and GitHub&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;You don’t have become an expert, but you’ll need to become roughly fluent in all three to make good use of bookdown. Basically, if you are able to load data into R, document a rudimentary analysis in an R Notebook file, and then share the project in a non-embarrassing way in GitHub, you’re ready to use bookdown.&lt;/p&gt;
-&lt;p&gt;I’ve already mentioned it, but the authoritative work on bookdown is Yihui Xie’s &lt;a href=&#34;https://bookdown.org/yihui/bookdown/&#34;&gt;&lt;em&gt;bookdown: Authoring Books and Technical Documents with R Markdown&lt;/em&gt;&lt;/a&gt;. Yihui Xie, of course, is the author of the package. It’s probably best to just start there, going bit by bit. He also gave an RStudio webinar, &lt;a href=&#34;https://www.youtube.com/watch?v=dVqVscgwSpw&amp;amp;t=12s&#34;&gt;&lt;em&gt;Authoring Books with R Markdown&lt;/em&gt;&lt;/a&gt;, which I found to be a helpful supplement.&lt;/p&gt;
-&lt;p&gt;The complete version of my &lt;a href=&#34;https://bookdown.org/connect/#/apps/1850/access&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt; with brms, ggplot2, and the tidyverse&lt;/a&gt; project has 15 chapters and several preamble sections. Almost all the chapters files include a lot of computationally-intensive code, with the simulations for chapter 6 taking multiple hours to compute. I do not recommend starting off with a project like that, at least not all at once. If you follow along with Yihui Xie’s guide, you’ll practice stitching together simple files, first. After learning those basics, I then picked up other helpful tricks, like &lt;a href=&#34;https://bookdown.org/yihui/bookdown/preview-a-chapter.html#&#34;&gt;caching analyses&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;Although I didn’t use these resources while I was learning bookdown, you might also benefit from checking out&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;Sean Kross’s &lt;a href=&#34;http://seankross.com/2016/11/17/How-to-Start-a-Bookdown-Book.html&#34;&gt;&lt;em&gt;How to Start a Bookdown Book&lt;/em&gt;&lt;/a&gt;,&lt;/li&gt;
-&lt;li&gt;Karl Broman’s &lt;a href=&#34;https://kbroman.org/blog/2017/05/31/omg-bookdown/&#34;&gt;&lt;em&gt;omg, bookdown!&lt;/em&gt;&lt;/a&gt;,&lt;/li&gt;
-&lt;li&gt;Rachael Lappan’s &lt;a href=&#34;https://rachaellappan.github.io/bookdown/&#34;&gt;&lt;em&gt;Using Bookdown for tidy documentation&lt;/em&gt;&lt;/a&gt;, or&lt;/li&gt;
-&lt;li&gt;Pablo Casas’s &lt;a href=&#34;https://blog.datascienceheroes.com/how-to-self-publish-a-book/&#34;&gt;&lt;em&gt;How to self-publish a book: A handy list of resources&lt;/em&gt;&lt;/a&gt;.&lt;/li&gt;
-&lt;/ul&gt;
 &lt;/div&gt;
 </description>
     </item>

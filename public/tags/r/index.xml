@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Tue, 27 Aug 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 09 Oct 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/r/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Individuals are not small groups, I: Simpson&#39;s paradox</title>
+      <link>/post/individuals-are-not-small-groups-i-simpson-s-paradox/</link>
+      <pubDate>Wed, 09 Oct 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/individuals-are-not-small-groups-i-simpson-s-paradox/</guid>
+      <description>tl;dr If you are under the impression group-level data and group-based data analysis will inform you about within-person processes, you would be wrong. Stick around to learn why.
+ This is gonna be a long car ride. Earlier this year I published a tutorial 1 on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method been around for a long time, since at least the 80s (Molenaar, 1985).</description>
+    </item>
     
     <item>
       <title>Bayesian power analysis: Part III.b. What about 0/1 data?</title>

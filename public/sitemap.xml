@@ -28,6 +28,14 @@
     
     <url>
     
+      <loc>/post/individuals-are-not-small-groups-i-simpson-s-paradox/</loc>
+      <lastmod>2019-10-09T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/post/how-to-survive-a-plague-part-2-n-of-a-premature-book-report/</loc>
       <lastmod>2019-09-30T00:00:00+00:00</lastmod>
     </url>
@@ -158,6 +166,14 @@
     
       <loc>/tutorial/</loc>
       <lastmod>2018-09-09T00:00:00-05:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/privacy/</loc>
+      <lastmod>2018-06-28T00:00:00-05:00</lastmod>
     </url>
     
   
@@ -296,7 +312,7 @@
     <url>
     
       <loc>/tags/r/</loc>
-      <lastmod>2019-08-27T00:00:00+00:00</lastmod>
+      <lastmod>2019-10-09T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -357,6 +373,24 @@
     
       <loc>/tags/brms/</loc>
       <lastmod>2019-08-27T00:00:00+00:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/dynamic-p-technique/</loc>
+      <lastmod>2019-10-09T00:00:00+00:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/idiographic/</loc>
+      <lastmod>2019-10-09T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     
@@ -436,6 +470,15 @@
     
     <url>
     
+      <loc>/tags/single-case/</loc>
+      <lastmod>2019-10-09T00:00:00+00:00</lastmod>
+      <priority>0</priority>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/tags/smartphone/</loc>
       <lastmod>2018-10-07T00:00:00+00:00</lastmod>
       <priority>0</priority>
@@ -473,7 +516,7 @@
     <url>
     
       <loc>/tags/tutorial/</loc>
-      <lastmod>2019-08-27T00:00:00+00:00</lastmod>
+      <lastmod>2019-10-09T00:00:00+00:00</lastmod>
       <priority>0</priority>
     </url>
     

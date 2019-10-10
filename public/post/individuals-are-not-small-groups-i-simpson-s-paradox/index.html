@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="generator" content="Source Themes Academic 2.4.0">
+  <meta name="generator" content="Hugo 0.49" />
+  <meta name="author" content="A. Solomon Kurz">
+
+  
+  
+  
+  
+    
+  
+  <meta name="description" content="tl;dr If you are under the impression group-level data and group-based data analysis will inform you about within-person processes, you would be wrong. Stick around to learn why.
+ This is gonna be a long car ride. Earlier this year I published a tutorial 1 on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method been around for a long time, since at least the 80s (Molenaar, 1985).">
+
+  
+  <link rel="alternate" hreflang="en-us" href="/post/individuals-are-not-small-groups-i-simpson-s-paradox/">
+
+  
+
+
+  
+
+  
+
+  
+
+  
+  
+  
+  <meta name="theme-color" content="#0095eb">
+  
+
+  
+  
+  
+  
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha256-eSi1q2PG6J7g7ib17yAaWMcrr5GrtohYChqibrV7PBE=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/academicons/1.8.6/css/academicons.min.css" integrity="sha256-uFVgMKfistnJAfoCUQigIl+JfUaP47GrRKjf6CTPVmw=" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.css" integrity="sha256-ygkqlh3CYSUri3LhQxzdcm0n1EQvH2Y+U5S2idbLtxs=" crossorigin="anonymous">
+
+    
+    
+    
+      
+    
+    
+      
+      
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css" crossorigin="anonymous">
+      
+    
+
+    
+
+    
+
+  
+
+  
+  
+  <link rel="stylesheet" href=//fonts.googleapis.com/css?family=Montserrat:400,700|Roboto:400,400italic,700|Roboto+Mono>
+  
+
+  <link rel="stylesheet" href="/styles.css">
+  
+
+  
+  
+  
+
+  
+  <link rel="alternate" href="/index.xml" type="application/rss+xml" title="A. Solomon Kurz">
+  <link rel="feed" href="/index.xml" type="application/rss+xml" title="A. Solomon Kurz">
+  
+
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="icon" type="image/png" href="/img/icon.png">
+  <link rel="apple-touch-icon" type="image/png" href="/img/icon-192.png">
+
+  <link rel="canonical" href="/post/individuals-are-not-small-groups-i-simpson-s-paradox/">
+
+  <meta property="twitter:card" content="summary_large_image">
+  
+  <meta property="twitter:site" content="@SolomonKurz">
+  <meta property="twitter:creator" content="@SolomonKurz">
+  
+  <meta property="og:site_name" content="A. Solomon Kurz">
+  <meta property="og:url" content="/post/individuals-are-not-small-groups-i-simpson-s-paradox/">
+  <meta property="og:title" content="Individuals are not small groups, I: Simpson&#39;s paradox | A. Solomon Kurz">
+  <meta property="og:description" content="tl;dr If you are under the impression group-level data and group-based data analysis will inform you about within-person processes, you would be wrong. Stick around to learn why.
+ This is gonna be a long car ride. Earlier this year I published a tutorial 1 on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method been around for a long time, since at least the 80s (Molenaar, 1985).">
+  
+  
+    
+  <meta property="og:image" content="/img/Solomon%20at%20Double%20Decker.jpg">
+  <meta property="og:locale" content="en-us">
+  
+  <meta property="article:published_time" content="2019-10-09T00:00:00&#43;00:00">
+  
+  <meta property="article:modified_time" content="2019-10-09T00:00:00&#43;00:00">
+  
+
+  
+
+  
+
+  <title>Individuals are not small groups, I: Simpson&#39;s paradox | A. Solomon Kurz</title>
+
+</head>
+<body id="top" data-spy="scroll" data-target="#TableOfContents" data-offset="71" >
+
+<nav class="navbar navbar-light fixed-top navbar-expand-lg py-0" id="navbar-main">
+  <div class="container">
+
+    
+      <a class="navbar-brand" href="/">A. Solomon Kurz</a>
+      
+      <button type="button" class="navbar-toggler" data-toggle="collapse"
+              data-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span><i class="fas fa-bars"></i></span>
+      </button>
+      
+
+    
+    <div class="collapse navbar-collapse" id="navbar">
+
+      
+      
+      <ul class="navbar-nav ml-auto">
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link" href="/#about">
+            
+            <span>Home</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link" href="/post/">
+            
+            <span>Blog posts</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link" href="/bookdown/">
+            
+            <span>Book-length projects</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link" href="/teaching/">
+            
+            <span>Teaching</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+        
+
+        
+        
+        
+          
+        
+
+        <li class="nav-item">
+          <a class="nav-link" href="/conflicts_of_interest/">
+            
+            <span>Conflicts of interest</span>
+            
+          </a>
+        </li>
+
+        
+        
+
+      
+
+        
+
+        
+      </ul>
+
+    </div>
+  </div>
+</nav>
+
+
+<article class="article" itemscope itemtype="http://schema.org/Article">
+
+  
+
+
+
+
+
+  <div class="article-container">
+    <h1 itemprop="name">Individuals are not small groups, I: Simpson&#39;s paradox</h1>
+
+    
+
+<div class="article-metadata">
+
+  
+  
+  <span itemscope itemprop="author" itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="A. Solomon Kurz">
+  </span>
+  
+
+  <span class="article-date">
+    
+    <meta content="2019-10-09 00:00:00 &#43;0000 UTC" itemprop="datePublished">
+    <time datetime="2019-10-09 00:00:00 &#43;0000 UTC" itemprop="dateModified">
+      Oct 9, 2019
+    </time>
+  </span>
+  <span itemscope itemprop="publisher" itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="A. Solomon Kurz">
+  </span>
+
+  
+  <span class="middot-divider"></span>
+  <span class="article-reading-time">
+    7 min read
+  </span>
+  
+
+  
+  
+
+  
+  
+  
+  
+
+  
+  
+<div class="share-box" aria-hidden="true">
+  <ul class="share">
+    <li>
+      <a class="twitter"
+         href="https://twitter.com/intent/tweet?text=Individuals%20are%20not%20small%20groups%2c%20I%3a%20Simpson%27s%20paradox&amp;url=%2fpost%2findividuals-are-not-small-groups-i-simpson-s-paradox%2f"
+         target="_blank" rel="noopener">
+        <i class="fab fa-twitter"></i>
+      </a>
+    </li>
+    <li>
+      <a class="facebook"
+         href="https://www.facebook.com/sharer.php?u=%2fpost%2findividuals-are-not-small-groups-i-simpson-s-paradox%2f"
+         target="_blank" rel="noopener">
+        <i class="fab fa-facebook-f"></i>
+      </a>
+    </li>
+    <li>
+      <a class="linkedin"
+         href="https://www.linkedin.com/shareArticle?mini=true&amp;url=%2fpost%2findividuals-are-not-small-groups-i-simpson-s-paradox%2f&amp;title=Individuals%20are%20not%20small%20groups%2c%20I%3a%20Simpson%27s%20paradox"
+         target="_blank" rel="noopener">
+        <i class="fab fa-linkedin-in"></i>
+      </a>
+    </li>
+    <li>
+      <a class="weibo"
+         href="http://service.weibo.com/share/share.php?url=%2fpost%2findividuals-are-not-small-groups-i-simpson-s-paradox%2f&amp;title=Individuals%20are%20not%20small%20groups%2c%20I%3a%20Simpson%27s%20paradox"
+         target="_blank" rel="noopener">
+        <i class="fab fa-weibo"></i>
+      </a>
+    </li>
+    <li>
+      <a class="email"
+         href="mailto:?subject=Individuals%20are%20not%20small%20groups%2c%20I%3a%20Simpson%27s%20paradox&amp;body=%2fpost%2findividuals-are-not-small-groups-i-simpson-s-paradox%2f">
+        <i class="fas fa-envelope"></i>
+      </a>
+    </li>
+  </ul>
+</div>
+
+
+  
+
+</div>
+
+
+    <div class="article-style" itemprop="articleBody">
+      <div id="tldr" class="section level2">
+<h2>tl;dr</h2>
+<p>If you are under the impression group-level data and group-based data analysis will inform you about within-person processes, you would be wrong. Stick around to learn why.</p>
+</div>
+<div id="this-is-gonna-be-a-long-car-ride." class="section level2">
+<h2>This is gonna be a long car ride.</h2>
+<p>Earlier this year I published <a href="https://www.sciencedirect.com/science/article/pii/S2212144718301807?via%3Dihub">a tutorial</a> <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method been around for a long time, since at least the 80s (<a href="https://link.springer.com/article/10.1007/BF02294246">Molenaar, 1985</a>). The precursors to the dynamic p go back to at least the 40s (<a href="https://link.springer.com/article/10.1007/BF02288941">Cattell, Cattell, &amp; Rhymer, 1947</a>). In the age where it’s increasingly cheap and easy to collect data on large groups, on both one measurement occasion or over many, you might want to know why you might learn about a single-case statistical technique. Isn’t such a thing unneeded?</p>
+<p>No. It is indeed needed. Unfortunately for me, the reasons why it’s needed aren’t intuitive or well understood. Luckily for us all, I’m a patient man. We’ll be covering the reasons step by step. Once we’re done covering reasons, we’ll switch into full-blown tutorial mode. In this first blog on the topic, we’ll cover reason #1. Simpson’s paradox is a thing and it’ll bite you hard it you’re not looking for it.</p>
+</div>
+<div id="simpsons-paradox" class="section level2">
+<h2>Simpson’s paradox</h2>
+<p>Simpson’s paradox officially made its way into the literature in <a href="http://math.bme.hu/~marib/bsmeur/simpson.pdf">this 1951 paper</a> by Simpson. Rather than define it outright, I’m going to demonstrate it with a classic example. The data come from the 1973 University of California, Berkeley, graduate admissions. Based on a simple breakdown of the admission rates, 44% of the men who applied were admitted. In contrast, only 35% of the women who applied were admitted. The university was accused of sexism and the issue made its way into the courts.</p>
+<p>However, when statisticians looked more closely at the data, it became apparent those data were not the compelling evidence of sexism they were initially made out to be. To see why, we’ll want to get into the data, ourselves. The admissions rates for the six largest departments have made their way into the peer-reviewed literature (<a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.9241&amp;rep=rep1&amp;type=pdf">Bickel, Hammel, &amp; O’Connell, 1975</a>), into many textbooks (e.g., Danielle Navarro’s <a href="https://learningstatisticswithr.com/lsr-0.6.pdf"><em>Learning statistics with R</em></a>), and are available in <strong>R</strong> as the built-in data set <code>UCBAdmissions</code>. Here we’ll call them, convert the data into a tidy format <a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>, and add a variable.</p>
+<pre class="r"><code>library(tidyverse)
+
+d &lt;-
+  UCBAdmissions %&gt;% 
+  as_tibble() %&gt;% 
+  pivot_wider(id_cols = c(Dept, Gender),
+              names_from = Admit, 
+              values_from = n) %&gt;% 
+  mutate(total = Admitted + Rejected)
+
+head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 5
+##   Dept  Gender Admitted Rejected total
+##   &lt;chr&gt; &lt;chr&gt;     &lt;dbl&gt;    &lt;dbl&gt; &lt;dbl&gt;
+## 1 A     Male        512      313   825
+## 2 A     Female       89       19   108
+## 3 B     Male        353      207   560
+## 4 B     Female       17        8    25
+## 5 C     Male        120      205   325
+## 6 C     Female      202      391   593</code></pre>
+<p>The identities of the departments have been anonymized, so we’re stuck with referring to them as A through F. Much like with the overall rates for graduate admissions, it appears that the admission rates for the six anonymized departments in the <code>UCBAdmissions</code> data show higher a admission rate for men.</p>
+<pre class="r"><code>d %&gt;% 
+  group_by(Gender) %&gt;% 
+  summarise(percent_admitted = (100 * sum(Admitted) / sum(total)) %&gt;% round(digits = 1))</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   Gender percent_admitted
+##   &lt;chr&gt;             &lt;dbl&gt;
+## 1 Female             30.4
+## 2 Male               44.5</code></pre>
+<p>A 14% difference seems large enough to make a stink. However, the plot thickens when we break the data down by department. For that, we’ll make a visual.</p>
+<pre class="r"><code>d %&gt;%  
+  mutate(dept = str_c(&quot;department &quot;, Dept)) %&gt;% 
+  pivot_longer(cols = Admitted:Rejected,
+               names_to = &quot;admit&quot;,
+               values_to = &quot;n&quot;) %&gt;% 
+  
+  ggplot(aes(x = Gender, y = n, fill = admit)) +
+  geom_col(position = &quot;dodge&quot;) +
+  scale_fill_viridis_d(NULL, option = &quot;A&quot;, end = .6) +
+  xlab(NULL) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~dept)</code></pre>
+<p><img src="/post/2019-10-09-individuals-are-not-small-groups-i-simpson-s-paradox_files/figure-html/unnamed-chunk-3-1.png" width="768" /></p>
+<p>The problem with our initial analysis is it didn’t take into account how different departments might admit men/women at different rates. We also failed to consider whether men and women applied to those different departments at different rates. Take departments A and B. Both admitted the majority of applicants, regardless of gender. Now look at departments E and F. The supermajorities of applicants were rejected, both for men and women Also notice that whereas the departments where the supermajority of applicants were men (i.e., departments A and B) had generous admission rates, the departments with the largest proportion of women applicants (i.e., departments C and E) had rather high rejection rates.</p>
+<p>It can be hard to juggle all this in your head at once, even with the aid of our figure. Let’s look at the data in a different way. This time we’ll summarize the admission rates in a probability metric where the probability of admission is <code>n / total</code> (i.e., the number of successes divided by the total number of trials). We’ll compute those probabilities while grouping by <code>Gender</code> and <code>Dept</code>.</p>
+<pre class="r"><code>d %&gt;%
+  mutate(p = Admitted / total) %&gt;% 
+  
+  ggplot(aes(x = Dept, y = p)) +
+  geom_hline(yintercept = .5, color = &quot;white&quot;) +
+  geom_point(aes(color = Gender, size = total),
+             position = position_dodge(width = 0.3)) +
+  scale_color_manual(NULL, values = c(&quot;red3&quot;, &quot;blue3&quot;)) +
+  scale_y_continuous(&quot;admission probability&quot;, limits = 0:1) +
+  xlab(&quot;department&quot;) +
+  theme(panel.grid = element_blank())</code></pre>
+<p><img src="/post/2019-10-09-individuals-are-not-small-groups-i-simpson-s-paradox_files/figure-html/unnamed-chunk-4-1.png" width="576" /></p>
+<p>Several things pop out. For <span class="math inline">\(5/6\)</span> of the departments (i.e., all but A), the admission probabilities were very similar for men and women–sometimes slightly higher for women, sometimes slightly higher for men. We also see a broad range overall admission rates across departments. Note how the dots are sized based on the <code>total</code> number of applications, by <code>Gender</code> and <code>Dept</code>. Hopefully those sizes help show how women disproportionately applied to departments with low overall admission probabilities. Interestingly, the department with the largest gender bias was A, which showed a bias towards admitting women at <em>higher</em> rates than men.</p>
+<p>Let’s get formal. The paradox Simpson wrote about is that the simple association between two variables can disappear or even change sign when it is conditioned on a relevant third variable. The relevant third variable is typically a grouping variable. In the Berkeley admissions example, the seemingly alarming association between graduate admissions and gender disappeared when conditioned on department. If you’re still jarred by this, Navarro covered this in the opening chapter of her text. Richard McElreath covered it more extensively in chapters 10 and 13 of his (2015) text, <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical Rethinking</em></a>. I’ve also worked through a similar example of Simpson’s paradox from the more recent literature, <a href="https://bookdown.org/content/1850/adventures-in-covariance.html#summary-bonus-another-berkley-admissions-data-like-example">here</a>. Kievit, Frankenhuis, Waldorp, and Borsboom (2013) wrote a <a href="https://www.frontiersin.org/articles/10.3389/fpsyg.2013.00513/full">fine primer on the topic</a>, too.</p>
+</div>
+<div id="wait.-what" class="section level2">
+<h2>Wait. What?</h2>
+<p>At this point you might be wondering what this has to do with the difference between groups and individuals. We’re slowly building a case step by step, remember? For this first installment, just notice how a simple bivariate analysis fell apart once we took an important third variable into account. In this case and in many others, it so happened that third variable was a grouping variable.</p>
+<p>Stay tuned for the next post where well build on this with a related phenomenon: the ecological fallacy.</p>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 3.6.0 (2019-04-26)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS High Sierra 10.13.6
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2    
+## [5] readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
+## [9] tidyverse_1.2.1
+## 
+## loaded via a namespace (and not attached):
+##  [1] tidyselect_0.2.5  xfun_0.10         haven_2.1.0      
+##  [4] lattice_0.20-38   colorspace_1.4-1  vctrs_0.2.0      
+##  [7] generics_0.0.2    viridisLite_0.3.0 htmltools_0.4.0  
+## [10] yaml_2.2.0        utf8_1.1.4        rlang_0.4.0      
+## [13] pillar_1.4.2      glue_1.3.1        withr_2.1.2      
+## [16] modelr_0.1.4      readxl_1.3.1      lifecycle_0.1.0  
+## [19] munsell_0.5.0     blogdown_0.14     gtable_0.3.0     
+## [22] cellranger_1.1.0  rvest_0.3.4       evaluate_0.14    
+## [25] labeling_0.3      knitr_1.23        fansi_0.4.0      
+## [28] broom_0.5.2       Rcpp_1.0.2        scales_1.0.0     
+## [31] backports_1.1.5   jsonlite_1.6      hms_0.4.2        
+## [34] digest_0.6.21     stringi_1.4.3     bookdown_0.12    
+## [37] grid_3.6.0        cli_1.1.0         tools_3.6.0      
+## [40] magrittr_1.5      lazyeval_0.2.2    crayon_1.3.4     
+## [43] pkgconfig_2.0.3   zeallot_0.1.0     xml2_1.2.0       
+## [46] lubridate_1.7.4   assertthat_0.2.1  rmarkdown_1.13   
+## [49] httr_1.4.0        rstudioapi_0.10   R6_2.4.0         
+## [52] nlme_3.1-139      compiler_3.6.0</code></pre>
+</div>
+<div id="footnotes" class="section level2">
+<h2>Footnotes</h2>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>You can find the preprint and supporting documents, including the data and code, <a href="https://osf.io/cbyj3/">here</a>.<a href="#fnref1" class="footnote-back">↩</a></p></li>
+<li id="fn2"><p>Walking out the definition of <em>tidy data</em> is beyond the scope of this post. It’s connected to the work of data scientist <a href="http://hadley.nz">Hadley Wickham</a>, in particular, and the ethos behind the collection of <strong>R</strong> packages called the <a href="https://www.tidyverse.org"><strong>tidyverse</strong></a>, more generally. My <strong>R</strong> code tends to follow the <a href="https://style.tidyverse.org">tidyverse style</a>. If you’re new these ideas, it’ll help if you familiarize yourself with them a bit. For an introduction to the notion of tidy data, Wickham’s recent talk, <a href="https://www.youtube.com/watch?v=9YTNYT1maa4"><em>Data visualization and data science</em></a>, is a fine place to start.<a href="#fnref2" class="footnote-back">↩</a></p></li>
+</ol>
+</div>
+
+    </div>
+
+    
+
+
+<div class="article-tags">
+  
+  <a class="badge badge-light" href="/tags/dynamic-p-technique/">dynamic p-technique</a>
+  
+  <a class="badge badge-light" href="/tags/idiographic/">idiographic</a>
+  
+  <a class="badge badge-light" href="/tags/r/">R</a>
+  
+  <a class="badge badge-light" href="/tags/single-case/">single-case</a>
+  
+  <a class="badge badge-light" href="/tags/tutorial/">tutorial</a>
+  
+</div>
+
+
+
+
+    
+    
+    <div class="article-widget">
+      <div class="hr-light"></div>
+      <h3>Related</h3>
+      <ul>
+        
+        <li><a href="/post/bayesian-power-analysis-part-iii-b/">Bayesian power analysis: Part III.b. What about 0/1 data?</a></li>
+        
+        <li><a href="/post/bayesian-power-analysis-part-iii-a/">Bayesian power analysis: Part III.a. Counts are special.</a></li>
+        
+        <li><a href="/post/bayesian-power-analysis-part-ii/">Bayesian power analysis: Part II. Some might prefer precision to power</a></li>
+        
+        <li><a href="/post/bayesian-power-analysis-part-i/">Bayesian power analysis: Part I. Prepare to reject $H_0$ with simulation.</a></li>
+        
+        <li><a href="/post/would-you-like-all-your-posteriors-in-one-plot/">Would you like all your posteriors in one plot?</a></li>
+        
+      </ul>
+    </div>
+    
+
+    
+
+    
+
+
+  </div>
+</article>
+
+<div class="container">
+  <footer class="site-footer">
+  
+  <p class="powered-by">
+    <a href="/privacy/">Privacy Policy</a>
+  </p>
+  
+
+  <p class="powered-by">
+    &copy; 2018 &middot; 
+
+    Powered by the
+    <a href="https://sourcethemes.com/academic/" target="_blank" rel="noopener">Academic theme</a> for
+    <a href="https://gohugo.io" target="_blank" rel="noopener">Hugo</a>.
+
+    
+    <span class="float-right" aria-hidden="true">
+      <a href="#" id="back_to_top">
+        <span class="button_icon">
+          <i class="fas fa-chevron-up fa-2x"></i>
+        </span>
+      </a>
+    </span>
+    
+  </p>
+</footer>
+
+</div>
+
+
+<div id="modal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Cite</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <pre><code class="tex hljs"></code></pre>
+      </div>
+      <div class="modal-footer">
+        <a class="btn btn-outline-primary my-1 js-copy-cite" href="#" target="_blank">
+          <i class="fas fa-copy"></i> Copy
+        </a>
+        <a class="btn btn-outline-primary my-1 js-download-cite" href="#" target="_blank">
+          <i class="fas fa-download"></i> Download
+        </a>
+        <div id="modal-error"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+    
+    <script type="text/x-mathjax-config">
+      MathJax.Hub.Config({
+        CommonHTML: { linebreaks: { automatic: true } },
+        tex2jax: { inlineMath: [ ['$', '$'], ['\\(','\\)'] ], displayMath: [ ['$$','$$'], ['\\[', '\\]'] ], processEscapes: false },
+        TeX: { noUndefined: { attributes: { mathcolor: 'red', mathbackground: '#FFEEEE', mathsize: '90%' } } },
+        messageStyle: 'none'
+      });
+    </script>
+    
+
+    
+    
+    
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha512-+NqPlbbtM1QqiK8ZAo4Yrj2c4lNQoGv8P79DPtKzj++l5jnN39rHA/xsqn8zE9l0uSoxaCdrOgFs6yjyfbBxSg==" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.imagesloaded/4.1.3/imagesloaded.pkgd.min.js" integrity="sha512-umsR78NN0D23AzgoZ11K7raBD+R6hqKojyBZs1w8WvYlsI+QuKRGBx3LFCwhatzBunCjDuJpDHwxD13sLMbpRA==" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha256-VsEqElsCHSGmnmHXGQzvoWjWwoznFSZc6hs7ARLRacQ=" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.isotope/3.0.4/isotope.pkgd.min.js" integrity="sha512-VDBOIlDbuC4VWxGJNmuFRQ0Li0SKkDpmGyuhAG5LTDLd/dJ/S0WMVxriR2Y+CyPL5gzjpN4f/6iqWVBJlht0tQ==" crossorigin="anonymous"></script>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.2.5/jquery.fancybox.min.js" integrity="sha256-X5PoE3KU5l+JcX+w09p/wHl9AzK333C4hJ2I9S5mD4M=" crossorigin="anonymous"></script>
+
+      
+        
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js" integrity="sha256-/BfiIkHlHoVihZdc6TFuj7MmJ0TWcWsMXkeDFwhi0zw=" crossorigin="anonymous"></script>
+        
+      
+
+      
+      
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS_CHTML-full" integrity="sha256-GhM+5JHb6QUzOQPXSJLEWP7R73CbkisjzK5Eyij4U9w=" crossorigin="anonymous" async></script>
+      
+    
+
+    <script src="/js/hugo-academic.js"></script>
+    
+
+    
+    
+
+    
+    
+    
+
+    
+    
+    <script>hljs.initHighlightingOnLoad();</script>
+    
+
+    
+    
+    <script>
+      const search_index_filename = "/index.json";
+      const i18n = {
+        'placeholder': "Search...",
+        'results': "Search Results",
+        'no_results': "No results found"
+      };
+      const content_type = {
+        'post': "Posts",
+        'project': "Projects",
+        'publication' : "Publications",
+        'talk' : "Talks"
+        };
+    </script>
+    
+
+    
+    
+
+    
+    
+    <script id="search-hit-fuse-template" type="text/x-template">
+      <div class="search-hit" id="summary-{{key}}">
+      <div class="search-hit-content">
+        <div class="search-hit-name">
+          <a href="{{relpermalink}}">{{title}}</a>
+          <div class="article-metadata search-hit-type">{{type}}</div>
+          <p class="search-hit-description">{{snippet}}</p>
+        </div>
+      </div>
+      </div>
+    </script>
+    
+
+    
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fuse.js/3.2.1/fuse.min.js" integrity="sha256-VzgmKYmhsGNNN4Ph1kMW+BjoYJM2jV5i4IlFoeZA9XI=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mark.js/8.11.1/jquery.mark.min.js" integrity="sha256-4HLtjeVgH0eIB3aZ9mLYF6E8oU5chNdjU6p6rrXpl9U=" crossorigin="anonymous"></script>
+    <script src="/js/search.js"></script>
+    
+
+    
+    
+
+  </body>
+</html>
+
