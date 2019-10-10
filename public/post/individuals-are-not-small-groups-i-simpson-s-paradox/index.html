@@ -16,7 +16,7 @@
     
   
   <meta name="description" content="tl;dr If you are under the impression group-level data and group-based data analysis will inform you about within-person processes, you would be wrong. Stick around to learn why.
- This is gonna be a long car ride. Earlier this year I published a tutorial 1 on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method has been around for a long time, since at least the 80s (Molenaar, 1985).">
+ This is gonna be a long car ride. Earlier this year I published a tutorial 1 on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method has been around since at least the 80s (Molenaar, 1985) and its precursors date back to at least the 40s (Cattell, Cattell, &amp; Rhymer, 1947).">
 
   
   <link rel="alternate" hreflang="en-us" href="/post/individuals-are-not-small-groups-i-simpson-s-paradox/">
@@ -96,7 +96,7 @@
   <meta property="og:url" content="/post/individuals-are-not-small-groups-i-simpson-s-paradox/">
   <meta property="og:title" content="Individuals are not small groups, I: Simpson&#39;s paradox | A. Solomon Kurz">
   <meta property="og:description" content="tl;dr If you are under the impression group-level data and group-based data analysis will inform you about within-person processes, you would be wrong. Stick around to learn why.
- This is gonna be a long car ride. Earlier this year I published a tutorial 1 on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method has been around for a long time, since at least the 80s (Molenaar, 1985).">
+ This is gonna be a long car ride. Earlier this year I published a tutorial 1 on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method has been around since at least the 80s (Molenaar, 1985) and its precursors date back to at least the 40s (Cattell, Cattell, &amp; Rhymer, 1947).">
   
   
     
@@ -346,12 +346,12 @@
 </div>
 <div id="this-is-gonna-be-a-long-car-ride." class="section level2">
 <h2>This is gonna be a long car ride.</h2>
-<p>Earlier this year I published <a href="https://www.sciencedirect.com/science/article/pii/S2212144718301807?via%3Dihub">a tutorial</a> <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method has been around for a long time, since at least the 80s (<a href="https://link.springer.com/article/10.1007/BF02294246">Molenaar, 1985</a>). The precursors to the dynamic p go back to at least the 40s (<a href="https://link.springer.com/article/10.1007/BF02288941">Cattell, Cattell, &amp; Rhymer, 1947</a>). In the age where it’s increasingly cheap and easy to collect data on large groups, on both one measurement occasion or over many, you might want to know why you might learn about a single-case statistical technique. Isn’t such a thing unneeded?</p>
-<p>No. It is indeed needed. Unfortunately for me, the reasons why it’s needed aren’t intuitive or well understood. Luckily for us all, I’m a patient man. We’ll be covering the reasons step by step. Once we’re done covering reasons, we’ll switch into full-blown tutorial mode. In this first blog on the topic, we’ll cover reason #1. Simpson’s paradox is a thing and it’ll bite you hard it you’re not looking for it.</p>
+<p>Earlier this year I published <a href="https://www.sciencedirect.com/science/article/pii/S2212144718301807?via%3Dihub">a tutorial</a> <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It’s called the dynamic p-technique. The method has been around since at least the 80s (<a href="https://link.springer.com/article/10.1007/BF02294246">Molenaar, 1985</a>) and its precursors date back to at least the 40s (<a href="https://link.springer.com/article/10.1007/BF02288941">Cattell, Cattell, &amp; Rhymer, 1947</a>). In the age where it’s increasingly cheap and easy to collect data from large groups, on both one measurement occasion or over many, you might wonder why you should learn about a single-case statistical technique. Isn’t such a thing unneeded?</p>
+<p>No. It is indeed needed. Unfortunately for me, the reasons we need it aren’t intuitive or well understood. Luckily for us all, I’m a patient man. We’ll be covering the reasons step by step. Once we’re done covering reasons, we’ll switch into full-blown tutorial mode. In this first blog on the topic, we’ll cover reason #1: Simpson’s paradox is a thing and it’ll bite you hard it you’re not looking for it.</p>
 </div>
 <div id="simpsons-paradox" class="section level2">
 <h2>Simpson’s paradox</h2>
-<p>Simpson’s paradox officially made its way into the literature in <a href="http://math.bme.hu/~marib/bsmeur/simpson.pdf">this 1951 paper</a> by Simpson. Rather than define it outright, I’m going to demonstrate it with a classic example. The data come from the 1973 University of California, Berkeley, graduate admissions. Based on a simple breakdown of the admission rates, 44% of the men who applied were admitted. In contrast, only 35% of the women who applied were admitted. The university was accused of sexism and the issue made its way into the courts.</p>
+<p>Simpson’s paradox officially made its way into the literature in <a href="http://math.bme.hu/~marib/bsmeur/simpson.pdf">this 1951 paper</a> by Simpson. Rather than define the paradox outright, I’m going to demonstrate it with a classic example. The data come from the 1973 University of California, Berkeley, graduate admissions. Based on a simple breakdown of the admission rates, 44% of the men who applied were admitted. In contrast, only 35% of the women who applied were admitted. The university was accused of sexism and the issue made its way into the courts.</p>
 <p>However, when statisticians looked more closely at the data, it became apparent those data were not the compelling evidence of sexism they were initially made out to be. To see why, we’ll want to get into the data, ourselves. The admissions rates for the six largest departments have made their way into the peer-reviewed literature (<a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.9241&amp;rep=rep1&amp;type=pdf">Bickel, Hammel, &amp; O’Connell, 1975</a>), into many textbooks (e.g., Danielle Navarro’s <a href="https://learningstatisticswithr.com/lsr-0.6.pdf"><em>Learning statistics with R</em></a>), and are available in <strong>R</strong> as the built-in data set <code>UCBAdmissions</code>. Here we’ll call them, convert the data into a tidy format <a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>, and add a variable.</p>
 <pre class="r"><code>library(tidyverse)
 
@@ -382,7 +382,7 @@ head(d)</code></pre>
 ##   &lt;chr&gt;             &lt;dbl&gt;
 ## 1 Female             30.4
 ## 2 Male               44.5</code></pre>
-<p>A 14% difference seems large enough to make a stink. However, the plot thickens when we break the data down by department. For that, we’ll make a visual.</p>
+<p>A 14% difference seems large enough to justify a stink. However, the plot thickens when we break the data down by department. For that, we’ll make a visual.</p>
 <pre class="r"><code>d %&gt;%  
   mutate(dept = str_c(&quot;department &quot;, Dept)) %&gt;% 
   pivot_longer(cols = Admitted:Rejected,

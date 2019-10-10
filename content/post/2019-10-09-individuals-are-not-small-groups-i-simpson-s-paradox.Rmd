@@ -23,13 +23,13 @@ If you are under the impression group-level data and group-based data analysis w
 
 ## This is gonna be a long car ride.
 
-Earlier this year I published [a tutorial](https://www.sciencedirect.com/science/article/pii/S2212144718301807?via%3Dihub) [^1] on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It's called the dynamic p-technique. The method has been around for a long time, since at least the 80s ([Molenaar, 1985](https://link.springer.com/article/10.1007/BF02294246)). The precursors to the dynamic p go back to at least the 40s ([Cattell, Cattell, & Rhymer, 1947](https://link.springer.com/article/10.1007/BF02288941)). In the age where it's increasingly cheap and easy to collect data on large groups, on both one measurement occasion or over many, you might want to know why you might learn about a single-case statistical technique. Isn't such a thing unneeded?
+Earlier this year I published [a tutorial](https://www.sciencedirect.com/science/article/pii/S2212144718301807?via%3Dihub) [^1] on a statistical technique that will allow you to analyze the multivariate time series data of a single individual. It's called the dynamic p-technique. The method has been around since at least the 80s ([Molenaar, 1985](https://link.springer.com/article/10.1007/BF02294246)) and its precursors date back to at least the 40s ([Cattell, Cattell, & Rhymer, 1947](https://link.springer.com/article/10.1007/BF02288941)). In the age where it's increasingly cheap and easy to collect data from large groups, on both one measurement occasion or over many, you might wonder why you should learn about a single-case statistical technique. Isn't such a thing unneeded?
 	
-No. It is indeed needed. Unfortunately for me, the reasons why it's needed aren't intuitive or well understood. Luckily for us all, I'm a patient man. We'll be covering the reasons step by step. Once we're done covering reasons, we'll switch into full-blown tutorial mode. In this first blog on the topic, we'll cover reason #1. Simpson's paradox is a thing and it'll bite you hard it you're not looking for it.
+No. It is indeed needed. Unfortunately for me, the reasons we need it aren't intuitive or well understood. Luckily for us all, I'm a patient man. We'll be covering the reasons step by step. Once we're done covering reasons, we'll switch into full-blown tutorial mode. In this first blog on the topic, we'll cover reason #1: Simpson's paradox is a thing and it'll bite you hard it you're not looking for it.
 
 ## Simpson's paradox
 
-Simpson's paradox officially made its way into the literature in [this 1951 paper](http://math.bme.hu/~marib/bsmeur/simpson.pdf) by Simpson. Rather than define it outright, I'm going to demonstrate it with a classic example. The data come from the 1973 University of California, Berkeley, graduate admissions. Based on a simple breakdown of the admission rates, 44% of the men who applied were admitted. In contrast, only 35% of the women who applied were admitted. The university was accused of sexism and the issue made its way into the courts.
+Simpson's paradox officially made its way into the literature in [this 1951 paper](http://math.bme.hu/~marib/bsmeur/simpson.pdf) by Simpson. Rather than define the paradox outright, I'm going to demonstrate it with a classic example. The data come from the 1973 University of California, Berkeley, graduate admissions. Based on a simple breakdown of the admission rates, 44% of the men who applied were admitted. In contrast, only 35% of the women who applied were admitted. The university was accused of sexism and the issue made its way into the courts.
 
 However, when statisticians looked more closely at the data, it became apparent those data were not the compelling evidence of sexism they were initially made out to be. To see why, we'll want to get into the data, ourselves. The admissions rates for the six largest departments have made their way into the peer-reviewed literature ([Bickel, Hammel, & O'Connell, 1975](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.394.9241&rep=rep1&type=pdf)), into many textbooks (e.g., Danielle Navarro's [*Learning statistics with R*](https://learningstatisticswithr.com/lsr-0.6.pdf)), and are available in **R** as the built-in data set `UCBAdmissions`. Here we'll call them, convert the data into a tidy format [^2], and add a variable. 
 
@@ -55,7 +55,7 @@ d %>%
   summarise(percent_admitted = (100 * sum(Admitted) / sum(total)) %>% round(digits = 1))
 ```
 
-A 14% difference seems large enough to make a stink. However, the plot thickens when we break the data down by department. For that, we'll make a visual.
+A 14% difference seems large enough to justify a stink. However, the plot thickens when we break the data down by department. For that, we'll make a visual.
 
 ```{r, fig.width = 8, fig.height = 4}
 d %>%  
