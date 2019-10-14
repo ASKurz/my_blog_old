@@ -11,6 +11,255 @@
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
+      <title>Individuals are not small groups, II: The ecological fallacy</title>
+      <link>/post/individuals-are-not-small-groups-ii-the-ecological-fallacy/</link>
+      <pubDate>Mon, 14 Oct 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/individuals-are-not-small-groups-ii-the-ecological-fallacy/</guid>
+      <description>&lt;div id=&#34;tldr&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;tl;dr&lt;/h2&gt;
+&lt;p&gt;When people conclude results from group-level data will tell you about individual-level processes, even of the individuals whose data made up those group-level data, they commit the &lt;em&gt;ecological fallacy&lt;/em&gt;. This can be odd and counterintuitive. Keep reading to wade into the topic more slowly.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;we-need-history.&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;We need history.&lt;/h2&gt;
+&lt;p&gt;The ecological fallacy is closely related to Simpson’s paradox &lt;a href=&#34;#fn1&#34; class=&#34;footnote-ref&#34; id=&#34;fnref1&#34;&gt;&lt;sup&gt;1&lt;/sup&gt;&lt;/a&gt;. It is often attributed to sociologist William S. Robinson’s (1950) paper &lt;a href=&#34;https://www.jstor.org/stable/2087176?origin=crossref&amp;amp;seq=1#page_scan_tab_contents&#34;&gt;&lt;em&gt;Ecological Correlations and the Behavior of Individuals&lt;/em&gt;&lt;/a&gt;. My fellow psychologists might be happy to learn the idea goes back at least as far as E. L. Thorndike’s (1939) paper, &lt;a href=&#34;https://www.jstor.org/stable/1416673?seq=1#page_scan_tab_contents&#34;&gt;&lt;em&gt;On the fallacy of imputing the correlations found for groups to the individuals or smaller groups composing them&lt;/em&gt;&lt;/a&gt;. Yet as far as I can tell, the term “ecological fallacy” itself first appeared in sociologist Hanan C. Selvin’s (1958) paper, &lt;a href=&#34;https://s3.amazonaws.com/academia.edu.documents/33024288/Durkheim-suicide_empirical-research-problems.pdf?response-content-disposition=inline%3B%20filename%3DDurkheims_Suicide_and_Problems_of_Empiri.pdf&amp;amp;X-Amz-Algorithm=AWS4-HMAC-SHA256&amp;amp;X-Amz-Credential=AKIAIWOWYYGZ2Y53UL3A%2F20191014%2Fus-east-1%2Fs3%2Faws4_request&amp;amp;X-Amz-Date=20191014T151247Z&amp;amp;X-Amz-Expires=3600&amp;amp;X-Amz-SignedHeaders=host&amp;amp;X-Amz-Signature=4e9eeb342fa0332cd0f7ed00a4769661cb7c6921e07dd19a763595f037d35dae&#34;&gt;&lt;em&gt;Durkheim’s suicide and problems of empirical research&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The central point of seminal Robinson’s paper can be summed up in this quote: “&lt;em&gt;There need be no correspondence between the individual correlation and the ecological correlation&lt;/em&gt;” (p. 339, &lt;em&gt;emphasis&lt;/em&gt; added) &lt;a href=&#34;#fn2&#34; class=&#34;footnote-ref&#34; id=&#34;fnref2&#34;&gt;&lt;sup&gt;2&lt;/sup&gt;&lt;/a&gt;. Robinson framed his argument in terms of correlations. In more general and contemporary terms, his insight was that results from between-person analyses will not necessarily match up with results from within-person analyses. When we assume the results from a between-person analysis will tell us about within-person processes, we commit the ecological fallacy.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;an-example-might-help.&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;An example might help.&lt;/h2&gt;
+&lt;p&gt;Though Thorndike, Robinson, and Selvin all worked through examples of the ecological fallacy, I’m a fan of contemporary methodologist Ellen Hamaker’s example. We’ll quote from her (2012) chapter, &lt;a href=&#34;http://www.geo.uzh.ch/~screde/share/ReadingGroup/Hamaker-12.pdf&#34;&gt;&lt;em&gt;Why researchers should think “within-person”: A paradigmatic rationale&lt;/em&gt;&lt;/a&gt;, in bulk:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Suppose we are interested in the relationship between typing speed (i.e., number of words typed per minute) and the percentage of typos that are made. If we look at the cross-sectional relationship (i.e., the population level), we may well find a negative relationship, in that people who type faster make fewer mistakes (this may be reflective of the fact that people with better developed typing skills and more experience both type faster and make fewer mistakes). (p. 44)&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Based on a figure in Hamaker’s chapter, that cross-sectional relationship might look something like this.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)
+
+d %&amp;gt;% 
+  filter(j == 1) %&amp;gt;% 
+  
+  ggplot(aes(x = x, y = y)) +
+  geom_point(alpha = 2/3) +
+  stat_ellipse(size = 1/4) +
+  scale_x_continuous(&amp;quot;typing speed&amp;quot;, breaks = NULL, limits = c(-3, 3)) +
+  scale_y_continuous(&amp;quot;number of typos&amp;quot;, breaks = NULL, limits = c(-3, 3)) +
+  coord_equal() +
+  theme(panel.grid = element_blank())&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-10-14-individuals-are-not-small-groups-ii-the-ecological-fallacy_files/figure-html/unnamed-chunk-2-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Since these data were from one time point, they only allow us to make a between-person analysis.&lt;/p&gt;
+&lt;p&gt;I’m not going to show you how I made these data just yet. It’d break up the flow. For the curious, the statistical formula and code are at the end of the post. I should point out, though, that the scale is arbitrary.&lt;/p&gt;
+&lt;p&gt;Anyway, here’s that cross-sectional correlation.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d %&amp;gt;% 
+  filter(j == 1) %&amp;gt;% 
+  summarise(correlation_between_participants = cor(x, y))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 1 x 1
+##   correlation_between_participants
+##                              &amp;lt;dbl&amp;gt;
+## 1                           -0.696&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In the chapter, Hamaker continued her case.&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;If we were to generalize this result to the within-person level, we would conclude that if a particular person types faster, he or she will make fewer mistakes. Clearly, this is not what we expect: In fact, we are fairly certain that for any particular individual, the number of typos will increase if he or she tries to type faster. This implies a positive–rather than a negative–relationship at the within-person level. (p. 44)&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;The simulated data I just showed were from 50 participants at one measurement occasion. However, the full data set contains 50 measurement occasions for each of the 50 participants. In the next plot, we’ll show all 50 measurement occasions for just 5 participants. The &lt;span class=&#34;math inline&#34;&gt;\(n\)&lt;/span&gt; is reduced in the plot to avoid cluttering.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d %&amp;gt;% 
+  filter(i %in% c(1, 10, 25, 47, 50)) %&amp;gt;% 
+  mutate(i = factor(i)) %&amp;gt;% 
+  
+  ggplot() +
+  geom_point(aes(x = x, y = y, color = i),
+             size = 1/3) +
+  stat_ellipse(aes(x = x, y = y, color = i),
+               size = 1/5) +
+  geom_point(data = d %&amp;gt;% 
+               filter(j == 1 &amp;amp;
+                        i %in% c(1, 10, 25, 47, 50)),
+             aes(x = x0, y = y0),
+             size = 2, color = &amp;quot;grey50&amp;quot;) +
+  scale_color_viridis_d(option = &amp;quot;B&amp;quot;, begin = .25, end = .85) +
+  scale_x_continuous(&amp;quot;typing speed&amp;quot;, breaks = NULL, limits = c(-3, 3)) +
+  scale_y_continuous(&amp;quot;number of typos&amp;quot;, breaks = NULL, limits = c(-3, 3)) +
+  coord_equal() +
+  theme(panel.grid = element_blank(),
+        legend.position = &amp;quot;none&amp;quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-10-14-individuals-are-not-small-groups-ii-the-ecological-fallacy_files/figure-html/unnamed-chunk-4-1.png&#34; width=&#34;672&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;The points are colored by participant. The gray points in each data cloud are the participant-level means. Although we still see a clear negative relationship between participants, we now also see a mild positive relationship within participants. If we compute the correlation separately for each of our 50 participants, we can summarize the results in a histogram.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d %&amp;gt;% 
+  group_by(i) %&amp;gt;% 
+  summarise(r = cor(x, y) %&amp;gt;% round(digits = 2)) %&amp;gt;% 
+  
+  ggplot(aes(x = r)) +
+  geom_histogram(binwidth = .1) +
+  xlab(&amp;quot;correlations within participants&amp;quot;) +
+  theme(panel.grid = element_blank())&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-10-14-individuals-are-not-small-groups-ii-the-ecological-fallacy_files/figure-html/unnamed-chunk-6-1.png&#34; width=&#34;288&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;In this case, the within-person correlations all clustered together around -.3. That won’t necessarily be the case in other contexts.&lt;/p&gt;
+&lt;p&gt;Hopefully this gives you a sense of how meaningless a question like &lt;em&gt;What is the correlation between typing speed and typo rates?&lt;/em&gt; is. The question is poorly specified because it makes no distinction between the between- and within-person frameworks. As it turns out, the answer could well be different depending on which one you care about and which one you end up studying. I suspect poorly-specified questions of this kind are scattered throughout the literature. For example, I’m a clinical psychologist. Have you ever heard a clinical psychologist talk about how highly anxiety is correlated with depression? And yet much of that evidence is cross-sectional (e.g., correlations between the anxiety and depression subscales of the DASS; &lt;a href=&#34;https://www.womenshealthapta.org/wp-content/uploads/2013/12/DASS-Lovibond.pdf&#34;&gt;Lovibond &amp;amp; Lovibond, 1995&lt;/a&gt;). But what about &lt;em&gt;within&lt;/em&gt; specific people? Do you really believe anxiety and depression are highly-correlated in all people? More cross-sectional analyses will not answer that question.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;take-home-the-take-home.&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Take home the take-home.&lt;/h2&gt;
+&lt;p&gt;Our typing data are is just one example of how between- and within-person analyses can differ. To see Hamaker walk out the example herself, check out her &lt;a href=&#34;https://www.youtube.com/watch?v=RnbsXfE2R9g&#34;&gt;talk on the subject&lt;/a&gt; from a few years ago. I think you’ll find her an engaging speaker. To close this topic out, it’s worth considering the Conclusion section from Robinson’s (1950) paper in full:&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;The relation between ecological and individual correlations which is discussed in this paper provides a definite answer as to whether ecological correlations can validly be used as substitutes for individual correlations. They cannot. While it is theoretically possible for the two to be equal, the conditions under which this can happen are far removed from those ordinarily encountered in data. From a practical standpoint, therefore, the only reasonable assumption is that an ecological correlation is almost certainly not equal to its corresponding individual correlation.&lt;/p&gt;
+&lt;p&gt;I am aware that this conclusion has serious consequences, and that its effect appears wholly negative because it throws serious doubt upon the validity of a number of important studies made in recent years. The purpose of this paper will have been accomplished, however, if it prevents the future computation of meaningless correlations and stimulates the study of similar problems with the use of meaningful correlations between the properties of individuals. (pp. 340–341)&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;/div&gt;
+&lt;div id=&#34;this-stuff-is-hard.&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;This stuff is hard.&lt;/h2&gt;
+&lt;p&gt;Let’s do a brief recap. With Simpson’s paradox, we learned that the apparent association between two variables can be attenuated after conditioning on a relevant third variable. In the literature, that third variable is often a grouping variable like gender or college department.&lt;/p&gt;
+&lt;p&gt;The ecological fallacy demonstrated something similar, but from a different angle. That literature showed us that the results from a between-person analysis will not necessarily inform us of within-person processes. The converse is logically true, too. Indeed, the ecological fallacy is something of a special case of Simpson’s paradox. With the ecological fallacy, the grouping variable is participant id which, when accounted for, yields a different level of analysis &lt;a href=&#34;#fn3&#34; class=&#34;footnote-ref&#34; id=&#34;fnref3&#34;&gt;&lt;sup&gt;3&lt;/sup&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;With both validity threats, the results of an analysis can attenuate, go to zero, or even switch sign. With the Berkeley example in the &lt;a href=&#34;https://solomonkurz.netlify.com/post/individuals-are-not-small-groups-i-simpson-s-paradox/&#34;&gt;previous post&lt;/a&gt;, the relation went to zero. With our simulated data inspired by Hamaker’s example, the effect size went from a large negative cross-sectional correlation to a bundle of small/medium &lt;em&gt;positive&lt;/em&gt; within-person correlations. These are non-trivial changes.&lt;/p&gt;
+&lt;p&gt;If at this point you find yourself fatigued and your head hurts a little, don’t worry. You’re probably normal. In a series of experiments, &lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.839.8878&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;Fiedler, Walther, Freytag, and Nickel (2003)&lt;/a&gt; showed it’s quite normal to struggle with these concepts. For more practice, check out Kievit, Frankenhuis, Waldorp, and Borsboom’s nice (2013) paper, &lt;a href=&#34;https://www.frontiersin.org/articles/10.3389/fpsyg.2013.00513&#34;&gt;&lt;em&gt;Simpson’s paradox in psychological science: a practical guide&lt;/em&gt;&lt;/a&gt;. Kuppens and Pollet (2014) covered more examples of the fallacy in their &lt;a href=&#34;https://www.frontiersin.org/articles/10.3389/fpsyg.2014.01110/full#h5&#34;&gt;&lt;em&gt;Mind the level: problems with two recent nation-level analyses in psychology&lt;/em&gt;&lt;/a&gt;. I’ve also worked out and posted the example from Thorndike’s (1939) paper, which you can find &lt;a href=&#34;https://github.com/ASKurz/ecological_fallacy_Thorndike/tree/master&#34;&gt;here&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;In the next post, we’ll flesh out this between- versus within-person stuff a bit more with a dive into traits versus states.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;afterward-how-might-one-simulate-those-typing-speed-data&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Afterward: How might one simulate those typing speed data?&lt;/h2&gt;
+&lt;p&gt;In those simulated data, we generically named the “typing speed” variable &lt;code&gt;x&lt;/code&gt; and the “error count” variable &lt;code&gt;y&lt;/code&gt;. If you let the index &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt; stand for the &lt;span class=&#34;math inline&#34;&gt;\(i^\text{th}\)&lt;/span&gt; case and &lt;span class=&#34;math inline&#34;&gt;\(j\)&lt;/span&gt; stand for the &lt;span class=&#34;math inline&#34;&gt;\(j^\text{th}\)&lt;/span&gt; measurement occasion, the data-generating formula is as follows:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
+x_{ij}, y_{ij} &amp;amp; \sim 
+
+\text{MVNormal} 
+\begin{pmatrix}
+
+\begin{bmatrix} 
+\mu_{i}^x \\ \mu_{i}^y
+\end{bmatrix},
+
+\begin{bmatrix} 
+\sigma_{ij}^x \\ \sigma_{ij}^y
+\end{bmatrix}
+
+\end{pmatrix} \\
+
+\mu_i^x &amp;amp; = \beta_{0_i}^x \\
+\mu_i^y &amp;amp; = \beta_{0_i}^y \\
+
+\begin{bmatrix} 
+\beta_{0_i}^x \\ \beta_{0_i}^y
+\end{bmatrix} &amp;amp; \sim \text{MVNormal}
+
+\begin{pmatrix} 
+\begin{bmatrix} 
+\beta_0^x \\ \beta_0^y
+\end{bmatrix}, 
+
+\begin{bmatrix} 
+1 &amp;amp; .8 \\ .8 &amp;amp; 1
+\end{bmatrix}
+
+\end{pmatrix} \\
+
+\begin{bmatrix} 
+\sigma_{ij}^x \\ \sigma_{ij}^y
+\end{bmatrix} &amp;amp; \sim \text{MVNormal}
+
+\begin{pmatrix} 
+\begin{bmatrix} 
+0 \\ 0
+\end{bmatrix}, 
+
+\begin{bmatrix} 
+0.2 &amp;amp; -.2 \\ -.2 &amp;amp; 0.2
+\end{bmatrix}
+
+\end{pmatrix}
+
+\end{align*}\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;For simplicity, &lt;span class=&#34;math inline&#34;&gt;\(\beta_0^x\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\beta_0^y\)&lt;/span&gt; were fixed to zero. Note I’m using the &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; parameterization instead of the &lt;span class=&#34;math inline&#34;&gt;\(\sigma^2\)&lt;/span&gt; parameterization. In words, this is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out &lt;a href=&#34;https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/&#34;&gt;Baldwin, Imel, Braithwaite, and Atkins (2014)&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The approach I used to generate the data is an extension of the one from my project recoding McElreath’s (2015) text. You can find the original code, &lt;a href=&#34;https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction&#34;&gt;here&lt;/a&gt;. There are two big changes to the original. First, setting the random effects for the mean structure to a &lt;span class=&#34;math inline&#34;&gt;\(z\)&lt;/span&gt;-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the &lt;code&gt;x&lt;/code&gt; and &lt;code&gt;y&lt;/code&gt; values.&lt;/p&gt;
+&lt;p&gt;First, define the mean structure.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;n     &amp;lt;- 50   # choose the n
+
+b0    &amp;lt;-  0   # average morning wait time
+b1    &amp;lt;-  0   # average difference afternoon wait time
+sd_b0 &amp;lt;-  1   # std dev in intercepts
+sd_b1 &amp;lt;-  1   # std dev in slopes
+r     &amp;lt;- -.8  # correlation between intercepts and slopes
+
+# the next three lines of code simply combine the terms, above
+mu     &amp;lt;- c(b0, b1)
+sigma  &amp;lt;- matrix(c(sd_b0, r, 
+                   r, sd_b1), ncol = 2)
+set.seed(1)
+m &amp;lt;-
+  MASS::mvrnorm(n, mu, sigma) %&amp;gt;% 
+  data.frame() %&amp;gt;% 
+  set_names(&amp;quot;x0&amp;quot;, &amp;quot;y0&amp;quot;) %&amp;gt;% 
+  arrange(x0) %&amp;gt;% 
+  mutate(i = 1:n) %&amp;gt;% 
+  expand(nesting(i, x0, y0),
+         j = 1:n) &lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Second, define the residual structure.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sigma  &amp;lt;- matrix(c(sd_b0, .3, 
+                   .3, sd_b1), ncol = 2)
+set.seed(1)
+r &amp;lt;-
+  MASS::mvrnorm(n * n, mu, sigma) %&amp;gt;% 
+  data.frame() %&amp;gt;% 
+  set_names(&amp;quot;xr&amp;quot;, &amp;quot;yr&amp;quot;) %&amp;gt;% 
+  mutate_all(.funs = ~. * .25)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Combine the two data structures and save.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d &amp;lt;-
+  bind_cols(m, r) %&amp;gt;% 
+  mutate(x = x0 + xr,
+         y = y0 + yr) &lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Because we used the &lt;code&gt;set.seed()&lt;/code&gt; function before each simulation step, you will be able to reproduce the results exactly.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;session-info&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Session info&lt;/h2&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## R version 3.6.0 (2019-04-26)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS High Sierra 10.13.6
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] forcats_0.4.0   stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2    
+## [5] readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
+## [9] tidyverse_1.2.1
+## 
+## loaded via a namespace (and not attached):
+##  [1] tidyselect_0.2.5  xfun_0.10         haven_2.1.0      
+##  [4] lattice_0.20-38   colorspace_1.4-1  vctrs_0.2.0      
+##  [7] generics_0.0.2    viridisLite_0.3.0 htmltools_0.4.0  
+## [10] yaml_2.2.0        utf8_1.1.4        rlang_0.4.0      
+## [13] pillar_1.4.2      glue_1.3.1        withr_2.1.2      
+## [16] modelr_0.1.4      readxl_1.3.1      lifecycle_0.1.0  
+## [19] munsell_0.5.0     blogdown_0.14     gtable_0.3.0     
+## [22] cellranger_1.1.0  rvest_0.3.4       evaluate_0.14    
+## [25] labeling_0.3      knitr_1.23        fansi_0.4.0      
+## [28] broom_0.5.2       Rcpp_1.0.2        scales_1.0.0     
+## [31] backports_1.1.5   jsonlite_1.6      hms_0.4.2        
+## [34] digest_0.6.21     stringi_1.4.3     bookdown_0.12    
+## [37] grid_3.6.0        cli_1.1.0         tools_3.6.0      
+## [40] magrittr_1.5      lazyeval_0.2.2    crayon_1.3.4     
+## [43] pkgconfig_2.0.3   zeallot_0.1.0     MASS_7.3-51.4    
+## [46] xml2_1.2.0        lubridate_1.7.4   assertthat_0.2.1 
+## [49] rmarkdown_1.13    httr_1.4.0        rstudioapi_0.10  
+## [52] R6_2.4.0          nlme_3.1-139      compiler_3.6.0&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;div id=&#34;footnotes&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Footnotes&lt;/h2&gt;
+&lt;/div&gt;
+&lt;div class=&#34;footnotes&#34;&gt;
+&lt;hr /&gt;
+&lt;ol&gt;
+&lt;li id=&#34;fn1&#34;&gt;&lt;p&gt;Do you need a refresher on Simpson’s paradox? Click &lt;a href=&#34;https://solomonkurz.netlify.com/post/individuals-are-not-small-groups-i-simpson-s-paradox/&#34;&gt;here&lt;/a&gt;.&lt;a href=&#34;#fnref1&#34; class=&#34;footnote-back&#34;&gt;↩&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li id=&#34;fn2&#34;&gt;&lt;p&gt;The page numbers in this section might could use some clarifications. It’s a bit of a pain to locate a PDF of Robinson’s original 1950 paper. If you do a casual online search, it’s more likely you’ll come across &lt;a href=&#34;https://academic.oup.com/ije/article/38/2/337/658252&#34;&gt;this 2009 reprint of the paper&lt;/a&gt;. To the best of my knowledge, the reprint is faithful. For all the Robinson quotes in this post, the page numbers are based on the 2009 reprint.&lt;a href=&#34;#fnref2&#34; class=&#34;footnote-back&#34;&gt;↩&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;li id=&#34;fn3&#34;&gt;&lt;p&gt;Some readers may see the multilevel model lurking in the shadows, here. You’re right. When we think of the relationship between Simpson’s paradox and the ecological fallacy, I find it particularly instructive to recall how the multilevel model can be thought of as a high-rent interaction model. I’m not making that point directly in the prose, yet, for the sake of keeping the content more general and conceptual. But yes, the multilevel model will move out of the shadows into the light of day as we press forward in this series.&lt;a href=&#34;#fnref3&#34; class=&#34;footnote-back&#34;&gt;↩&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Individuals are not small groups, I: Simpson&#39;s paradox</title>
       <link>/post/individuals-are-not-small-groups-i-simpson-s-paradox/</link>
       <pubDate>Wed, 09 Oct 2019 00:00:00 +0000</pubDate>
@@ -5420,79 +5669,6 @@ b14.6 %&amp;gt;%
 ##  [99] xtable_1.8-4              httpuv_1.5.1             
 ## [101] stats4_3.6.0              munsell_0.5.0            
 ## [103] viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Don&#39;t pay to meditate</title>
-      <link>/post/dont-pay-to-meditate/</link>
-      <pubDate>Sun, 07 Oct 2018 00:00:00 +0000</pubDate>
-      
-      <guid>/post/dont-pay-to-meditate/</guid>
-      <description>&lt;p&gt;The other day, my Twitter feed informed me Penn Jillette just clocked in 1000 consecutive days of meditation using the Headspace app. Now he’s considering checking out Sam Harris’s new Waking Up meditation app. Sam left a congratulatory comment on Penn’s tweet.&lt;/p&gt;
-&lt;blockquote class=&#34;twitter-tweet&#34;&gt;&lt;p lang=&#34;en&#34; dir=&#34;ltr&#34;&gt;Well done, Penn! &lt;a href=&#34;https://t.co/SZkKocIPEH&#34;&gt;https://t.co/SZkKocIPEH&lt;/a&gt;&lt;/p&gt;&amp;mdash; Sam Harris (@SamHarrisOrg) &lt;a href=&#34;https://twitter.com/SamHarrisOrg/status/1048730683940646914?ref_src=twsrc%5Etfw&#34;&gt;October 7, 2018&lt;/a&gt;&lt;/blockquote&gt;
-&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;
-
-&lt;p&gt;The whole thing was rainbows and kittens. And it reminded me to pass on some advice: &lt;strong&gt;Stop using fee-based meditation apps!&lt;/strong&gt;&lt;/p&gt;
-&lt;div id=&#34;what&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;What?&lt;/h2&gt;
-&lt;p&gt;The &lt;a href=&#34;https://www.headspace.com/headspace-meditation-app&#34;&gt;Headspace app&lt;/a&gt; is popular and highly-rated. It’s free to download and has some nice features, like reminders to meditate. However, if you want full access to its library of guided meditation audio recordings, you’ll need to pay a fee at a monthly, yearly, or lifetime rate.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/HS_subscription.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;Sam Harris’s &lt;a href=&#34;https://wakingup.com/home-reviews/?_ga=2.267492553.617729158.1538952176-2137086923.1448849490&amp;amp;utm_expid=.4j5YZcqhSKSYqCMuOBBY-A.1&amp;amp;utm_referrer=https%3A%2F%2Fsamharris.org%2F&#34;&gt;Waking Up app&lt;/a&gt; app is also free to download. It’s new and, in fairness, we’ll have to wait and see how its format will unfold. But at present it has more of a course-type format. The free version gives you access to five guided meditations and three lessons. But if you want full access to the app’s content, you also have to subscribe.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/WU_subscribe.jpg&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;I have no problem with the Headspace and Waking Up apps. They have many fine features. And I’m even a fan of a lot Harris’s work. But we have a cheaper, high-quality option:&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;consider-insight-timer&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Consider &lt;a href=&#34;https://insighttimer.com&#34;&gt;Insight Timer&lt;/a&gt;&lt;/h2&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_bowl.png&#34; style=&#34;width:50.0%&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;&lt;a href=&#34;https://insighttimer.com&#34;&gt;Insight Timer&lt;/a&gt; comes with a free and pay versions, too. But just download the free version. It’s excellent and all you need for your meditation needs. Let me list the reasons why.&lt;/p&gt;
-&lt;div id=&#34;the-free-library-is-extensive.&#34; class=&#34;section level3&#34;&gt;
-&lt;h3&gt;The free library is extensive.&lt;/h3&gt;
-&lt;p&gt;At the time of this writing, my free subscription to Insight Timer gives me access to some 12,000 guided meditation audios. Most of them are in English. But many are offered in other languages, such as Hebrew, Malay, and Spanish.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_languages.jpg&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
-&lt;div id=&#34;duration.&#34; class=&#34;section level4&#34;&gt;
-&lt;h4&gt;Duration.&lt;/h4&gt;
-&lt;p&gt;Their durations vary. The bulk of the guided meditations seem to be in the 5-to-20-minute range. But some last more than an hour.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_duration.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;people-and-their-voices.&#34; class=&#34;section level4&#34;&gt;
-&lt;h4&gt;People and their voices.&lt;/h4&gt;
-&lt;p&gt;Insight Timer’s deep library boasts an impressive cast of meditation teachers. I was happy to see some familiar high-profile meditation teachers, such as Tara Brach and Joseph Goldstein. But I have also discovered new favorites, like Stephen Pende Wormland and Dawn Mauricio. To be sure, the quality of the audio recordings varies. But more importantly, they also vary in terms of vocal tone and pacing. There should be a vocal style to suit just about everyone.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_teachers.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;emphasis.&#34; class=&#34;section level4&#34;&gt;
-&lt;h4&gt;Emphasis.&lt;/h4&gt;
-&lt;p&gt;I’m an academic and generally prefer meditations that are secular and connected to the clinical literature (e.g., &lt;a href=&#34;https://www.sciencedirect.com/science/article/pii/S0272735817303847?via%3Dihub&#34;&gt;this recent meta-analysis&lt;/a&gt;). Happily, the Insight Timer library contains offerings based on mindfulness-based stress reduction (&lt;a href=&#34;https://www.umassmed.edu/cfm/mindfulness-based-programs/mbsr-courses/about-mbsr/history-of-mbsr/&#34;&gt;MBSR&lt;/a&gt;) and its derivatives (e.g., &lt;a href=&#34;http://www.mbct.com&#34;&gt;mindfulness-based cognitive therapy&lt;/a&gt;, &lt;a href=&#34;https://www.mindfulrp.com&#34;&gt;mindfulness-based relapse prevention&lt;/a&gt;).&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_mindfulness.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;But you can also find meditations grounded within a number of faith traditions.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_faith.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;music.&#34; class=&#34;section level4&#34;&gt;
-&lt;h4&gt;Music.&lt;/h4&gt;
-&lt;p&gt;I’ve focused mainly on vocally-driven meditations. However, Insight Timer also contains music/sound-based recordings. I’m partial to recordings featuring Tibetan singing bowls.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_bowls.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;div id=&#34;its-a-timer-too.&#34; class=&#34;section level3&#34;&gt;
-&lt;h3&gt;It’s a timer, too.&lt;/h3&gt;
-&lt;p&gt;Sometimes you just want a silent meditation. For those occasions, Insight Timer offers a nice timer feature. You can set it like a stopwatch to whatever duration you prefer, and choose among an array of sounds to mark the beginning and end of your sit.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_timer.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;it-tracks.&#34; class=&#34;section level3&#34;&gt;
-&lt;h3&gt;It tracks.&lt;/h3&gt;
-&lt;p&gt;If you go to the Profile section of the app, you’ll discover it keeps track of your use and displays various summaries in attractive bar plots.&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-07-dont-pay-to-meditate_files/IT_track.PNG&#34; style=&#34;width:33.0%&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;[And yes, I generally agree with Richard McElreath: “The only problem with barplots is that they have bars” (p. 203, &lt;a href=&#34;https://bookdown.org/connect/#/apps/1850/access&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt;&lt;/a&gt;). You can’t have everything.]&lt;/p&gt;
-&lt;/div&gt;
-&lt;/div&gt;
-&lt;div id=&#34;insight-timer-is-great-for-researchers&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Insight Timer is great for researchers&lt;/h2&gt;
-&lt;p&gt;Insight Timer allows you to download your data as a CSV file, which you can keep for yourself or email to others. Over the years, I’ve used the app to run group meditations within my research protocols. Since I selected the audios from the app, it allowed me to standardize the instructions across meditation sessions. Although my research assistants and I used the app on our phones to play the audios, our participants would use the timer functions on the apps on their phones to record their sessions. This gave us duplicate attendance records: one on a sign-in sheet and another on their phones. In longitudinal studies, participants could use the app on their own time and each of those sessions were recorded in the app. At the end of our studies, we were then able to download their use records as CSV files ready for pre-analysis data wrangling.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;parting-thoughts&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Parting thoughts&lt;/h2&gt;
-&lt;p&gt;Insight Timer has other functions, such as social networking and dharma talks. I just don’t care about those things, so you can learn about them on your own. But if you’re interested in learning about meditation or even if you’re a veteran meditator looking for a convenient app to augment your practice with, do consider Insight Timer. There’s no reason to spend your money on the alternatives before you capitalize on such a powerful resource that’s available to you for free.&lt;/p&gt;
 &lt;/div&gt;
 </description>
     </item>

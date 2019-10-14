@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Wed, 09 Oct 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 14 Oct 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/idiographic/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Individuals are not small groups, II: The ecological fallacy</title>
+      <link>/post/individuals-are-not-small-groups-ii-the-ecological-fallacy/</link>
+      <pubDate>Mon, 14 Oct 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/individuals-are-not-small-groups-ii-the-ecological-fallacy/</guid>
+      <description>tl;dr When people conclude results from group-level data will tell you about individual-level processes, even of the individuals whose data made up those group-level data, they commit the ecological fallacy. This can be odd and counterintuitive. Keep reading to wade into the topic more slowly.
+ We need history. The ecological fallacy is closely related to Simpson’s paradox 1. It is often attributed to sociologist William S. Robinson’s (1950) paper Ecological Correlations and the Behavior of Individuals.</description>
+    </item>
     
     <item>
       <title>Individuals are not small groups, I: Simpson&#39;s paradox</title>
