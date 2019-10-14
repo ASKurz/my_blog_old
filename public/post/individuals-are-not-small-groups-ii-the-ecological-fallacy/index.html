@@ -351,7 +351,7 @@
 </div>
 <div id="an-example-might-help." class="section level2">
 <h2>An example might help.</h2>
-<p>Though Thorndike, Robinson, and Selvin all worked through examples of the ecological fallacy, I’m a fan of contemporary methodologist Ellen L. Hamaker’s way of explaining it. We’ll quote from her (2012) chapter, <a href="http://www.geo.uzh.ch/~screde/share/ReadingGroup/Hamaker-12.pdf"><em>Why researchers should think “within-person”: A paradigmatic rationale</em></a>, in bulk:</p>
+<p>Though Thorndike, Robinson, and Selvin all worked through examples of the ecological fallacy, I’m a fan of contemporary methodologist Ellen L. Hamaker’s way of explaining it. We’ll quote from her (2012) chapter, <a href="https://www.researchgate.net/publication/266896375_Why_researchers_should_think_within-person_A_paradigmatic_rationale"><em>Why researchers should think “within-person”: A paradigmatic rationale</em></a>, in bulk:</p>
 <blockquote>
 <p>Suppose we are interested in the relationship between typing speed (i.e., number of words typed per minute) and the percentage of typos that are made. If we look at the cross-sectional relationship (i.e., the population level), we may well find a negative relationship, in that people who type faster make fewer mistakes (this may be reflective of the fact that people with better developed typing skills and more experience both type faster and make fewer mistakes). (p. 44)</p>
 </blockquote>
@@ -488,7 +488,7 @@ x_{ij}, y_{ij} &amp; \sim
 
 \end{align*}\]</span></p>
 <p>For simplicity, <span class="math inline">\(\beta_0^x\)</span> and <span class="math inline">\(\beta_0^y\)</span> were fixed to zero. Note I’m using the <span class="math inline">\(\sigma\)</span> parameterization instead of the <span class="math inline">\(\sigma^2\)</span> parameterization. In words, this is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/">Baldwin, Imel, Braithwaite, and Atkins (2014)</a>.</p>
-<p>The approach I used to generate the data is an extension of the one from my project recoding McElreath’s (2015) text. You can find the original code, <a href="https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction">here</a>. There are two big changes to the original. First, setting the random effects for the mean structure to a <span class="math inline">\(z\)</span>-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the <code>x</code> and <code>y</code> values.</p>
+<p>The approach I used to generate the data is an extension of the one I used in chapter 13 of my project recoding McElreath’s (2015) text. You can find that code, <a href="https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction">here</a>. There are two big changes to the original. First, setting the random effects for the mean structure to a <span class="math inline">\(z\)</span>-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the <code>x</code> and <code>y</code> values.</p>
 <p>First, define the mean structure.</p>
 <pre class="r"><code>n     &lt;- 50   # choose the n
 

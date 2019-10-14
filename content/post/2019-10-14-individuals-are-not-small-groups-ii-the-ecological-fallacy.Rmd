@@ -29,7 +29,7 @@ The central point of seminal Robinson's seminal paper can be summed up in this q
 
 ## An example might help.
 
-Though Thorndike, Robinson, and Selvin all worked through examples of the ecological fallacy, I'm a fan of contemporary methodologist Ellen L. Hamaker's way of explaining it. We'll quote from her (2012) chapter, [*Why researchers should think "within-person": A paradigmatic rationale*](http://www.geo.uzh.ch/~screde/share/ReadingGroup/Hamaker-12.pdf), in bulk:
+Though Thorndike, Robinson, and Selvin all worked through examples of the ecological fallacy, I'm a fan of contemporary methodologist Ellen L. Hamaker's way of explaining it. We'll quote from her (2012) chapter, [*Why researchers should think "within-person": A paradigmatic rationale*](https://www.researchgate.net/publication/266896375_Why_researchers_should_think_within-person_A_paradigmatic_rationale), in bulk:
 
 > Suppose we are interested in the relationship between typing speed (i.e., number of words typed per minute) and the percentage of typos that are made. If we look at the cross-sectional relationship (i.e., the population level), we may well find a negative relationship, in that people who type faster make fewer mistakes (this may be reflective of the fact that people with better developed typing skills and more experience both type faster and make fewer mistakes). (p. 44)
 
@@ -247,7 +247,7 @@ x_{ij}, y_{ij} & \sim
 
 For simplicity, $\beta_0^x$ and $\beta_0^y$ were fixed to zero. Note I'm using the $\sigma$ parameterization instead of the $\sigma^2$ parameterization. In words, this is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out [Baldwin, Imel, Braithwaite, and Atkins (2014)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/).
 
-The approach I used to generate the data is an extension of the one from my project recoding McElreath's (2015) text. You can find the original code, [here](https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction). There are two big changes to the original. First, setting the random effects for the mean structure to a $z$-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the `x` and `y` values.
+The approach I used to generate the data is an extension of the one I used in chapter 13 of my project recoding McElreath's (2015) text. You can find that code, [here](https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction). There are two big changes to the original. First, setting the random effects for the mean structure to a $z$-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the `x` and `y` values.
 
 First, define the mean structure.
 
