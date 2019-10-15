@@ -437,8 +437,7 @@ d %&gt;%
 <div id="afterward-how-might-one-simulate-those-typing-speed-data" class="section level2">
 <h2>Afterward: How might one simulate those typing speed data?</h2>
 <p>In those simulated data, we generically named the “typing speed” variable <code>x</code> and the “error count” variable <code>y</code>. If you let the index <span class="math inline">\(i\)</span> stand for the <span class="math inline">\(i^\text{th}\)</span> case and <span class="math inline">\(j\)</span> stand for the <span class="math inline">\(j^\text{th}\)</span> measurement occasion, the data-generating formula is as follows:</p>
-<p>$$
-<span class="math display">\[\begin{align*}
+<p><span class="math display">\[\begin{align*}
 \text x_{ij} &amp; = \gamma_{00}^\text x + \zeta_{0i}^\text x + \epsilon_{ij}^\text x \\
 \text y_{ij} &amp; = \gamma_{00}^\text y + \zeta_{0i}^\text y + \epsilon_{ij}^\text y, \text{where} \\
 
@@ -472,8 +471,7 @@ d %&gt;%
 
 \end{pmatrix}.
 
-\end{align*}\]</span>
-$$</p>
+\end{align*}\]</span></p>
 <p>Because the variances for the <span class="math inline">\(\zeta\)</span>s were 1, that put them in a standardized metric. As such <span class="math inline">\(-0.08\)</span> is both a covariance and a correlation. The values in the variance/covariance matrix for the <span class="math inline">\(\epsilon\)</span>s was something I came to by trial and error, which I cover in more detail, below. In words, this model is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/">Baldwin, Imel, Braithwaite, and Atkins (2014)</a>.</p>
 <p>The approach I used to generate the data is an extension of the one I used in chapter 13 of my project recoding McElreath’s (2015) text. You can find that code, <a href="https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction">here</a>. There are two big changes to the original. First, setting the random effects for the mean structure to a <span class="math inline">\(z\)</span>-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the <code>x</code> and <code>y</code> values.</p>
 <p>First, define the mean structure.</p>

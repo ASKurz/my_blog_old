@@ -113,8 +113,7 @@ d %&amp;gt;%
 &lt;div id=&#34;afterward-how-might-one-simulate-those-typing-speed-data&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Afterward: How might one simulate those typing speed data?&lt;/h2&gt;
 &lt;p&gt;In those simulated data, we generically named the “typing speed” variable &lt;code&gt;x&lt;/code&gt; and the “error count” variable &lt;code&gt;y&lt;/code&gt;. If you let the index &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt; stand for the &lt;span class=&#34;math inline&#34;&gt;\(i^\text{th}\)&lt;/span&gt; case and &lt;span class=&#34;math inline&#34;&gt;\(j\)&lt;/span&gt; stand for the &lt;span class=&#34;math inline&#34;&gt;\(j^\text{th}\)&lt;/span&gt; measurement occasion, the data-generating formula is as follows:&lt;/p&gt;
-&lt;p&gt;$$
-&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
 \text x_{ij} &amp;amp; = \gamma_{00}^\text x + \zeta_{0i}^\text x + \epsilon_{ij}^\text x \\
 \text y_{ij} &amp;amp; = \gamma_{00}^\text y + \zeta_{0i}^\text y + \epsilon_{ij}^\text y, \text{where} \\
 
@@ -148,8 +147,7 @@ d %&amp;gt;%
 
 \end{pmatrix}.
 
-\end{align*}\]&lt;/span&gt;
-$$&lt;/p&gt;
+\end{align*}\]&lt;/span&gt;&lt;/p&gt;
 &lt;p&gt;Because the variances for the &lt;span class=&#34;math inline&#34;&gt;\(\zeta\)&lt;/span&gt;s were 1, that put them in a standardized metric. As such &lt;span class=&#34;math inline&#34;&gt;\(-0.08\)&lt;/span&gt; is both a covariance and a correlation. The values in the variance/covariance matrix for the &lt;span class=&#34;math inline&#34;&gt;\(\epsilon\)&lt;/span&gt;s was something I came to by trial and error, which I cover in more detail, below. In words, this model is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out &lt;a href=&#34;https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/&#34;&gt;Baldwin, Imel, Braithwaite, and Atkins (2014)&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;The approach I used to generate the data is an extension of the one I used in chapter 13 of my project recoding McElreath’s (2015) text. You can find that code, &lt;a href=&#34;https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction&#34;&gt;here&lt;/a&gt;. There are two big changes to the original. First, setting the random effects for the mean structure to a &lt;span class=&#34;math inline&#34;&gt;\(z\)&lt;/span&gt;-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the &lt;code&gt;x&lt;/code&gt; and &lt;code&gt;y&lt;/code&gt; values.&lt;/p&gt;
 &lt;p&gt;First, define the mean structure.&lt;/p&gt;

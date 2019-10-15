@@ -197,7 +197,6 @@ In the next post, we'll continue developing this material with a discussion of t
 
 In those simulated data, we generically named the "typing speed" variable `x` and the "error count" variable `y`. If you let the index $i$ stand for the $i^\text{th}$ case and $j$ stand for the $j^\text{th}$ measurement occasion, the data-generating formula is as follows:
 
-$$
 \begin{align*}
 \text x_{ij} & = \gamma_{00}^\text x + \zeta_{0i}^\text x + \epsilon_{ij}^\text x \\
 \text y_{ij} & = \gamma_{00}^\text y + \zeta_{0i}^\text y + \epsilon_{ij}^\text y, \text{where} \\
@@ -233,7 +232,6 @@ $$
 \end{pmatrix}.
 
 \end{align*}
-$$
 
 Because the variances for the $\zeta$s were 1, that put them in a standardized metric. As such $-0.08$ is both a covariance and a correlation. The values in the variance/covariance matrix for the $\epsilon$s was something I came to by trial and error, which I cover in more detail, below. In words, this model is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out [Baldwin, Imel, Braithwaite, and Atkins (2014)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/).
 
