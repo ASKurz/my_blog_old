@@ -19,13 +19,13 @@ header:
 
 ## tl;dr
 
-When people conclude results from group-level data will tell you about individual-level processes, even of the individuals whose data made up those group-level data, they commit the *ecological fallacy*. This can be odd and counterintuitive. Keep reading to wade into the topic more slowly.
+When people conclude results from group-level data will tell you about individual-level processes, they commit the *ecological fallacy*. This is true even of the individuals whose data contributed to those group-level results. This phenomenon can seem odd and counterintuitive. Keep reading to improve your intuition.
 
 ## We need history.
 
 The ecological fallacy is closely related to Simpson's paradox [^1]. It is often attributed to sociologist William S. Robinson's (1950) paper [*Ecological Correlations and the Behavior of Individuals*](https://www.jstor.org/stable/2087176?origin=crossref&seq=1#page_scan_tab_contents). My fellow psychologists might be happy to learn the idea goes back at least as far as E. L. Thorndike's (1939) paper, [*On the fallacy of imputing the correlations found for groups to the individuals or smaller groups composing them*](https://www.jstor.org/stable/1416673?seq=1#page_scan_tab_contents). Yet as far as I can tell, the term "ecological fallacy" itself first appeared in sociologist Hanan C. Selvin's (1958) paper, [*Durkheim's suicide and problems of empirical research*](https://s3.amazonaws.com/academia.edu.documents/33024288/Durkheim-suicide_empirical-research-problems.pdf?response-content-disposition=inline%3B%20filename%3DDurkheims_Suicide_and_Problems_of_Empiri.pdf&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWOWYYGZ2Y53UL3A%2F20191014%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20191014T151247Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=4e9eeb342fa0332cd0f7ed00a4769661cb7c6921e07dd19a763595f037d35dae).
 
-The central point of seminal Robinson's seminal paper can be summed up in this quote: "*There need be no correspondence between the individual correlation and the ecological correlation*" (p. 339, *emphasis* added) [^2]. Robinson framed his argument in terms of correlations. In more general and contemporary terms, his insight was that results from between-person analyses will not necessarily match up with results from within-person analyses. When we assume the results from a between-person analysis will tell us about within-person processes, we commit the ecological fallacy.
+The central point of Robinson's seminal paper can be summed up in this quote: "*There need be no correspondence between the individual correlation and the ecological correlation*" (p. 339, *emphasis* added) [^2]. Both Robinson and Thorndike framed their arguments in terms of correlations. In more general and contemporary terms, their insight was that results from between-person analyses will not necessarily match up with results from within-person analyses. When we assume the results from a between-person analysis will tell us about within-person processes, we commit the ecological fallacy.
 
 ## An example might help.
 
@@ -100,7 +100,7 @@ d %>%
 
 Since these data were from one time point, they only allow us to make a between-person analysis.
 
-I'm not going to show you how I made these data just yet. It'd break up the flow. For the curious, the statistical formula and code are at the end of the post. I should point out, though, that the scale is arbitrary. 
+[I'm not going to show you how I made these data just yet. It'd break up the flow. For the curious, the statistical formula and code are at the end of the post. I should point out, though, that the scale is arbitrary.]
 
 Anyway, here's that cross-sectional correlation.
 
@@ -110,7 +110,7 @@ d %>%
   summarise(correlation_between_participants = cor(x, y))
 ```
 
-Hamaker continued:
+Like Hamaker suggested, it's large and negative. Hamaker continued:
 
 > If we were to generalize this result to the within-person level, we would conclude that if a particular person types faster, he or she will make fewer mistakes. Clearly, this is not what we expect: In fact, we are fairly certain that for any particular individual, the number of typos will increase if he or she tries to type faster. This implies a positive--rather than a negative--relationship at the within-person level. (p. 44)
 
@@ -175,7 +175,7 @@ Hopefully this gives you a sense of how meaningless a question like *What is the
 
 ## Robinson finished with a bang.
 
-Our typing data are just one example of how between- and within-person analyses can differ. To see Hamaker walk out the example herself, check out her [talk on the subject](https://www.youtube.com/watch?v=RnbsXfE2R9g) from a few years ago. I think you'll find her an engaging speaker. To sum this topic up, it's worth considering the Conclusion section from Robinson's (1950) paper in full:
+Our typing data are just one example of how between- and within-person analyses can differ. To see Hamaker walk out the example herself, check out her [talk on the subject](https://www.youtube.com/watch?v=RnbsXfE2R9g) from a few years ago. I think you'll find her an engaging speaker. But to sum this topic up, it's worth considering the Conclusion section from Robinson's (1950) paper in full:
 
 > The relation between ecological and individual correlations which is discussed in this paper provides a definite answer as to whether ecological correlations can validly be used as substitutes for individual correlations. They cannot. While it is theoretically possible for the two to be equal, the conditions under which this can happen are far removed from those ordinarily encountered in data. From a practical standpoint, therefore, the only reasonable assumption is that an ecological correlation is almost certainly not equal to its corresponding individual correlation.
 >
@@ -189,7 +189,7 @@ The ecological fallacy demonstrated something similar, but from a different angl
 
 With both validity threats, the results of a given analysis can attenuate, go to zero, or even switch sign. With the Berkeley example in the [previous post](https://solomonkurz.netlify.com/post/individuals-are-not-small-groups-i-simpson-s-paradox/), the relation went to zero. With our simulated data inspired by Hamaker's example, the effect size went from a large negative cross-sectional correlation to a bundle of small/medium *positive* within-person correlations. These are non-trivial changes.
 
-If at this point you find yourself fatigued and your head hurts a little, don't worry. You're probably normal. In a series of experiments, [Fiedler, Walther, Freytag, and Nickel (2003)](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.839.8878&rep=rep1&type=pdf) showed it's quite normal to struggle with these concepts. For more practice, check out Kievit, Frankenhuis, Waldorp, and Borsboom's nice (2013) paper, [*Simpson's paradox in psychological science: a practical guide*](https://www.frontiersin.org/articles/10.3389/fpsyg.2013.00513). Kuppens and Pollet (2014) covered more examples of the fallacy in their [*Mind the level: problems with two recent nation-level analyses in psychology*](https://www.frontiersin.org/articles/10.3389/fpsyg.2014.01110/full#h5). I've also worked out and posted the example from Thorndike's (1939) paper, which you can find [here](https://github.com/ASKurz/ecological_fallacy_Thorndike/tree/master).
+If at this point you find yourself fatigued and your head hurts a little, don't worry. You're probably normal. In a series of experiments, [Fiedler, Walther, Freytag, and Nickel (2003)](http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.839.8878&rep=rep1&type=pdf) showed it's quite normal to struggle with these concepts. For more practice, check out Kievit, Frankenhuis, Waldorp, and Borsboom's nice (2013) paper, [*Simpson's paradox in psychological science: a practical guide*](https://www.frontiersin.org/articles/10.3389/fpsyg.2013.00513). Kuppens and Pollet (2014) covered more examples of the ecological fallacy in their [*Mind the level: problems with two recent nation-level analyses in psychology*](https://www.frontiersin.org/articles/10.3389/fpsyg.2014.01110/full#h5). I've also worked out and posted the example of the ecological fallacy from Thorndike's (1939) paper, which you can find [here](https://github.com/ASKurz/ecological_fallacy_Thorndike/tree/master).
 
 In the next post, we'll continue developing this material with a discussion of traits versus states.
 
