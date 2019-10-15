@@ -233,7 +233,7 @@ In those simulated data, we generically named the "typing speed" variable `x` an
 
 \end{align*}
 
-Because the variances for the $\zeta$s were 1, that put them in a standardized metric. As such $-0.08$ is both a covariance and a correlation. The values in the variance/covariance matrix for the $\epsilon$s was something I came to by trial and error, which I cover in more detail, below. In words, this model is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out [Baldwin, Imel, Braithwaite, and Atkins (2014)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/).
+Because the variances for the $\zeta$s were 1, that put them in a standardized metric. As such $-0.8$ is both a covariance and a correlation. I came to the values in the variance/covariance matrix for the $\epsilon$s by trial and error, which I cover in more detail, below. In words, this model is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out [Baldwin, Imel, Braithwaite, and Atkins (2014)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/).
 
 The approach I used to generate the data is an extension of the one I used in chapter 13 of my project recoding McElreath's (2015) text. You can find that code, [here](https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction). There are two big changes to the original. First, setting the random effects for the mean structure to a $z$-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the `x` and `y` values.
 
