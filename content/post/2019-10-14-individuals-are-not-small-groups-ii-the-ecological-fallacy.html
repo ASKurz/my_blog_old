@@ -116,42 +116,13 @@ d %&gt;%
 <div id="afterward-how-might-one-simulate-those-typing-speed-data" class="section level2">
 <h2>Afterward: How might one simulate those typing speed data?</h2>
 <p>In those simulated data, we generically named the “typing speed” variable <code>x</code> and the “error count” variable <code>y</code>. If you let the index <span class="math inline">\(i\)</span> stand for the <span class="math inline">\(i^\text{th}\)</span> case and <span class="math inline">\(j\)</span> stand for the <span class="math inline">\(j^\text{th}\)</span> measurement occasion, the data-generating formula is as follows:</p>
-<p><span class="math display">\[\begin{align*}
-x_{ij}, y_{ij} &amp; \sim 
-
-\text{MVNormal} 
-\begin{pmatrix}
-
-\begin{bmatrix} 
-\mu_{i}^x \\ \mu_{i}^y
-\end{bmatrix},
+<p>$$
+<span class="math display">\[\begin{align*}
+\text x_{ij} &amp; = \gamma_{00}^\text x + \zeta_{0i}^\text x + \epsilon_{ij}^\text x \\
+\text y_{ij} &amp; = \gamma_{00}^\text y + \zeta_{0i}^\text y + \epsilon_{ij}^\text y, \text{where} \\
 
 \begin{bmatrix} 
-\sigma_{ij}^x \\ \sigma_{ij}^y
-\end{bmatrix}
-
-\end{pmatrix} \\
-
-\mu_i^x &amp; = \beta_{0_i}^x \\
-\mu_i^y &amp; = \beta_{0_i}^y \\
-
-\begin{bmatrix} 
-\beta_{0_i}^x \\ \beta_{0_i}^y
-\end{bmatrix} &amp; \sim \text{MVNormal}
-
-\begin{pmatrix} 
-\begin{bmatrix} 
-\beta_0^x \\ \beta_0^y
-\end{bmatrix}, 
-
-\begin{bmatrix} 
-1 &amp; .8 \\ .8 &amp; 1
-\end{bmatrix}
-
-\end{pmatrix} \\
-
-\begin{bmatrix} 
-\sigma_{ij}^x \\ \sigma_{ij}^y
+\zeta_{0_i}^\text x \\ \zeta_{0_i}^\text y
 \end{bmatrix} &amp; \sim \text{MVNormal}
 
 \begin{pmatrix} 
@@ -160,27 +131,42 @@ x_{ij}, y_{ij} &amp; \sim
 \end{bmatrix}, 
 
 \begin{bmatrix} 
-0.2 &amp; -.2 \\ -.2 &amp; 0.2
+1 &amp; -0.8 \\ -0.8 &amp; 1
 \end{bmatrix}
 
-\end{pmatrix}
+\end{pmatrix} \text{and} \\
 
-\end{align*}\]</span></p>
-<p>For simplicity, <span class="math inline">\(\beta_0^x\)</span> and <span class="math inline">\(\beta_0^y\)</span> were fixed to zero. Note I’m using the <span class="math inline">\(\sigma\)</span> parameterization instead of the <span class="math inline">\(\sigma^2\)</span> parameterization. In words, this is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/">Baldwin, Imel, Braithwaite, and Atkins (2014)</a>.</p>
+\begin{bmatrix} 
+\epsilon_{ij}^\text x \\ \epsilon_{ij}^\text y
+\end{bmatrix} &amp; \sim \text{MVNormal}
+
+\begin{pmatrix} 
+\begin{bmatrix} 
+0 \\ 0
+\end{bmatrix}, 
+
+\begin{bmatrix} 
+0.625 &amp; 0.019 \\ 0.019 &amp; 0.625
+\end{bmatrix}
+
+\end{pmatrix}.
+
+\end{align*}\]</span>
+$$</p>
+<p>Because the variances for the <span class="math inline">\(\zeta\)</span>s were 1, that put them in a standardized metric. As such <span class="math inline">\(-0.08\)</span> is both a covariance and a correlation. The values in the variance/covariance matrix for the <span class="math inline">\(\epsilon\)</span>s was something I came to by trial and error, which I cover in more detail, below. In words, this model is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/">Baldwin, Imel, Braithwaite, and Atkins (2014)</a>.</p>
 <p>The approach I used to generate the data is an extension of the one I used in chapter 13 of my project recoding McElreath’s (2015) text. You can find that code, <a href="https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction">here</a>. There are two big changes to the original. First, setting the random effects for the mean structure to a <span class="math inline">\(z\)</span>-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the <code>x</code> and <code>y</code> values.</p>
 <p>First, define the mean structure.</p>
-<pre class="r"><code>n     &lt;- 50   # choose the n
-
-b0    &lt;-  0   # average morning wait time
-b1    &lt;-  0   # average difference afternoon wait time
-sd_b0 &lt;-  1   # std dev in intercepts
-sd_b1 &lt;-  1   # std dev in slopes
-r     &lt;- -.8  # correlation between intercepts and slopes
+<pre class="r"><code>n     &lt;- 50  # choose the n
+x0   &lt;-  0   # population mean for x
+y0   &lt;-  0   # population mean for x
+v_x0 &lt;-  1   # variance around x
+v_y0 &lt;-  1   # variance around y
+cov  &lt;- -.8  # covariance for the variances
 
 # the next three lines of code simply combine the terms, above
-mu     &lt;- c(b0, b1)
-sigma  &lt;- matrix(c(sd_b0, r, 
-                   r, sd_b1), ncol = 2)
+mu     &lt;- c(x0, y0)
+sigma  &lt;- matrix(c(v_x0, cov, 
+                   cov, v_y0), ncol = 2)
 set.seed(1)
 m &lt;-
   MASS::mvrnorm(n, mu, sigma) %&gt;% 
@@ -189,21 +175,25 @@ m &lt;-
   arrange(x0) %&gt;% 
   mutate(i = 1:n) %&gt;% 
   expand(nesting(i, x0, y0),
-         j = 1:n) </code></pre>
+         j = 1:n)</code></pre>
 <p>Second, define the residual structure.</p>
-<pre class="r"><code>sigma  &lt;- matrix(c(sd_b0, .3, 
-                   .3, sd_b1), ncol = 2)
+<pre class="r"><code># note how these values initially place the epsilons in a standardized metric
+sigma  &lt;- matrix(c(v_x0, .3, 
+                   .3, v_y0), ncol = 2)
 set.seed(1)
 r &lt;-
   MASS::mvrnorm(n * n, mu, sigma) %&gt;% 
   data.frame() %&gt;% 
-  set_names(&quot;xr&quot;, &quot;yr&quot;) %&gt;% 
+  set_names(&quot;e_x&quot;, &quot;e_y&quot;) %&gt;% 
+  # you do not need this step. 
+  # it&#39;s something I experimented with to rescale
+  # the residual variances to a workable level for the plots.
   mutate_all(.funs = ~. * .25)</code></pre>
 <p>Combine the two data structures and save.</p>
 <pre class="r"><code>d &lt;-
   bind_cols(m, r) %&gt;% 
-  mutate(x = x0 + xr,
-         y = y0 + yr) </code></pre>
+  mutate(x = x0 + e_x,
+         y = y0 + e_y) </code></pre>
 <p>Because we used the <code>set.seed()</code> function before each simulation step, you will be able to reproduce the results exactly.</p>
 </div>
 <div id="session-info" class="section level2">

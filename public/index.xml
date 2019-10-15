@@ -113,42 +113,13 @@ d %&amp;gt;%
 &lt;div id=&#34;afterward-how-might-one-simulate-those-typing-speed-data&#34; class=&#34;section level2&#34;&gt;
 &lt;h2&gt;Afterward: How might one simulate those typing speed data?&lt;/h2&gt;
 &lt;p&gt;In those simulated data, we generically named the “typing speed” variable &lt;code&gt;x&lt;/code&gt; and the “error count” variable &lt;code&gt;y&lt;/code&gt;. If you let the index &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt; stand for the &lt;span class=&#34;math inline&#34;&gt;\(i^\text{th}\)&lt;/span&gt; case and &lt;span class=&#34;math inline&#34;&gt;\(j\)&lt;/span&gt; stand for the &lt;span class=&#34;math inline&#34;&gt;\(j^\text{th}\)&lt;/span&gt; measurement occasion, the data-generating formula is as follows:&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
-x_{ij}, y_{ij} &amp;amp; \sim 
-
-\text{MVNormal} 
-\begin{pmatrix}
-
-\begin{bmatrix} 
-\mu_{i}^x \\ \mu_{i}^y
-\end{bmatrix},
+&lt;p&gt;$$
+&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
+\text x_{ij} &amp;amp; = \gamma_{00}^\text x + \zeta_{0i}^\text x + \epsilon_{ij}^\text x \\
+\text y_{ij} &amp;amp; = \gamma_{00}^\text y + \zeta_{0i}^\text y + \epsilon_{ij}^\text y, \text{where} \\
 
 \begin{bmatrix} 
-\sigma_{ij}^x \\ \sigma_{ij}^y
-\end{bmatrix}
-
-\end{pmatrix} \\
-
-\mu_i^x &amp;amp; = \beta_{0_i}^x \\
-\mu_i^y &amp;amp; = \beta_{0_i}^y \\
-
-\begin{bmatrix} 
-\beta_{0_i}^x \\ \beta_{0_i}^y
-\end{bmatrix} &amp;amp; \sim \text{MVNormal}
-
-\begin{pmatrix} 
-\begin{bmatrix} 
-\beta_0^x \\ \beta_0^y
-\end{bmatrix}, 
-
-\begin{bmatrix} 
-1 &amp;amp; .8 \\ .8 &amp;amp; 1
-\end{bmatrix}
-
-\end{pmatrix} \\
-
-\begin{bmatrix} 
-\sigma_{ij}^x \\ \sigma_{ij}^y
+\zeta_{0_i}^\text x \\ \zeta_{0_i}^\text y
 \end{bmatrix} &amp;amp; \sim \text{MVNormal}
 
 \begin{pmatrix} 
@@ -157,27 +128,42 @@ x_{ij}, y_{ij} &amp;amp; \sim
 \end{bmatrix}, 
 
 \begin{bmatrix} 
-0.2 &amp;amp; -.2 \\ -.2 &amp;amp; 0.2
+1 &amp;amp; -0.8 \\ -0.8 &amp;amp; 1
 \end{bmatrix}
 
-\end{pmatrix}
+\end{pmatrix} \text{and} \\
 
-\end{align*}\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;For simplicity, &lt;span class=&#34;math inline&#34;&gt;\(\beta_0^x\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\beta_0^y\)&lt;/span&gt; were fixed to zero. Note I’m using the &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; parameterization instead of the &lt;span class=&#34;math inline&#34;&gt;\(\sigma^2\)&lt;/span&gt; parameterization. In words, this is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out &lt;a href=&#34;https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/&#34;&gt;Baldwin, Imel, Braithwaite, and Atkins (2014)&lt;/a&gt;.&lt;/p&gt;
+\begin{bmatrix} 
+\epsilon_{ij}^\text x \\ \epsilon_{ij}^\text y
+\end{bmatrix} &amp;amp; \sim \text{MVNormal}
+
+\begin{pmatrix} 
+\begin{bmatrix} 
+0 \\ 0
+\end{bmatrix}, 
+
+\begin{bmatrix} 
+0.625 &amp;amp; 0.019 \\ 0.019 &amp;amp; 0.625
+\end{bmatrix}
+
+\end{pmatrix}.
+
+\end{align*}\]&lt;/span&gt;
+$$&lt;/p&gt;
+&lt;p&gt;Because the variances for the &lt;span class=&#34;math inline&#34;&gt;\(\zeta\)&lt;/span&gt;s were 1, that put them in a standardized metric. As such &lt;span class=&#34;math inline&#34;&gt;\(-0.08\)&lt;/span&gt; is both a covariance and a correlation. The values in the variance/covariance matrix for the &lt;span class=&#34;math inline&#34;&gt;\(\epsilon\)&lt;/span&gt;s was something I came to by trial and error, which I cover in more detail, below. In words, this model is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out &lt;a href=&#34;https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/&#34;&gt;Baldwin, Imel, Braithwaite, and Atkins (2014)&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;The approach I used to generate the data is an extension of the one I used in chapter 13 of my project recoding McElreath’s (2015) text. You can find that code, &lt;a href=&#34;https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction&#34;&gt;here&lt;/a&gt;. There are two big changes to the original. First, setting the random effects for the mean structure to a &lt;span class=&#34;math inline&#34;&gt;\(z\)&lt;/span&gt;-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the &lt;code&gt;x&lt;/code&gt; and &lt;code&gt;y&lt;/code&gt; values.&lt;/p&gt;
 &lt;p&gt;First, define the mean structure.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;n     &amp;lt;- 50   # choose the n
-
-b0    &amp;lt;-  0   # average morning wait time
-b1    &amp;lt;-  0   # average difference afternoon wait time
-sd_b0 &amp;lt;-  1   # std dev in intercepts
-sd_b1 &amp;lt;-  1   # std dev in slopes
-r     &amp;lt;- -.8  # correlation between intercepts and slopes
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;n     &amp;lt;- 50  # choose the n
+x0   &amp;lt;-  0   # population mean for x
+y0   &amp;lt;-  0   # population mean for x
+v_x0 &amp;lt;-  1   # variance around x
+v_y0 &amp;lt;-  1   # variance around y
+cov  &amp;lt;- -.8  # covariance for the variances
 
 # the next three lines of code simply combine the terms, above
-mu     &amp;lt;- c(b0, b1)
-sigma  &amp;lt;- matrix(c(sd_b0, r, 
-                   r, sd_b1), ncol = 2)
+mu     &amp;lt;- c(x0, y0)
+sigma  &amp;lt;- matrix(c(v_x0, cov, 
+                   cov, v_y0), ncol = 2)
 set.seed(1)
 m &amp;lt;-
   MASS::mvrnorm(n, mu, sigma) %&amp;gt;% 
@@ -186,21 +172,25 @@ m &amp;lt;-
   arrange(x0) %&amp;gt;% 
   mutate(i = 1:n) %&amp;gt;% 
   expand(nesting(i, x0, y0),
-         j = 1:n) &lt;/code&gt;&lt;/pre&gt;
+         j = 1:n)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Second, define the residual structure.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sigma  &amp;lt;- matrix(c(sd_b0, .3, 
-                   .3, sd_b1), ncol = 2)
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# note how these values initially place the epsilons in a standardized metric
+sigma  &amp;lt;- matrix(c(v_x0, .3, 
+                   .3, v_y0), ncol = 2)
 set.seed(1)
 r &amp;lt;-
   MASS::mvrnorm(n * n, mu, sigma) %&amp;gt;% 
   data.frame() %&amp;gt;% 
-  set_names(&amp;quot;xr&amp;quot;, &amp;quot;yr&amp;quot;) %&amp;gt;% 
+  set_names(&amp;quot;e_x&amp;quot;, &amp;quot;e_y&amp;quot;) %&amp;gt;% 
+  # you do not need this step. 
+  # it&amp;#39;s something I experimented with to rescale
+  # the residual variances to a workable level for the plots.
   mutate_all(.funs = ~. * .25)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Combine the two data structures and save.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d &amp;lt;-
   bind_cols(m, r) %&amp;gt;% 
-  mutate(x = x0 + xr,
-         y = y0 + yr) &lt;/code&gt;&lt;/pre&gt;
+  mutate(x = x0 + e_x,
+         y = y0 + e_y) &lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Because we used the &lt;code&gt;set.seed()&lt;/code&gt; function before each simulation step, you will be able to reproduce the results exactly.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div id=&#34;session-info&#34; class=&#34;section level2&#34;&gt;

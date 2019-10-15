@@ -40,17 +40,16 @@ library(tidyverse)
 # define the mean structure
 
 n     <- 50  # choose the n
-
-b0    <-  0  # average morning wait time
-b1    <-  0  # average difference afternoon wait time
-sd_b0 <-  1  # std dev in intercepts
-sd_b1 <-  1  # std dev in slopes
-r     <- -.8  # correlation between intercepts and slopes
+x0   <-  0   # population mean for x
+y0   <-  0   # population mean for x
+v_x0 <-  1   # variance around x
+v_y0 <-  1   # variance around y
+cov  <- -.8  # covariance for the variances
 
 # the next three lines of code simply combine the terms, above
-mu     <- c(b0, b1)
-sigma  <- matrix(c(sd_b0, r, 
-                   r, sd_b1), ncol = 2)
+mu     <- c(x0, y0)
+sigma  <- matrix(c(v_x0, cov, 
+                   cov, v_y0), ncol = 2)
 set.seed(1)
 m <-
   MASS::mvrnorm(n, mu, sigma) %>% 
@@ -59,25 +58,29 @@ m <-
   arrange(x0) %>% 
   mutate(i = 1:n) %>% 
   expand(nesting(i, x0, y0),
-         j = 1:n) 
+         j = 1:n)
 
 # Define the residual variance/covariance structure
 
-sigma  <- matrix(c(sd_b0, .3, 
-                   .3, sd_b1), ncol = 2)
+# note how these values initially place the epsilons in a standardized metric
+sigma  <- matrix(c(v_x0, .3, 
+                   .3, v_y0), ncol = 2)
 set.seed(1)
 r <-
   MASS::mvrnorm(n * n, mu, sigma) %>% 
   data.frame() %>% 
-  set_names("xr", "yr") %>% 
+  set_names("e_x", "e_y") %>% 
+  # you do not need this step. 
+  # it's something I experimented with to rescale
+  # the residual variances to a workable level for the plots.
   mutate_all(.funs = ~. * .25)
 
 # Combine the two and save.
 
 d <-
   bind_cols(m, r) %>% 
-  mutate(x = x0 + xr,
-         y = y0 + yr) 
+  mutate(x = x0 + e_x,
+         y = y0 + e_y) 
 ```
 
 ```{r, fig.height = 3}
@@ -194,42 +197,13 @@ In the next post, we'll continue developing this material with a discussion of t
 
 In those simulated data, we generically named the "typing speed" variable `x` and the "error count" variable `y`. If you let the index $i$ stand for the $i^\text{th}$ case and $j$ stand for the $j^\text{th}$ measurement occasion, the data-generating formula is as follows:
 
+$$
 \begin{align*}
-x_{ij}, y_{ij} & \sim 
-
-\text{MVNormal} 
-\begin{pmatrix}
+\text x_{ij} & = \gamma_{00}^\text x + \zeta_{0i}^\text x + \epsilon_{ij}^\text x \\
+\text y_{ij} & = \gamma_{00}^\text y + \zeta_{0i}^\text y + \epsilon_{ij}^\text y, \text{where} \\
 
 \begin{bmatrix} 
-\mu_{i}^x \\ \mu_{i}^y
-\end{bmatrix},
-
-\begin{bmatrix} 
-\sigma_{ij}^x \\ \sigma_{ij}^y
-\end{bmatrix}
-
-\end{pmatrix} \\
-
-\mu_i^x & = \beta_{0_i}^x \\
-\mu_i^y & = \beta_{0_i}^y \\
-
-\begin{bmatrix} 
-\beta_{0_i}^x \\ \beta_{0_i}^y
-\end{bmatrix} & \sim \text{MVNormal}
-
-\begin{pmatrix} 
-\begin{bmatrix} 
-\beta_0^x \\ \beta_0^y
-\end{bmatrix}, 
-
-\begin{bmatrix} 
-1 & .8 \\ .8 & 1
-\end{bmatrix}
-
-\end{pmatrix} \\
-
-\begin{bmatrix} 
-\sigma_{ij}^x \\ \sigma_{ij}^y
+\zeta_{0_i}^\text x \\ \zeta_{0_i}^\text y
 \end{bmatrix} & \sim \text{MVNormal}
 
 \begin{pmatrix} 
@@ -238,32 +212,47 @@ x_{ij}, y_{ij} & \sim
 \end{bmatrix}, 
 
 \begin{bmatrix} 
-0.2 & -.2 \\ -.2 & 0.2
+1 & -0.8 \\ -0.8 & 1
 \end{bmatrix}
 
-\end{pmatrix}
+\end{pmatrix} \text{and} \\
+
+\begin{bmatrix} 
+\epsilon_{ij}^\text x \\ \epsilon_{ij}^\text y
+\end{bmatrix} & \sim \text{MVNormal}
+
+\begin{pmatrix} 
+\begin{bmatrix} 
+0 \\ 0
+\end{bmatrix}, 
+
+\begin{bmatrix} 
+0.625 & 0.019 \\ 0.019 & 0.625
+\end{bmatrix}
+
+\end{pmatrix}.
 
 \end{align*}
+$$
 
-For simplicity, $\beta_0^x$ and $\beta_0^y$ were fixed to zero. Note I'm using the $\sigma$ parameterization instead of the $\sigma^2$ parameterization. In words, this is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out [Baldwin, Imel, Braithwaite, and Atkins (2014)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/).
+Because the variances for the $\zeta$s were 1, that put them in a standardized metric. As such $-0.08$ is both a covariance and a correlation. The values in the variance/covariance matrix for the $\epsilon$s was something I came to by trial and error, which I cover in more detail, below. In words, this model is a bivariate intercepts-only multilevel model. For an introduction to these kinds of models, check out [Baldwin, Imel, Braithwaite, and Atkins (2014)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4119868/).
 
 The approach I used to generate the data is an extension of the one I used in chapter 13 of my project recoding McElreath's (2015) text. You can find that code, [here](https://bookdown.org/content/1850/adventures-in-covariance.html#varying-slopes-by-construction). There are two big changes to the original. First, setting the random effects for the mean structure to a $z$-score metric simplified that part of the code quite a bit. Second, I defined the residuals, which were correlated, in a separate data object from the one containing the mean structure. In the final step, we combined the two and simulated the `x` and `y` values.
 
 First, define the mean structure.
 
 ```{r, eval = F}
-n     <- 50   # choose the n
-
-b0    <-  0   # average morning wait time
-b1    <-  0   # average difference afternoon wait time
-sd_b0 <-  1   # std dev in intercepts
-sd_b1 <-  1   # std dev in slopes
-r     <- -.8  # correlation between intercepts and slopes
+n     <- 50  # choose the n
+x0   <-  0   # population mean for x
+y0   <-  0   # population mean for x
+v_x0 <-  1   # variance around x
+v_y0 <-  1   # variance around y
+cov  <- -.8  # covariance for the variances
 
 # the next three lines of code simply combine the terms, above
-mu     <- c(b0, b1)
-sigma  <- matrix(c(sd_b0, r, 
-                   r, sd_b1), ncol = 2)
+mu     <- c(x0, y0)
+sigma  <- matrix(c(v_x0, cov, 
+                   cov, v_y0), ncol = 2)
 set.seed(1)
 m <-
   MASS::mvrnorm(n, mu, sigma) %>% 
@@ -272,19 +261,23 @@ m <-
   arrange(x0) %>% 
   mutate(i = 1:n) %>% 
   expand(nesting(i, x0, y0),
-         j = 1:n) 
+         j = 1:n)
 ```
 
 Second, define the residual structure.
 
 ```{r, eval = F}
-sigma  <- matrix(c(sd_b0, .3, 
-                   .3, sd_b1), ncol = 2)
+# note how these values initially place the epsilons in a standardized metric
+sigma  <- matrix(c(v_x0, .3, 
+                   .3, v_y0), ncol = 2)
 set.seed(1)
 r <-
   MASS::mvrnorm(n * n, mu, sigma) %>% 
   data.frame() %>% 
-  set_names("xr", "yr") %>% 
+  set_names("e_x", "e_y") %>% 
+  # you do not need this step. 
+  # it's something I experimented with to rescale
+  # the residual variances to a workable level for the plots.
   mutate_all(.funs = ~. * .25)
 ```
 
@@ -293,8 +286,8 @@ Combine the two data structures and save.
 ```{r, eval = F}
 d <-
   bind_cols(m, r) %>% 
-  mutate(x = x0 + xr,
-         y = y0 + yr) 
+  mutate(x = x0 + e_x,
+         y = y0 + e_y) 
 ```
 
 Because we used the `set.seed()` function before each simulation step, you will be able to reproduce the results exactly.
