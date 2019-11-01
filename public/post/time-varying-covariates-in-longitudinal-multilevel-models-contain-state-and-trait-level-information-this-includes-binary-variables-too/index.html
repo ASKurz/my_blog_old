@@ -424,7 +424,7 @@ d %&gt;%
 <div id="embrace-the-hate." class="section level3">
 <h3>Embrace the hate.</h3>
 <p>To be honest, I kinda hate these data. There are too few measurement occasions within participants for my liking and the assessment schedule just seems bazar. As we’ll see in a bit, these data are also unideal to address exactly the kinds of models this blog is centered on.</p>
-<p>Yet it’s for these vary reasons I love these data. Real-world data analysis is ugly. The data are never what you want or expected them to be. So it seems the data we use in our educational materials should be equally terrible.</p>
+<p>Yet it’s for just these reasons I love these data. Real-world data analysis is ugly. The data are never what you want or expected them to be. So it seems the data we use in our educational materials should be equally terrible.</p>
 <p>Much like we do for our most meaningful relationships, let’s embrace our hate/love ambivalence for our data with wide-open eyes and tender hearts. 🖤</p>
 </div>
 <div id="time-to-model." class="section level3">
@@ -528,7 +528,7 @@ head(d)</code></pre>
 \pi_{1i} &amp; = \gamma_{10} + \gamma_{11} (\overline{\text{unemp}}_i) + \zeta_{1i} \\
 \pi_{2i} &amp; = \gamma_{20},
 \end{align*}\]</span></p>
-<p>which is meant to convey that <span class="math inline">\(\overline{\text{unemp}}_i\)</span> is allowed to explain variability in both initial status on CESD scores (i.e., the random intercepts) and change in CESD scores over time (i.e., the random <code>months</code> slopes). Our variance parameters are all the same:</p>
+<p>which is meant to convey that <span class="math inline">\(\overline{\text{unemp}}_i\)</span> is allowed to explain variability in both initial status on CES-D scores (i.e., the random intercepts) and change in CES-D scores over time (i.e., the random <code>months</code> slopes). Our variance parameters are all the same:</p>
 <p><span class="math display">\[\begin{align*}
 \epsilon_{ij} &amp; \sim \operatorname{Normal} (0, \sigma_\epsilon) \text{ and} \\
 \begin{bmatrix} 
@@ -581,7 +581,7 @@ head(d)</code></pre>
 ## 4   641       0.333  0.789    27     1        -1.58 
 ## 5   641       0.333  4.86      7     0        -1.58 
 ## 6   641       0.333 11.8      25     0        -1.58</code></pre>
-<p>The model formula is the same as before with the exception that we replace <code>unemp_id_mu</code> with <code>unemp_id_mu_s</code>. For simplicity, I’m leaving the priors the same.</p>
+<p>The model formula is the same as before with the exception that we replace <code>unemp_id_mu</code> with <code>unemp_id_mu_s</code>. For simplicity, I’m leaving the priors the way they were.</p>
 <pre class="r"><code>fit3 &lt;-
   brm(data = d, 
       family = gaussian,
@@ -594,7 +594,7 @@ head(d)</code></pre>
       iter = 2000, warmup = 1000, chains = 4, cores = 4,
       control = list(adapt_delta = .9),
       seed = 5)</code></pre>
-<p>Instead of examining each of the model summaries one by one, we’ll condense the information into a series of coefficient plots. For simplicity, we’ll restrict our focus on the <span class="math inline">\(\gamma\)</span> parameters.</p>
+<p>Instead of examining each of the model summaries one by one, we’ll condense the information into a series of coefficient plots. For simplicity, we’ll restrict our focus to the <span class="math inline">\(\gamma\)</span> parameters.</p>
 <pre class="r"><code># extract the `fit1` summaries
 fixef(fit1) %&gt;%
   data.frame() %&gt;%
@@ -630,9 +630,9 @@ fixef(fit1) %&gt;%
   coord_flip() +
   facet_wrap(~gamma, nrow = 3, scale = &quot;free_x&quot;, labeller = label_parsed)</code></pre>
 <p><img src="/post/2019-10-31-time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too_files/figure-html/unnamed-chunk-10-1.png" width="576" /></p>
-<p>In case you’re not familiar with the output from the <code>brm::fixef()</code> function, each of the parameter estimates are summarized by their posterior means (i.e,. the dots) and percentile-based 95% intervals (i.e., the horizontal lines).</p>
+<p>In case you’re not familiar with the output from the <code>brms::fixef()</code> function, each of the parameter estimates are summarized by their posterior means (i.e,. the dots) and percentile-based 95% intervals (i.e., the horizontal lines).</p>
 <p>Recall how earlier I complained that these data weren’t particularly good for demonstrating this method? Well, here you finally get to see why. Regardless of the model, the estimates didn’t change much. In these data, the predictive utility of our between-level variable, <code>unemp_id_mu</code>–standardized or not–, was just about zilch. This is summarized by the <span class="math inline">\(\gamma_{01}\)</span> and <span class="math inline">\(\gamma_{11}\)</span> parameters. Both are centered around zero for both models containing them. Thus adding in an inconsequential level-2 predictor had little effect on its level-1 companion, <code>unemp</code>, which was expressed by <span class="math inline">\(\gamma_{20}\)</span>.</p>
-<p>Depressing as these results are, the practice was still worthwhile. Had we not decomposed our time-varying <code>unemp</code> variable into it’s within- and between-level components, we would never had known that the trait levels of <code>umemp</code> were inconsequential for these analyses. Now we know. For these models, all the action for <code>unemp</code> was at the within-person level.</p>
+<p>Depressing as these results are, the practice was still worthwhile. Had we not decomposed our time-varying <code>unemp</code> variable into its within- and between-level components, we would never had known that the trait levels of <code>umemp</code> were inconsequential for these analyses. Now we know. For these models, all the action for <code>unemp</code> was at the within-person level.</p>
 <p>This is also the explanation for why we focused on the <span class="math inline">\(\gamma\)</span>s to the neglect of the variance parameters. Because our <code>unemp_id_mu</code> variables were poor predictors of the random effects, there was no reason to expect they’d differ meaningfully across models. And because <code>unemp_id_mu</code> is only a level-2 predictor, it never had any hope for changing the estimates for <span class="math inline">\(\sigma_\epsilon\)</span>.</p>
 </div>
 <div id="what-about-centering-umemp" class="section level3">

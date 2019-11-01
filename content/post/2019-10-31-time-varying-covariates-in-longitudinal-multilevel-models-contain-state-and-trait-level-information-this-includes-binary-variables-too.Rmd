@@ -117,7 +117,7 @@ d %>%
 
 To be honest, I kinda hate these data. There are too few measurement occasions within participants for my liking and the assessment schedule just seems bazar. As we'll see in a bit, these data are also unideal to address exactly the kinds of models this blog is centered on.
 
-Yet it's for these vary reasons I love these data. Real-world data analysis is ugly. The data are never what you want or expected them to be. So it seems the data we use in our educational materials should be equally terrible.
+Yet it's for just these reasons I love these data. Real-world data analysis is ugly. The data are never what you want or expected them to be. So it seems the data we use in our educational materials should be equally terrible.
 
 Much like we do for our most meaningful relationships, let's embrace our hate/love ambivalence for our data with wide-open eyes and tender hearts. `r emo::ji("black_heart")`
 
@@ -240,7 +240,7 @@ However, there are two new terms in our level-2 model,
 \pi_{2i} & = \gamma_{20},
 \end{align*}
 
-which is meant to convey that $\overline{\text{unemp}}_i$ is allowed to explain variability in both initial status on CESD scores (i.e., the random intercepts) and change in CESD scores over time (i.e., the random `months` slopes). Our variance parameters are all the same:
+which is meant to convey that $\overline{\text{unemp}}_i$ is allowed to explain variability in both initial status on CES-D scores (i.e., the random intercepts) and change in CES-D scores over time (i.e., the random `months` slopes). Our variance parameters are all the same:
 
 \begin{align*}
 \epsilon_{ij} & \sim \operatorname{Normal} (0, \sigma_\epsilon) \text{ and} \\
@@ -297,7 +297,7 @@ d <-
 head(d)
 ```
 
-The model formula is the same as before with the exception that we replace `unemp_id_mu` with `unemp_id_mu_s`. For simplicity, I'm leaving the priors the same.
+The model formula is the same as before with the exception that we replace `unemp_id_mu` with `unemp_id_mu_s`. For simplicity, I'm leaving the priors the way they were.
 
 ```{r fit3, cache = T, warning = F, message = F, results = "hide"}
 fit3 <-
@@ -314,7 +314,7 @@ fit3 <-
       seed = 5)
 ```
 
-Instead of examining each of the model summaries one by one, we'll condense the information into a series of coefficient plots. For simplicity, we'll restrict our focus on the $\gamma$ parameters.
+Instead of examining each of the model summaries one by one, we'll condense the information into a series of coefficient plots. For simplicity, we'll restrict our focus to the $\gamma$ parameters.
 
 ```{r, fig.width = 6, fig.height = 3}
 # extract the `fit1` summaries
@@ -353,11 +353,11 @@ fixef(fit1) %>%
   facet_wrap(~gamma, nrow = 3, scale = "free_x", labeller = label_parsed)
 ```
 
-In case you're not familiar with the output from the `brm::fixef()` function, each of the parameter estimates are summarized by their posterior means (i.e,. the dots) and percentile-based 95% intervals (i.e., the horizontal lines).
+In case you're not familiar with the output from the `brms::fixef()` function, each of the parameter estimates are summarized by their posterior means (i.e,. the dots) and percentile-based 95% intervals (i.e., the horizontal lines).
 
 Recall how earlier I complained that these data weren't particularly good for demonstrating this method? Well, here you finally get to see why. Regardless of the model, the estimates didn't change much. In these data, the predictive utility of our between-level variable, `unemp_id_mu`--standardized or not--, was just about zilch. This is summarized by the $\gamma_{01}$ and $\gamma_{11}$ parameters. Both are centered around zero for both models containing them. Thus adding in an inconsequential level-2 predictor had little effect on its level-1 companion, `unemp`, which was expressed by $\gamma_{20}$.
 
-Depressing as these results are, the practice was still worthwhile. Had we not decomposed our time-varying `unemp` variable into it's within- and between-level components, we would never had known that the trait levels of `umemp` were inconsequential for these analyses. Now we know. For these models, all the action for `unemp` was at the within-person level.
+Depressing as these results are, the practice was still worthwhile. Had we not decomposed our time-varying `unemp` variable into its within- and between-level components, we would never had known that the trait levels of `umemp` were inconsequential for these analyses. Now we know. For these models, all the action for `unemp` was at the within-person level.
 
 This is also the explanation for why we focused on the $\gamma$s to the neglect of the variance parameters. Because our `unemp_id_mu` variables were poor predictors of the random effects, there was no reason to expect they'd differ meaningfully across models. And because `unemp_id_mu` is only a level-2 predictor, it never had any hope for changing the estimates for $\sigma_\epsilon$.
 
@@ -394,17 +394,6 @@ rbind(
 ### What about centering `umemp`?
 
 If you look through our primary two references for this post, Enders & Tofighi (2007) and Hoffman (2015), you'll see both works spend a lot of time on discussing how one might center the level-1 versions of the time-varying covariates. If `unemp` was a continuous variable, we would have had to contend with that issue, too. But this just isn't necessary with binary variables. They have a sensible interpretation when left in the typical 0/1 format. So my recommendation is when you're decomposing your binary time-varying covariates, put your focus on meaningfully centering the level-2 version of the variable. Leave the level-1 version alone. However, if you're really interested in playing around with alternatives like effects coding, Enders and Tofighi provided several recommendations.
-
-
-
-
-
-
-
-
-
-
-
 
 
 ## Session info
