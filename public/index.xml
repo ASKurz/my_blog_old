@@ -11,6 +11,372 @@
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
+      <title>Time-varying covariates in longitudinal multilevel models contain state- and trait-level information: This includes binary variables, too</title>
+      <link>/post/time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too/</link>
+      <pubDate>Thu, 31 Oct 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too/</guid>
+      <description>&lt;div id=&#34;tldr&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;tl;dr&lt;/h2&gt;
+&lt;p&gt;When you have a time-varying covariate you’d like to add to a multilevel growth model, it’s important to break that variable into two. One part of the variable will account for within-person variation. The other part will account for between person variation. Keep reading to learn how you might do so when your time-varying covariate is binary.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;i-assume-things.&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;I assume things.&lt;/h2&gt;
+&lt;p&gt;For this post, I’m presuming you are familiar with longitudinal multilevel models and vaguely familiar with the basic differences between frequentist and Bayesian statistics. All code in is &lt;a href=&#34;https://www.r-project.org/about.html&#34;&gt;&lt;strong&gt;R&lt;/strong&gt;&lt;/a&gt;, with a heavy use of the &lt;a href=&#34;https://www.tidyverse.org&#34;&gt;&lt;strong&gt;tidyverse&lt;/strong&gt;&lt;/a&gt;–which you might learn a lot about &lt;a href=&#34;http://r4ds.had.co.nz&#34;&gt;here&lt;/a&gt;, especially &lt;a href=&#34;http://r4ds.had.co.nz/transform.html&#34;&gt;chapter 5&lt;/a&gt;–, and the &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;&lt;strong&gt;brms&lt;/strong&gt; package&lt;/a&gt; for Bayesian regression.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;context&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Context&lt;/h2&gt;
+&lt;p&gt;In my applied work, one of my collaborators collects longitudinal behavioral data. They are in the habit of analyzing their focal dependent variables (DVs) with variants of the longitudinal multilevel model, which is great. Though they often collect their primary independent variables (IVs) at all time points, they typically default to only using the baseline values for their IVs to predict the random intercepts and slopes of the focal DVs.&lt;/p&gt;
+&lt;p&gt;It seems like we’re making inefficient use of the data. At first I figured we’d just use the IVs at all time points, which would be treating them as time-varying covariates. But time varying covariates don’t allow one to predict variation in the random intercepts and slopes, which I and my collaborator would like to do. So while using the IVs at all time points as time-varying covariates makes use of more of the available data, it requires us to trade one substantive focus for another, which seems frustrating.&lt;/p&gt;
+&lt;p&gt;After low-key chewing on this for a while, I recalled that it’s possible to decompose time-varying covariates into measures of traits and states. Consider the simple case where your time-varying covariate, &lt;span class=&#34;math inline&#34;&gt;\(x_{ij}\)&lt;/span&gt; is continuous. In this notation, the &lt;span class=&#34;math inline&#34;&gt;\(x\)&lt;/span&gt; values vary across persons &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt; and time points &lt;span class=&#34;math inline&#34;&gt;\(j\)&lt;/span&gt;. If we compute the person level mean, &lt;span class=&#34;math inline&#34;&gt;\(\overline x_i\)&lt;/span&gt;, that would be a time-invariant covariate and would, conceptually, be a measure of a person’s trait level for &lt;span class=&#34;math inline&#34;&gt;\(x\)&lt;/span&gt;. Even if you do this, it’s still okay to include both &lt;span class=&#34;math inline&#34;&gt;\(\overline x_i\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(x_{ij}\)&lt;/span&gt; in the model equation. The former would be the time-&lt;em&gt;invariant&lt;/em&gt; covariate that might predict the variation in the random intercepts and slopes. The latter would still serve as a time-&lt;em&gt;varying&lt;/em&gt; covariate that might account for the within-person variation in the DV over time.&lt;/p&gt;
+&lt;p&gt;There, of course, are technicalities about how one might center &lt;span class=&#34;math inline&#34;&gt;\(\overline x_i\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(x_{ij}\)&lt;/span&gt; that one should carefully consider for these kinds of models. &lt;a href=&#34;http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.928.9848&amp;amp;rep=rep1&amp;amp;type=pdf&#34;&gt;Enders &amp;amp; Tofighi (2007)&lt;/a&gt; covered the issue from a cross-sectional perspective. &lt;a href=&#34;http://www.pilesofvariance.com/index.html&#34;&gt;Hoffman (2015)&lt;/a&gt; covered it from a longitudinal perspective. But in the grand scheme of things, those are small potatoes. The main deal is that I can use our IVs as both time-varying and time-invariant predictors.&lt;/p&gt;
+&lt;p&gt;I was pretty excited once I remembered all this.&lt;/p&gt;
+&lt;p&gt;But then I realized that some of my collaborator’s IVs are binary, which initially seemed baffling, to me. Would it be sensible to compute &lt;span class=&#34;math inline&#34;&gt;\(\overline x_i\)&lt;/span&gt; for a binary time-varying covariate? What would that mean for the time-varying version of the variable? So I did what any responsible postdoctoral researcher would do. I posed the issue on Twitter.&lt;/p&gt;
+&lt;blockquote class=&#34;twitter-tweet&#34;&gt;&lt;p lang=&#34;en&#34; dir=&#34;ltr&#34;&gt;Context: multilevel growth models.&lt;br&gt;&lt;br&gt;When you have a continuous time-varying covariate, you can decompose it into two variables, an id-level grand mean and the time-specific deviations from that mean. Is anyone aware of a complimentary approach for binary time-varying covariates?&lt;/p&gt;&amp;mdash; Solomon Kurz (@SolomonKurz) &lt;a href=&#34;https://twitter.com/SolomonKurz/status/1188185892332150789?ref_src=twsrc%5Etfw&#34;&gt;October 26, 2019&lt;/a&gt;&lt;/blockquote&gt;
+&lt;script async src=&#34;https://platform.twitter.com/widgets.js&#34; charset=&#34;utf-8&#34;&gt;&lt;/script&gt;
+
+&lt;p&gt;My initial thoughts on the topic were a little confused. I wasn’t differentiating well between issues about the variance decomposition and centering and I’m a little embarrassed over that gaff. But I’m still glad I posed the question to Twitter. My virtual colleagues came through in spades! In particular, I’d like to give major shout outs to Andrea Howard (&lt;a href=&#34;https://twitter.com/DrAndreaHoward&#34;&gt;@DrAndreaHoward&lt;/a&gt;), Mattan Ben-Shachar (&lt;a href=&#34;https://twitter.com/mattansb&#34;&gt;@mattansb&lt;/a&gt;), and Aidan Wright (&lt;a href=&#34;https://twitter.com/aidangcw&#34;&gt;@aidangcw&lt;/a&gt;), who collectively pointed me to the solution. It was detailed in the references I listed, above: Enders &amp;amp; Tofighi (2007) and Hoffman (2015). Thank you, all!&lt;/p&gt;
+&lt;p&gt;Here’s the deal: Yes, you simply take the person-level means for the binary covariate &lt;span class=&#34;math inline&#34;&gt;\(x\)&lt;/span&gt;. That will create a vector of time-invariant IVs ranging continuously from 0 to 1. They’ll be in a probability metric and they conceptually index a person’s probability of endorsing 1 over time. It’s basically the same as a batting average in baseball. You are at liberty to leave the time-invariant covariate in this metric, or you could center it by standardizing or some other sensible transformation. As for the state version of the IV, &lt;span class=&#34;math inline&#34;&gt;\(x_{ij}\)&lt;/span&gt;, you’d just leave it exactly as it is. [There are other ways to code binary data, such as effects coding. I’m not a fan and will not be covering that in detail, here. But yes, you could recode your time-varying binary covariate that way, too.]&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;break-out-the-data&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Break out the data&lt;/h2&gt;
+&lt;p&gt;We should practice this with some data. I’ve been chipping away at working through Singer and Willett’s classic (2003) text, &lt;a href=&#34;https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968&#34;&gt;&lt;em&gt;Applied longitudinal data analysis: Modeling change and event occurrence&lt;/em&gt;&lt;/a&gt; with &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;&lt;strong&gt;brms&lt;/strong&gt;&lt;/a&gt; and &lt;a href=&#34;https://www.tidyverse.org/&#34;&gt;&lt;strong&gt;tidyverse&lt;/strong&gt;&lt;/a&gt; code. You can find the working files in this &lt;a href=&#34;https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse&#34;&gt;GitHub repository&lt;/a&gt;. In chapter 5, Singer and Willett worked through a series of examples with a data set with a continuous DV and a binary IV. Here are those data.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(tidyverse)
+
+d &amp;lt;- read_csv(&amp;quot;https://raw.githubusercontent.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse/master/data/unemployment_pp.csv&amp;quot;)
+
+glimpse(d)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Observations: 674
+## Variables: 4
+## $ id     &amp;lt;dbl&amp;gt; 103, 103, 103, 641, 641, 641, 741, 846, 846, 846, 937, 93…
+## $ months &amp;lt;dbl&amp;gt; 1.149897, 5.946612, 12.911704, 0.788501, 4.862423, 11.827…
+## $ cesd   &amp;lt;dbl&amp;gt; 25, 16, 33, 27, 7, 25, 40, 2, 22, 0, 3, 8, 3, 0, 5, 7, 18…
+## $ unemp  &amp;lt;dbl&amp;gt; 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, …&lt;/code&gt;&lt;/pre&gt;
+&lt;div id=&#34;set-the-stage-with-descriptive-plots.&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Set the stage with descriptive plots.&lt;/h3&gt;
+&lt;p&gt;The focal DV is &lt;code&gt;cesd&lt;/code&gt;, a continuous variable measuring depression. Singer and Willett (2003):&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;Each time participants completed the Center for Epidemiologic Studies’ Depression (CES-D) scale (&lt;a href=&#34;https://journals.sagepub.com/doi/abs/10.1177/014662167700100306?casa_token=igspo7W_9SUAAAAA%3AhnRVqiDEM-b6nNh_-8VQ6tx1PukP8nsqyo4yd4m_inspjhH-3aeShEGodUxux8GuInG9AYbP1D2GLA&amp;amp;journalCode=apma&#34;&gt;Radloff, 1977&lt;/a&gt;), which asks them to rate, on a four-point scale, the frequency with which they experience each of the 20 depressive symptoms. The CES-D scores can vary from a low or 0 for someone with no symptoms to a high of 80 for someone in serious distress. (p. 161)&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Here’s what the &lt;code&gt;cesd&lt;/code&gt; scores look like, collapsing over time.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;theme_set(theme_gray() +
+            theme(panel.grid = element_blank()))
+
+d %&amp;gt;% 
+  ggplot(aes(x = cesd)) +
+  geom_histogram(fill = &amp;quot;grey50&amp;quot;, binwidth = 1) +
+  scale_y_continuous(NULL, breaks = NULL)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-10-31-time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too_files/figure-html/unnamed-chunk-3-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;Since these are longutdnial data, our fundamental IV is a measure of time. That’s captured in the &lt;code&gt;months&lt;/code&gt; column. Most participants have data on just three occasions and the &lt;code&gt;months&lt;/code&gt; values range from about 0 to 15.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d %&amp;gt;% 
+  ggplot(aes(x = months)) +
+  geom_histogram(fill = &amp;quot;grey50&amp;quot;, binwidth = 1) +
+  scale_y_continuous(NULL, breaks = NULL)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-10-31-time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too_files/figure-html/unnamed-chunk-4-1.png&#34; width=&#34;384&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;The main research question we’ll be addressing is: &lt;em&gt;What do participants’ &lt;code&gt;cesd&lt;/code&gt; scores look like over time and to what extent does their employment/unemployment status help explain their depression?&lt;/em&gt; So our substantive IV of interest is &lt;code&gt;unemp&lt;/code&gt;, which is coded 0 = employed and 1 = unemployed. Since participants were recruited from local unemployment offices, everyone started off as &lt;code&gt;unemp == 1&lt;/code&gt;. The values varied after that. Here’s a look at the data from a random sample of 25 of the participants.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# this makes `sample_n()` reproducible
+set.seed(5)
+
+# wrangle the data a little
+d %&amp;gt;% 
+  nest(data = c(months, cesd, unemp)) %&amp;gt;% 
+  sample_n(size = 25) %&amp;gt;% 
+  unnest(data) %&amp;gt;% 
+  mutate(id = str_c(&amp;quot;id: &amp;quot;, id),
+         e  = if_else(unemp == 0, &amp;quot;employed&amp;quot;, &amp;quot;unemployed&amp;quot;)) %&amp;gt;% 
+  
+  # plot
+  ggplot(aes(x = months, y = cesd)) +
+  geom_line(aes(group = id),
+            size = 1/4) +
+  geom_point(aes(color = e),
+             size = 7/4) +
+  scale_color_manual(NULL, values = c(&amp;quot;blue3&amp;quot;, &amp;quot;red3&amp;quot;)) +
+  theme(panel.grid      = element_blank(),
+        legend.position = &amp;quot;top&amp;quot;) +
+  facet_wrap(~id, nrow = 5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-10-31-time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too_files/figure-html/unnamed-chunk-5-1.png&#34; width=&#34;576&#34; /&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;embrace-the-hate.&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Embrace the hate.&lt;/h3&gt;
+&lt;p&gt;To be honest, I kinda hate these data. There are too few measurement occasions within participants for my liking and the assessment schedule just seems bazar. As we’ll see in a bit, these data are also unideal to address exactly the kinds of models this blog is centered on.&lt;/p&gt;
+&lt;p&gt;Yet it’s for these vary reasons I love these data. Real-world data analysis is ugly. The data are never what you want or expected them to be. So it seems the data we use in our educational materials should be equally terrible.&lt;/p&gt;
+&lt;p&gt;Much like we do for our most meaningful relationships, let’s embrace our hate/love ambivalence for our data with wide-open eyes and tender hearts. 🖤&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;time-to-model.&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;Time to model.&lt;/h3&gt;
+&lt;p&gt;Following Singer and Willett, we can define our first model using a level-1/level-2 specification. The level-1 model would be&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\text{cesd}_{ij} = \pi_{0i} + \pi_{1i} \text{months}_{ij} + \pi_{2i} \text{unemp}_{ij} + \epsilon_{ij},
+\]&lt;/span&gt;
+where &lt;span class=&#34;math inline&#34;&gt;\(\pi_{0i}\)&lt;/span&gt; is the intercept, &lt;span class=&#34;math inline&#34;&gt;\(\pi_{1i}\)&lt;/span&gt; is the effect of &lt;code&gt;months&lt;/code&gt; on &lt;code&gt;cesd&lt;/code&gt;, and &lt;span class=&#34;math inline&#34;&gt;\(\pi_{2i}\)&lt;/span&gt; is the effect of &lt;code&gt;unemp&lt;/code&gt; on &lt;code&gt;cesd&lt;/code&gt;. The final term, &lt;span class=&#34;math inline&#34;&gt;\(\epsilon_{ij}\)&lt;/span&gt;, is the within-person variation not accounted for by the model–sometimes called error or residual variance. Our &lt;span class=&#34;math inline&#34;&gt;\(\epsilon_{ij}\)&lt;/span&gt; term follows the usual distribution of&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\epsilon_{ij} \sim \operatorname{Normal} (0, \sigma_\epsilon),
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;which, in words, means that the within-person variance estimates are normally distributed with a mean of zero and a standard deviation that’s estimated from the data. The corresponding level-2 model follows the form&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
+\pi_{0i} &amp;amp; = \gamma_{00} + \zeta_{0i} \\
+\pi_{1i} &amp;amp; = \gamma_{10} + \zeta_{1i} \\
+\pi_{2i} &amp;amp; = \gamma_{20},
+\end{align*}\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(\gamma_{00}\)&lt;/span&gt; is the grand mean for the intercept, which varies by person, as captured by the level-2 variance term &lt;span class=&#34;math inline&#34;&gt;\(\zeta_{0i}\)&lt;/span&gt;. Similarly, &lt;span class=&#34;math inline&#34;&gt;\(\gamma_{10}\)&lt;/span&gt; is the grand mean for the effect of &lt;code&gt;months&lt;/code&gt;, which varies by person, as captured by the second level-2 variance term &lt;span class=&#34;math inline&#34;&gt;\(\zeta_{1i}\)&lt;/span&gt;. With this parameterization, it turns out &lt;span class=&#34;math inline&#34;&gt;\(\pi_{2i}\)&lt;/span&gt; does not vary by person and so its &lt;span class=&#34;math inline&#34;&gt;\(\gamma_{20}\)&lt;/span&gt; terms does not get a corresponding level-2 variance coefficient. If we wanted the effects of the time-varying covariate &lt;code&gt;unemp&lt;/code&gt; to vary across individuals, we’d expand the definition of &lt;span class=&#34;math inline&#34;&gt;\(\pi_{2i}\)&lt;/span&gt; to be&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\pi_{2i} = \gamma_{20} + \zeta_{2i}.
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Within our &lt;strong&gt;brms&lt;/strong&gt; paradigm, the two level-2 variance parameters follow the form&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} \\
+\end{bmatrix} &amp;amp; \sim \operatorname{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}&amp;#39;
+\Bigg ), \text{where} \\
+
+\mathbf{D}    &amp;amp; = \begin{bmatrix} \sigma_0 &amp;amp; 0 \\ 0 &amp;amp; \sigma_1 \end{bmatrix} \text{and} \\
+
+\mathbf{\Omega}  &amp;amp; = \begin{bmatrix} 1 &amp;amp; \rho_{01} \\ \rho_{01} &amp;amp; 1 \end{bmatrix}.
+
+\end{align*}\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;I’ll be using a weakly-regularizing approach for the model priors in this post. I detail how I came to these in the &lt;a href=&#34;https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse/blob/master/05.md&#34;&gt;Chapter 5 file from my GitHub repo&lt;/a&gt;. If you check that file, you’ll see this model is a simplified version of &lt;code&gt;fit10&lt;/code&gt;. Here are our priors:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
+\gamma_{00}     &amp;amp; \sim \operatorname{Normal}(14.5, 20) \\
+\gamma_{10} \text{ and }  \gamma_{20}  &amp;amp; \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \sigma_0,  \text{ and } \sigma_1 &amp;amp; \sim \operatorname{Student-t} (3, 0, 10) \\
+\Omega          &amp;amp; \sim \operatorname{LKJ} (4).
+\end{align*}\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Feel free to explore different priors on your own. But now we’re done spelling our our first model, it’s time to fire up our main statistical package, &lt;strong&gt;brms&lt;/strong&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We can fit the model with &lt;code&gt;brms::brm()&lt;/code&gt;, like so.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit1 &amp;lt;-
+  brm(data = d, 
+      family = gaussian,
+      cesd ~ 0 + intercept + months + unemp + (1 + months | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = &amp;quot;intercept&amp;quot;),
+                prior(normal(0, 10),    class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      control = list(adapt_delta = .95),
+      seed = 5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Before we explore the results from this model, we should point out that we only included &lt;code&gt;unemp&lt;/code&gt; as a level-1 time-varying predictor. As Hoffman pointed out in her (2015) text, the flaw in this approach is that&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;&lt;em&gt;time-varying predictors contain both between-person and within-person information&lt;/em&gt;…&lt;/p&gt;
+&lt;p&gt;[Thus,] time-varying predictors will need to be represented by two separate predictors that distinguish their between-person and within-person sources of variance in order to properly distinguish their potential between-person and within-person effects on a longitudinal outcome. (pp. 329, 333, &lt;em&gt;emphasis&lt;/em&gt; in the original)&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;The simplest way to separate the between-person variance in &lt;code&gt;unemp&lt;/code&gt; from the pure within-person variation is to compute a new variable capturing &lt;span class=&#34;math inline&#34;&gt;\(\overline{\text{unemp}}_i\)&lt;/span&gt;, the person-level means for their unemployment status. Here we compute that variable, which we’ll call &lt;code&gt;unemp_id_mu&lt;/code&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d &amp;lt;-
+  d %&amp;gt;% 
+  group_by(id) %&amp;gt;% 
+  mutate(unemp_id_mu = mean(unemp)) %&amp;gt;% 
+  ungroup()
+
+head(d)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 5
+##      id months  cesd unemp unemp_id_mu
+##   &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;       &amp;lt;dbl&amp;gt;
+## 1   103  1.15     25     1       1    
+## 2   103  5.95     16     1       1    
+## 3   103 12.9      33     1       1    
+## 4   641  0.789    27     1       0.333
+## 5   641  4.86      7     0       0.333
+## 6   641 11.8      25     0       0.333&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Because &lt;code&gt;umemp&lt;/code&gt; is binary, &lt;span class=&#34;math inline&#34;&gt;\(\overline{\text{unemp}}_i\)&lt;/span&gt; can only take on values ranging from 0 to 1. Here are the unique values we have for &lt;code&gt;unemp_id_mu&lt;/code&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d %&amp;gt;% 
+  distinct(unemp_id_mu)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 4 x 1
+##   unemp_id_mu
+##         &amp;lt;dbl&amp;gt;
+## 1       1    
+## 2       0.333
+## 3       0.667
+## 4       0.5&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Because each participant’s &lt;span class=&#34;math inline&#34;&gt;\(\overline{\text{unemp}}_i\)&lt;/span&gt; was based on 3 or fewer measurement occasions, basic algebra limited the variability in our &lt;code&gt;unemp_id_mu&lt;/code&gt; values. You’ll also note that there were no 0s. This, recall, is because participants were recruited at local unemployment offices, leaving all participants with at least one starting value of &lt;code&gt;unemp == 1&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;We should rehearse how we might interpret the &lt;code&gt;unemp_id_mu&lt;/code&gt; values. First recall they are considered level-2 variables; they are between-participant variables. Since they are averages of binary data, they are in a probability metric. In this instance, they are each participants overall probability of being unemployed–their trait-level propensity toward unemployment. No doubt these values would be more reliable if they were computed from data on a greater number of assessment occasions. But with three measurement occasions, we at least have a sense of stability.&lt;/p&gt;
+&lt;p&gt;Since our new &lt;span class=&#34;math inline&#34;&gt;\(\overline{\text{unemp}}_i\)&lt;/span&gt; variable is a level-2 predictor, the level-1 equation for our next model is the same as before:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
+\text{cesd}_{ij} = \pi_{0i} + \pi_{1i} \text{months}_{ij} + \pi_{2i} \text{unemp}_{ij} + \epsilon_{ij}.
+\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;However, there are two new terms in our level-2 model,&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
+\pi_{0i} &amp;amp; = \gamma_{00} + \gamma_{01} (\overline{\text{unemp}}_i) + \zeta_{0i} \\
+\pi_{1i} &amp;amp; = \gamma_{10} + \gamma_{11} (\overline{\text{unemp}}_i) + \zeta_{1i} \\
+\pi_{2i} &amp;amp; = \gamma_{20},
+\end{align*}\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;which is meant to convey that &lt;span class=&#34;math inline&#34;&gt;\(\overline{\text{unemp}}_i\)&lt;/span&gt; is allowed to explain variability in both initial status on CESD scores (i.e., the random intercepts) and change in CESD scores over time (i.e., the random &lt;code&gt;months&lt;/code&gt; slopes). Our variance parameters are all the same:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
+\epsilon_{ij} &amp;amp; \sim \operatorname{Normal} (0, \sigma_\epsilon) \text{ and} \\
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} \\
+\end{bmatrix} &amp;amp; \sim \operatorname{Normal} 
+\Bigg ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}&amp;#39;
+\Bigg ), \text{where} \\
+
+\mathbf{D}    &amp;amp; = \begin{bmatrix} \sigma_0 &amp;amp; 0 \\ 0 &amp;amp; \sigma_1 \end{bmatrix} \text{and} \\
+
+\mathbf{\Omega}  &amp;amp; = \begin{bmatrix} 1 &amp;amp; \rho_{01} \\ \rho_{01} &amp;amp; 1 \end{bmatrix}.
+
+\end{align*}\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Our priors also follow the same basic specification as before:&lt;/p&gt;
+&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\begin{align*}
+\gamma_{00}     &amp;amp; \sim \operatorname{Normal}(14.5, 20) \\
+\gamma_{01}, \gamma_{10}, \gamma_{11}, \text{ and }  \gamma_{20}  &amp;amp; \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \sigma_0,  \text{ and } \sigma_1 &amp;amp; \sim \operatorname{Student-t} (3, 0, 10) \\
+\Omega          &amp;amp; \sim \operatorname{LKJ} (4).
+\end{align*}\]&lt;/span&gt;&lt;/p&gt;
+&lt;p&gt;Note, however, that the inclusion of our new level-2 predictor, &lt;span class=&#34;math inline&#34;&gt;\((\overline{\text{unemp}}_i)\)&lt;/span&gt;, changes the meaning of the intercept, &lt;span class=&#34;math inline&#34;&gt;\(\gamma_{00}\)&lt;/span&gt;. The intercept is now the expected value for a person for whom &lt;code&gt;unemp_id_mu == 0&lt;/code&gt; at the start of the study (i.e., &lt;code&gt;months == 0&lt;/code&gt;). I still think our intercept prior from the first model is fine for this example. But do think carefully about the priors you use in your real-world data analyses.&lt;/p&gt;
+&lt;p&gt;Here’s how to fit the udpdate model with &lt;strong&gt;brms&lt;/strong&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit2 &amp;lt;-
+  brm(data = d, 
+      family = gaussian,
+      cesd ~ 0 + intercept + months + unemp + unemp_id_mu + unemp_id_mu:months + (1 + months | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = &amp;quot;intercept&amp;quot;),
+                prior(normal(0, 10),    class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;We should fit one more model before we look at the parameters. If you were paying close attention, above, you may have noticed how it’s odd that we kept &lt;code&gt;unemp_id_mu&lt;/code&gt; in it’s natural metric. Sure, it’s fine in principle–sensible even–to use a variable in a probability metric. But in this particular study, none of the participants had a value of &lt;code&gt;unemp_id_mu == 0&lt;/code&gt; because all of them were unemployed at the first time point. Though it is mathematically kosher to fit a model with an intercept based on &lt;code&gt;unemp_id_mu == 0&lt;/code&gt;, it’s awkward to interpret. So in this case, it makes sense to transform the metric of our level-2 predictor. Perhaps the simplest way is to standardize the variable. That would then give an intercept based on the average &lt;code&gt;unemp_id_mu&lt;/code&gt; value and a &lt;span class=&#34;math inline&#34;&gt;\(\gamma_{01}\)&lt;/span&gt; coefficient that was the expected change in intercept based on a one-standard-deviation higher value in &lt;code&gt;unemp_id_mu&lt;/code&gt;. Let’s compute that new standardized variable, which we’ll call &lt;code&gt;unemp_id_mu_s&lt;/code&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;d &amp;lt;-
+  d %&amp;gt;% 
+  nest(data = c(months:unemp)) %&amp;gt;% 
+  mutate(unemp_id_mu_s = (unemp_id_mu - mean(unemp_id_mu)) / sd(unemp_id_mu)) %&amp;gt;% 
+  unnest(data)
+
+head(d)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 6 x 6
+##      id unemp_id_mu months  cesd unemp unemp_id_mu_s
+##   &amp;lt;dbl&amp;gt;       &amp;lt;dbl&amp;gt;  &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;         &amp;lt;dbl&amp;gt;
+## 1   103       1      1.15     25     1         0.873
+## 2   103       1      5.95     16     1         0.873
+## 3   103       1     12.9      33     1         0.873
+## 4   641       0.333  0.789    27     1        -1.58 
+## 5   641       0.333  4.86      7     0        -1.58 
+## 6   641       0.333 11.8      25     0        -1.58&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The model formula is the same as before with the exception that we replace &lt;code&gt;unemp_id_mu&lt;/code&gt; with &lt;code&gt;unemp_id_mu_s&lt;/code&gt;. For simplicity, I’m leaving the priors the same.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;fit3 &amp;lt;-
+  brm(data = d, 
+      family = gaussian,
+      cesd ~ 0 + intercept + months + unemp + unemp_id_mu_s + unemp_id_mu_s:months + (1 + months | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = &amp;quot;intercept&amp;quot;),
+                prior(normal(0, 10),    class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      control = list(adapt_delta = .9),
+      seed = 5)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Instead of examining each of the model summaries one by one, we’ll condense the information into a series of coefficient plots. For simplicity, we’ll restrict our focus on the &lt;span class=&#34;math inline&#34;&gt;\(\gamma\)&lt;/span&gt; parameters.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# extract the `fit1` summaries
+fixef(fit1) %&amp;gt;%
+  data.frame() %&amp;gt;%
+  rownames_to_column(&amp;quot;par&amp;quot;) %&amp;gt;%
+  mutate(fit = &amp;quot;fit1&amp;quot;) %&amp;gt;% 
+  bind_rows(
+    # add the `fit2` summaries
+    fixef(fit2) %&amp;gt;%
+      data.frame() %&amp;gt;% 
+      rownames_to_column(&amp;quot;par&amp;quot;) %&amp;gt;%
+      mutate(fit = &amp;quot;fit2&amp;quot;),
+    # add the `fit2` summaries
+    fixef(fit3) %&amp;gt;%
+      data.frame() %&amp;gt;% 
+      rownames_to_column(&amp;quot;par&amp;quot;) %&amp;gt;%
+      mutate(fit = &amp;quot;fit3&amp;quot;)
+  ) %&amp;gt;% 
+  # rename the parameters
+  mutate(gamma = case_when(
+    par == &amp;quot;intercept&amp;quot;     ~ &amp;quot;gamma[0][0]&amp;quot;,
+    par == &amp;quot;months&amp;quot;        ~ &amp;quot;gamma[1][0]&amp;quot;,
+    par == &amp;quot;unemp&amp;quot;         ~ &amp;quot;gamma[2][0]&amp;quot;,
+    str_detect(par, &amp;quot;:&amp;quot;)   ~ &amp;quot;gamma[1][1]&amp;quot;,
+    par == &amp;quot;unemp_id_mu&amp;quot;   ~ &amp;quot;gamma[0][1]&amp;quot;,
+    par == &amp;quot;unemp_id_mu_s&amp;quot; ~ &amp;quot;gamma[0][1]&amp;quot;
+  )) %&amp;gt;% 
+  
+  # plot!
+  ggplot(aes(x = fit, y = Estimate, ymin = Q2.5, ymax = Q97.5)) +
+  geom_hline(yintercept = 0, color = &amp;quot;white&amp;quot;) +
+  geom_pointrange(fatten = 3) +
+  xlab(NULL) +
+  coord_flip() +
+  facet_wrap(~gamma, nrow = 3, scale = &amp;quot;free_x&amp;quot;, labeller = label_parsed)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;&lt;img src=&#34;/post/2019-10-31-time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too_files/figure-html/unnamed-chunk-10-1.png&#34; width=&#34;576&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;In case you’re not familiar with the output from the &lt;code&gt;brm::fixef()&lt;/code&gt; function, each of the parameter estimates are summarized by their posterior means (i.e,. the dots) and percentile-based 95% intervals (i.e., the horizontal lines).&lt;/p&gt;
+&lt;p&gt;Recall how earlier I complained that these data weren’t particularly good for demonstrating this method? Well, here you finally get to see why. Regardless of the model, the estimates didn’t change much. In these data, the predictive utility of our between-level variable, &lt;code&gt;unemp_id_mu&lt;/code&gt;–standardized or not–, was just about zilch. This is summarized by the &lt;span class=&#34;math inline&#34;&gt;\(\gamma_{01}\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(\gamma_{11}\)&lt;/span&gt; parameters. Both are centered around zero for both models containing them. Thus adding in an inconsequential level-2 predictor had little effect on its level-1 companion, &lt;code&gt;unemp&lt;/code&gt;, which was expressed by &lt;span class=&#34;math inline&#34;&gt;\(\gamma_{20}\)&lt;/span&gt;.&lt;/p&gt;
+&lt;p&gt;Depressing as these results are, the practice was still worthwhile. Had we not decomposed our time-varying &lt;code&gt;unemp&lt;/code&gt; variable into it’s within- and between-level components, we would never had known that the trait levels of &lt;code&gt;umemp&lt;/code&gt; were inconsequential for these analyses. Now we know. For these models, all the action for &lt;code&gt;unemp&lt;/code&gt; was at the within-person level.&lt;/p&gt;
+&lt;p&gt;This is also the explanation for why we focused on the &lt;span class=&#34;math inline&#34;&gt;\(\gamma\)&lt;/span&gt;s to the neglect of the variance parameters. Because our &lt;code&gt;unemp_id_mu&lt;/code&gt; variables were poor predictors of the random effects, there was no reason to expect they’d differ meaningfully across models. And because &lt;code&gt;unemp_id_mu&lt;/code&gt; is only a level-2 predictor, it never had any hope for changing the estimates for &lt;span class=&#34;math inline&#34;&gt;\(\sigma_\epsilon\)&lt;/span&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&#34;what-about-centering-umemp&#34; class=&#34;section level3&#34;&gt;
+&lt;h3&gt;What about centering &lt;code&gt;umemp&lt;/code&gt;?&lt;/h3&gt;
+&lt;p&gt;If you look through our primary two references for this post, Enders &amp;amp; Tofighi (2007) and Hoffman (2015), you’ll see both works spend a lot of time on discussing how one might center the level-1 versions of the time-varying covariates. If &lt;code&gt;unemp&lt;/code&gt; was a continuous variable, we would have had to contend with that issue, too. But this just isn’t necessary with binary variables. They have a sensible interpretation when left in the typical 0/1 format. So my recommendation is when you’re decomposing your binary time-varying covariates, put your focus on meaningfully centering the level-2 version of the variable. Leave the level-1 version alone. However, if you’re really interested in playing around with alternatives like effects coding, Enders and Tofighi provided several recommendations.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div id=&#34;session-info&#34; class=&#34;section level2&#34;&gt;
+&lt;h2&gt;Session info&lt;/h2&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## R version 3.6.0 (2019-04-26)
+## Platform: x86_64-apple-darwin15.6.0 (64-bit)
+## Running under: macOS High Sierra 10.13.6
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] brms_2.10.3     Rcpp_1.0.2      forcats_0.4.0   stringr_1.4.0  
+##  [5] dplyr_0.8.3     purrr_0.3.3     readr_1.3.1     tidyr_1.0.0    
+##  [9] tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1
+## 
+## loaded via a namespace (and not attached):
+##  [1] nlme_3.1-139         matrixStats_0.55.0   xts_0.11-2          
+##  [4] lubridate_1.7.4      threejs_0.3.1        httr_1.4.0          
+##  [7] rstan_2.19.2         tools_3.6.0          backports_1.1.5     
+## [10] utf8_1.1.4           R6_2.4.0             DT_0.9              
+## [13] lazyeval_0.2.2       colorspace_1.4-1     withr_2.1.2         
+## [16] prettyunits_1.0.2    processx_3.4.1       tidyselect_0.2.5    
+## [19] gridExtra_2.3        Brobdingnag_1.2-6    curl_4.2            
+## [22] compiler_3.6.0       cli_1.1.0            rvest_0.3.4         
+## [25] shinyjs_1.0          xml2_1.2.0           labeling_0.3        
+## [28] colourpicker_1.0     bookdown_0.12        scales_1.0.0        
+## [31] dygraphs_1.1.1.6     callr_3.3.2          ggridges_0.5.1      
+## [34] StanHeaders_2.19.0   digest_0.6.21        rmarkdown_1.13      
+## [37] base64enc_0.1-3      pkgconfig_2.0.3      htmltools_0.4.0     
+## [40] htmlwidgets_1.5      rlang_0.4.1          readxl_1.3.1        
+## [43] rstudioapi_0.10      shiny_1.3.2          generics_0.0.2      
+## [46] zoo_1.8-6            jsonlite_1.6         gtools_3.8.1        
+## [49] crosstalk_1.0.0      inline_0.3.15        magrittr_1.5        
+## [52] loo_2.1.0            bayesplot_1.7.0      Matrix_1.2-17       
+## [55] munsell_0.5.0        fansi_0.4.0          abind_1.4-5         
+## [58] lifecycle_0.1.0      stringi_1.4.3        yaml_2.2.0          
+## [61] pkgbuild_1.0.5       plyr_1.8.4           grid_3.6.0          
+## [64] parallel_3.6.0       promises_1.1.0       crayon_1.3.4        
+## [67] miniUI_0.1.1.1       lattice_0.20-38      haven_2.1.0         
+## [70] hms_0.4.2            ps_1.3.0             zeallot_0.1.0       
+## [73] knitr_1.23           pillar_1.4.2         igraph_1.2.4.1      
+## [76] emo_0.0.0.9000       markdown_1.1         shinystan_2.5.0     
+## [79] stats4_3.6.0         reshape2_1.4.3       rstantools_2.0.0    
+## [82] glue_1.3.1.9000      evaluate_0.14        blogdown_0.14       
+## [85] modelr_0.1.4         vctrs_0.2.0          httpuv_1.5.2        
+## [88] cellranger_1.1.0     gtable_0.3.0         assertthat_0.2.1    
+## [91] xfun_0.10            mime_0.7             xtable_1.8-4        
+## [94] broom_0.5.2          coda_0.19-3          later_1.0.0         
+## [97] rsconnect_0.8.15     shinythemes_1.1.2    bridgesampling_0.7-2&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Individuals are not small groups, II: The ecological fallacy</title>
       <link>/post/individuals-are-not-small-groups-ii-the-ecological-fallacy/</link>
       <pubDate>Mon, 14 Oct 2019 00:00:00 +0000</pubDate>
@@ -5258,405 +5624,6 @@ sd %&amp;gt;%
 ##  [94] callr_3.2.0               threejs_0.3.1             digest_0.6.20            
 ##  [97] xtable_1.8-4              httpuv_1.5.1              stats4_3.6.0             
 ## [100] munsell_0.5.0             viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
-&lt;/div&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Bayesian meta-analysis in brms</title>
-      <link>/post/bayesian-meta-analysis/</link>
-      <pubDate>Sun, 14 Oct 2018 00:00:00 +0000</pubDate>
-      
-      <guid>/post/bayesian-meta-analysis/</guid>
-      <description>&lt;p&gt;[edited Feb 27, 2019]&lt;/p&gt;
-&lt;div id=&#34;preamble&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Preamble&lt;/h2&gt;
-&lt;p&gt;I released the first &lt;a href=&#34;https://bookdown.org&#34;&gt;bookdown&lt;/a&gt; version of my &lt;a href=&#34;https://bookdown.org/connect/#/apps/1850/access&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt; with brms, ggplot2, and the tidyverse&lt;/a&gt; project a couple weeks ago. I consider it the 0.9.0 version. I wanted a little time to step back from the project before giving it a final edit for the first major edition. I also wanted to give others a little time to take a look and suggest edits, which some thankfully have.&lt;/p&gt;
-&lt;p&gt;Now some time has passed, it’s become clear I’d like to add a bonus section on Bayesian meta-analysis. IMO, this is a natural extension of the hierarchical models McElreath introduced in chapter’s 12 and 13 of &lt;a href=&#34;https://xcelab.net/rm/statistical-rethinking/&#34;&gt;his text&lt;/a&gt; and of the measurement-error models he introduced in chapter 14. So the purpose of this post is to present a rough draft of how I’d like to introduce fitting meta-analyses with Bürkner’s great brms package.&lt;/p&gt;
-&lt;p&gt;I intend to tack this section onto the end of chapter 14. If you have any &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse/issues&#34;&gt;constrictive criticisms, please pass them along&lt;/a&gt;.&lt;/p&gt;
-&lt;p&gt;Here’s the rough draft (which I updated on 2018-11-12):&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;rough-draft-meta-analysis&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Rough draft: Meta-analysis&lt;/h2&gt;
-&lt;p&gt;If your mind isn’t fully blown by those measurement-error and missing-data models, let’s keep building. As it turns out, meta-analyses are often just special kinds of multilevel measurement-error models. Thus, you can use &lt;code&gt;brms::brm()&lt;/code&gt; to fit Bayesian meta-analyses, too.&lt;/p&gt;
-&lt;p&gt;Before we proceed, I should acknowledge that this section is heavily influenced by Matti Vourre’s great blog post, &lt;a href=&#34;https://vuorre.netlify.com/post/2016/2016-09-29-bayesian-meta-analysis/&#34;&gt;&lt;em&gt;Meta-analysis is a special case of Bayesian multilevel modeling&lt;/em&gt;&lt;/a&gt;. And since McElreath’s text doesn’t directly address meta-analyses, we’ll take further inspiration from Gelman, Carlin, Stern, Dunson, Vehtari, and Rubin’s &lt;a href=&#34;http://www.stat.columbia.edu/~gelman/book/&#34;&gt;&lt;em&gt;Bayesian data analysis, Third edition&lt;/em&gt;&lt;/a&gt;. We’ll let Gelman and colleagues introduce the topic:&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;Discussions of meta-analysis are sometimes imprecise about the estimands of interest in the analysis, especially when the primary focus is on testing the null hypothesis of no effect in any of the studies to be combined. Our focus is on estimating meaningful parameters, and for this objective there appear to be three possibilities, accepting the overarching assumption that the studies are comparable in some broad sense. The first possibility is that we view the studies as identical replications of each other, in the sense we regard the individuals in all the studies as independent samples from a common population, with the same outcome measures and so on. A second possibility is that the studies are so different that the results of any one study provide no information about the results of any of the others. A third, more general, possibility is that we regard the studies as exchangeable but not necessarily either identical or completely unrelated; in other words we allow differences from study to study, but such that the differences are not expected &lt;em&gt;a priori&lt;/em&gt; to have predictable effects favoring one study over another.… This third possibility represents a continuum between the two extremes, and it is this exchangeable model (with unknown hyperparameters characterizing the population distribution) that forms the basis of our Bayesian analysis…&lt;/p&gt;
-&lt;p&gt;The first potential estimand of a meta-analysis, or a hierarchically structured problem in general, is the mean of the distribution of effect sizes, since this represents the overall ‘average’ effect across all studies that could be regarded as exchangeable with the observed studies. Other possible estimands are the effect size in any of the observed studies and the effect size in another, comparable (exchangeable) unobserved study. (pp. 125—126, &lt;em&gt;emphasis&lt;/em&gt; in the original)&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;The basic version of a Bayesian meta-analysis follows the form&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[y_i \sim \text{Normal}(\theta_i, \sigma_i)\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(y_i\)&lt;/span&gt; = the point estimate for the effect size of a single study, &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt;, which is presumed to have been a draw from a Normal distribution centered on &lt;span class=&#34;math inline&#34;&gt;\(\theta_i\)&lt;/span&gt;. The data in meta-analyses are typically statistical summaries from individual studies. The one clear lesson from this chapter is that those estimates themselves come with error and those errors should be fully expressed in the meta-analytic model. Which we do. The standard error from study &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt; is specified &lt;span class=&#34;math inline&#34;&gt;\(\sigma_i\)&lt;/span&gt;, which is also a stand-in for the standard deviation of the Normal distribution from which the point estimate was drawn. Do note, we’re not estimating &lt;span class=&#34;math inline&#34;&gt;\(\sigma_i\)&lt;/span&gt;, here. Those values we take directly from the original studies.&lt;/p&gt;
-&lt;p&gt;Building on the model, we further presume that study &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt; is itself just one draw from a population of related studies, each of which have their own effect sizes. As such. we presume &lt;span class=&#34;math inline&#34;&gt;\(\theta_i\)&lt;/span&gt; itself has a distribution following the form&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\theta_i \sim \text{Normal} (\mu, \tau)\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;where &lt;span class=&#34;math inline&#34;&gt;\(\mu\)&lt;/span&gt; is the meta-analytic effect (i.e., the population mean) and &lt;span class=&#34;math inline&#34;&gt;\(\tau\)&lt;/span&gt; is the variation around that mean, what you might also think of as &lt;span class=&#34;math inline&#34;&gt;\(\sigma_\tau\)&lt;/span&gt;.&lt;/p&gt;
-&lt;p&gt;Since there’s no example of a meta-analysis in the text, we’ll have to look elsewhere. We’ll focus on Gershoff and Grogan-Kaylor’s (2016) paper, &lt;a href=&#34;https://pdfs.semanticscholar.org/0d03/a2e9f085f0a268b4c0a52f5ac31c17a3e5f3.pdf&#34;&gt;&lt;em&gt;Spanking and Child Outcomes: Old Controversies and New Meta-Analyses&lt;/em&gt;&lt;/a&gt;. From their introduction, we read:&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;Around the world, most children (80%) are spanked or otherwise physically punished by their parents (&lt;a href=&#34;https://www.unicef.org/publications/index_74865.html&#34;&gt;UNICEF, 2014&lt;/a&gt;). The question of whether parents should spank their children to correct misbehaviors sits at a nexus of arguments from ethical, religious, and human rights perspectives both in the U.S. and around the world (&lt;a href=&#34;https://onlinelibrary.wiley.com/doi/abs/10.1111/cdep.12038&#34;&gt;Gershoff, 2013&lt;/a&gt;). Several hundred studies have been conducted on the associations between parents’ use of spanking or physical punishment and children’s behavioral, emotional, cognitive, and physical outcomes, making spanking one of the most studied aspects of parenting. What has been learned from these hundreds of studies? (p. 453)&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;Our goal will be to learn Bayesian meta-analysis by answering part of that question. I’ve transcribed the values directly from Gershoff and Grogan-Kaylor’s paper and saved them as a file called &lt;code&gt;spank.xlsx&lt;/code&gt;.
-You can find the data in &lt;a href=&#34;https://github.com/ASKurz/Statistical_Rethinking_with_brms_ggplot2_and_the_tidyverse&#34;&gt;this project’s GitHub repository&lt;/a&gt;. Let’s load them and &lt;code&gt;glimpse()&lt;/code&gt;.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;spank &amp;lt;- readxl::read_excel(&amp;quot;spank.xlsx&amp;quot;)
-
-library(tidyverse)
-glimpse(spank)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## Observations: 111
-## Variables: 8
-## $ study   &amp;lt;chr&amp;gt; &amp;quot;Bean and Roberts (1981)&amp;quot;, &amp;quot;Day and Roberts (1983)&amp;quot;, &amp;quot;Mi…
-## $ year    &amp;lt;dbl&amp;gt; 1981, 1983, 1971, 1988, 1990, 1961, 1962, 1990, 2002, 20…
-## $ outcome &amp;lt;chr&amp;gt; &amp;quot;Immediate defiance&amp;quot;, &amp;quot;Immediate defiance&amp;quot;, &amp;quot;Immediate d…
-## $ between &amp;lt;dbl&amp;gt; 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0,…
-## $ within  &amp;lt;dbl&amp;gt; 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1,…
-## $ d       &amp;lt;dbl&amp;gt; -0.74, 0.36, 0.34, -0.08, 0.10, 0.63, 0.19, 0.47, 0.14, …
-## $ ll      &amp;lt;dbl&amp;gt; -1.76, -1.04, -0.09, -1.01, -0.82, 0.16, -0.14, 0.20, -0…
-## $ ul      &amp;lt;dbl&amp;gt; 0.28, 1.77, 0.76, 0.84, 1.03, 1.10, 0.53, 0.74, 0.70, 0.…&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;In this paper, the effect size of interest is a &lt;em&gt;Cohen’s d&lt;/em&gt;, derived from the formula&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[d = \frac{\mu_\text{treatment} - \mu_\text{comparison}}{\sigma_{pooled}}\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;where&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[\sigma_{pooled} = \sqrt{\frac{((n_1 - 1) \sigma_1^2) + ((n_2 - 1) \sigma_2^2)}{n_1 + n_2 -2}}\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;To help make the equation for &lt;span class=&#34;math inline&#34;&gt;\(d\)&lt;/span&gt; clearer for our example, we might re-express it as&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[d = \frac{\mu_\text{spanked} - \mu_\text{not spanked}}{\sigma_{pooled}}\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;McElreath didn’t really focus on effect sizes in his text. If you need a refresher, you might check out Kelley and Preacher’s &lt;a href=&#34;https://www.researchgate.net/profile/Ken_Kelley/publication/270757972_On_Effect_Size/links/0046351b0cd48217ce000000/On-Effect-Size.pdf&#34;&gt;&lt;em&gt;On effect size&lt;/em&gt;&lt;/a&gt;. But in words, &lt;em&gt;Cohen’s d&lt;/em&gt; is a standardized mean difference between two groups.&lt;/p&gt;
-&lt;p&gt;So if you look back up at the results of &lt;code&gt;glimpse(spank)&lt;/code&gt;, you’ll notice the column &lt;code&gt;d&lt;/code&gt;, which is indeed a vector of &lt;em&gt;Cohen’s d&lt;/em&gt; effect sizes. The last two columns, &lt;code&gt;ll&lt;/code&gt; and &lt;code&gt;ul&lt;/code&gt; are the lower and upper limits of the associated 95% frequentist confidence intervals. But we don’t want confidence intervals for our &lt;code&gt;d&lt;/code&gt;-values; we want their standard errors. Fortunately, we can compute those with the following formula&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[SE = \frac{\text{upper limit } – \text{lower limit}}{3.92}\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;Here it is in code.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;spank &amp;lt;-
-  spank %&amp;gt;% 
-  mutate(se = (ul - ll) / 3.92)
-
-glimpse(spank)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## Observations: 111
-## Variables: 9
-## $ study   &amp;lt;chr&amp;gt; &amp;quot;Bean and Roberts (1981)&amp;quot;, &amp;quot;Day and Roberts (1983)&amp;quot;, &amp;quot;Mi…
-## $ year    &amp;lt;dbl&amp;gt; 1981, 1983, 1971, 1988, 1990, 1961, 1962, 1990, 2002, 20…
-## $ outcome &amp;lt;chr&amp;gt; &amp;quot;Immediate defiance&amp;quot;, &amp;quot;Immediate defiance&amp;quot;, &amp;quot;Immediate d…
-## $ between &amp;lt;dbl&amp;gt; 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0,…
-## $ within  &amp;lt;dbl&amp;gt; 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1,…
-## $ d       &amp;lt;dbl&amp;gt; -0.74, 0.36, 0.34, -0.08, 0.10, 0.63, 0.19, 0.47, 0.14, …
-## $ ll      &amp;lt;dbl&amp;gt; -1.76, -1.04, -0.09, -1.01, -0.82, 0.16, -0.14, 0.20, -0…
-## $ ul      &amp;lt;dbl&amp;gt; 0.28, 1.77, 0.76, 0.84, 1.03, 1.10, 0.53, 0.74, 0.70, 0.…
-## $ se      &amp;lt;dbl&amp;gt; 0.52040816, 0.71683673, 0.21683673, 0.47193878, 0.471938…&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Now our data are ready, we can express our first Bayesian meta-analysis with the formula&lt;/p&gt;
-&lt;p&gt;&lt;span class=&#34;math display&#34;&gt;\[
-\begin{eqnarray}
-\text{d}_i &amp;amp; \sim &amp;amp; \text{Normal}(\theta_i, \sigma_i = \text{se}_i) \\
-\theta_i &amp;amp; \sim &amp;amp; \text{Normal} (\mu, \tau) \\
-\mu &amp;amp; \sim &amp;amp; \text{Normal} (0, 1) \\
-\tau &amp;amp; \sim &amp;amp; \text{HalfCauchy} (0, 1)
-\end{eqnarray}
-\]&lt;/span&gt;&lt;/p&gt;
-&lt;p&gt;The last two lines, of course, spell out our priors. In psychology, it’s pretty rare to see &lt;em&gt;Cohen’s d&lt;/em&gt;-values greater than the absolute value of &lt;span class=&#34;math inline&#34;&gt;\(\pm 1\)&lt;/span&gt;. So in the absence of more specific domain knowledge–which I don’t have–, it seems like &lt;span class=&#34;math inline&#34;&gt;\(\text{Normal} (0, 1)\)&lt;/span&gt; is a reasonable place to start. And just like McElreath used &lt;span class=&#34;math inline&#34;&gt;\(\text{HalfCauchy} (0, 1)\)&lt;/span&gt; as the default prior for the group-level standard deviations, &lt;a href=&#34;https://psyarxiv.com/7tbrm/&#34;&gt;it makes sense to use it here&lt;/a&gt; for our meta-analytic &lt;span class=&#34;math inline&#34;&gt;\(\tau\)&lt;/span&gt; parameter.&lt;/p&gt;
-&lt;p&gt;Let’s load brms.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(brms)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Here’s the code for the first model.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;b14.5 &amp;lt;- 
-  brm(data = spank, family = gaussian,
-      d | se(se) ~ 1 + (1 | study),
-      prior = c(prior(normal(0, 1), class = Intercept),
-                prior(cauchy(0, 1), class = sd)),
-      iter = 2000, warmup = 1000, cores = 4, chains = 4,
-      seed = 14)&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;One thing you might notice is our &lt;code&gt;se(se)&lt;/code&gt; function excluded the &lt;code&gt;sigma&lt;/code&gt; argument. If you recall from section 14.1, we specified &lt;code&gt;sigma = T&lt;/code&gt; in our measurement-error models. The brms default is that within &lt;code&gt;se()&lt;/code&gt;, &lt;code&gt;sigma = FALSE&lt;/code&gt;. As such, we have no estimate for sigma the way we would if we were doing this analysis with the raw data from the studies. Hopefully this makes sense. The uncertainty around the &lt;code&gt;d&lt;/code&gt;-value for each study &lt;span class=&#34;math inline&#34;&gt;\(i\)&lt;/span&gt; has already been encoded in the data as &lt;code&gt;se&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;This brings us to another point. We typically perform meta-analyses on data summaries. In my field and perhaps in yours, this is due to the historical accident that it has not been the norm among researchers to make their data publically available. So effect size summaries were the best we typically had. However, times are changing (e.g., &lt;a href=&#34;https://www.apa.org/monitor/2017/11/trends-open-science.aspx&#34;&gt;here&lt;/a&gt;, &lt;a href=&#34;https://www.blog.google/products/search/making-it-easier-discover-datasets/&#34;&gt;here&lt;/a&gt;). If the raw data from all the studies for your meta-analysis are available, you can just fit a multilevel model in which the data are nested in the studies. Heck, you could even allow the studies to vary by &lt;span class=&#34;math inline&#34;&gt;\(\sigma\)&lt;/span&gt; by taking the &lt;a href=&#34;https://cran.r-project.org/web/packages/brms/vignettes/brms_distreg.html#a-simple-distributional-model&#34;&gt;distributional modeling approach&lt;/a&gt; and specify something like &lt;code&gt;sigma ~ 0 + study&lt;/code&gt; or even &lt;code&gt;sigma ~ 1 + (1 | study)&lt;/code&gt;.&lt;/p&gt;
-&lt;p&gt;But enough technical talk. Let’s look at the model results.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(b14.5)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##  Family: gaussian 
-##   Links: mu = identity; sigma = identity 
-## Formula: d | se(se) ~ 1 + (1 | study) 
-##    Data: spank (Number of observations: 111) 
-## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
-##          total post-warmup samples = 4000
-## 
-## Group-Level Effects: 
-## ~study (Number of levels: 76) 
-##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sd(Intercept)     0.26      0.03     0.21     0.33 1.00      726      972
-## 
-## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## Intercept     0.37      0.04     0.30     0.44 1.01      419      843
-## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
-## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Thus, in our simple Bayesian meta-analysis, we have a population &lt;em&gt;Cohen’s d&lt;/em&gt; of about 0.37. Our estimate for &lt;span class=&#34;math inline&#34;&gt;\(\tau\)&lt;/span&gt;, 0.26, suggests we have quite a bit of between-study variability. One question you might ask is: &lt;em&gt;What exactly are these&lt;/em&gt; Cohen’s d&lt;em&gt;s measuring, anyways?&lt;/em&gt; We’ve encoded that in the &lt;code&gt;outcome&lt;/code&gt; vector of the &lt;code&gt;spank&lt;/code&gt; data.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;spank %&amp;gt;% 
-  distinct(outcome) %&amp;gt;% 
-  knitr::kable()&lt;/code&gt;&lt;/pre&gt;
-&lt;table&gt;
-&lt;thead&gt;
-&lt;tr class=&#34;header&#34;&gt;
-&lt;th align=&#34;left&#34;&gt;outcome&lt;/th&gt;
-&lt;/tr&gt;
-&lt;/thead&gt;
-&lt;tbody&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Immediate defiance&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Low moral internalization&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Child aggression&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Child antisocial behavior&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Child externalizing behavior problems&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Child internalizing behavior problems&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Child mental health problems&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Child alcohol or substance abuse&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Negative parent–child relationship&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Impaired cognitive ability&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Low self-esteem&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Low self-regulation&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Victim of physical abuse&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Adult antisocial behavior&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Adult mental health problems&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;even&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Adult alcohol or substance abuse&lt;/td&gt;
-&lt;/tr&gt;
-&lt;tr class=&#34;odd&#34;&gt;
-&lt;td align=&#34;left&#34;&gt;Adult support for physical punishment&lt;/td&gt;
-&lt;/tr&gt;
-&lt;/tbody&gt;
-&lt;/table&gt;
-&lt;p&gt;There are a few things to note. First, with the possible exception of &lt;code&gt;Adult support for physical punishment&lt;/code&gt;, all of the outcomes are negative. We prefer conditions associated with lower values for things like &lt;code&gt;Child aggression&lt;/code&gt; and &lt;code&gt;Adult mental health problems&lt;/code&gt;. Second, the way the data are coded, larger effect sizes are interpreted as more negative outcomes associated with children having been spanked. That is, our analysis suggests spanking children is associated with worse outcomes. What might not be immediately apparent is that even though there are 111 cases in the data, there are only 76 distinct studies.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;spank %&amp;gt;% 
-  distinct(study) %&amp;gt;% 
-  count()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## # A tibble: 1 x 1
-##       n
-##   &amp;lt;int&amp;gt;
-## 1    76&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;In other words, some studies have multiple outcomes. In order to better accommodate the &lt;code&gt;study&lt;/code&gt;- and &lt;code&gt;outcome&lt;/code&gt;-level variances, let’s fit a cross-classified Bayesian meta-analysis reminiscent of the cross-classified chimp model from Chapter 13.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;b14.6 &amp;lt;- 
-  brm(data = spank, family = gaussian,
-      d | se(se) ~ 1 + (1 | study) + (1 | outcome),
-      prior = c(prior(normal(0, 1), class = Intercept),
-                prior(cauchy(0, 1), class = sd)),
-      iter = 2000, warmup = 1000, cores = 4, chains = 4,
-      seed = 14)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(b14.6)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##  Family: gaussian 
-##   Links: mu = identity; sigma = identity 
-## Formula: d | se(se) ~ 1 + (1 | study) + (1 | outcome) 
-##    Data: spank (Number of observations: 111) 
-## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
-##          total post-warmup samples = 4000
-## 
-## Group-Level Effects: 
-## ~outcome (Number of levels: 17) 
-##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sd(Intercept)     0.08      0.03     0.04     0.14 1.00      938     1642
-## 
-## ~study (Number of levels: 76) 
-##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sd(Intercept)     0.25      0.03     0.20     0.32 1.01      818     1458
-## 
-## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## Intercept     0.35      0.04     0.27     0.44 1.01      672     1128
-## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
-## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Now we have two &lt;span class=&#34;math inline&#34;&gt;\(\tau\)&lt;/span&gt; parameters. We might plot them to get a sense of where the variance is at.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;posterior_samples(b14.6) %&amp;gt;% 
-  select(starts_with(&amp;quot;sd&amp;quot;)) %&amp;gt;% 
-  gather(key, tau) %&amp;gt;% 
-  mutate(key = str_remove(key, &amp;quot;sd_&amp;quot;) %&amp;gt;% str_remove(., &amp;quot;__Intercept&amp;quot;)) %&amp;gt;% 
-  
-  ggplot(aes(x = tau, fill = key)) +
-  geom_density(color = &amp;quot;transparent&amp;quot;, alpha = 2/3) +
-  scale_fill_viridis_d(NULL, end = .85) +
-  scale_y_continuous(NULL, breaks = NULL) +
-  xlab(expression(tau)) +
-  theme(panel.grid = element_blank())&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-14-bayesian-meta-analysis_files/figure-html/unnamed-chunk-8-1.png&#34; width=&#34;480&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;So at this point, the big story is there’s more variability between the studies than there is the outcomes. But I still want to get a sense of the individual outcomes. Here we’ll use &lt;code&gt;tidybayes::geom_halfeyeh()&lt;/code&gt; to help us make our version of a &lt;a href=&#34;https://cran.r-project.org/web/packages/forestplot/vignettes/forestplot.html&#34;&gt;forest plot&lt;/a&gt;.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# load tidybayes
-library(tidybayes)
-
-b14.6 %&amp;gt;%
-  spread_draws(b_Intercept, r_outcome[outcome,]) %&amp;gt;%
-  # add the grand mean to the group-specific deviations
-  mutate(mu = b_Intercept + r_outcome) %&amp;gt;%
-  ungroup() %&amp;gt;%
-  mutate(outcome = str_replace_all(outcome, &amp;quot;[.]&amp;quot;, &amp;quot; &amp;quot;)) %&amp;gt;% 
-
-  # plot
-  ggplot(aes(x = mu, y = reorder(outcome, mu))) +
-  geom_vline(xintercept = fixef(b14.6)[1, 1], color = &amp;quot;white&amp;quot;, size = 1) +
-  geom_vline(xintercept = fixef(b14.6)[1, 3:4], color = &amp;quot;white&amp;quot;, linetype = 2) +
-  geom_halfeyeh(.width = .95, size = 2/3) +
-  labs(x = expression(italic(&amp;quot;Cohen&amp;#39;s d&amp;quot;)),
-       y = NULL) +
-  theme(panel.grid   = element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.text.y  = element_text(hjust = 0))&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-14-bayesian-meta-analysis_files/figure-html/unnamed-chunk-9-1.png&#34; width=&#34;480&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;The solid and dashed vertical white lines in the background mark off the grand mean (i.e., the meta-analytic effect) and its 95% intervals. But anyway, there’s not a lot of variability across the outcomes. Let’s go one step further with the model. Doubling back to Gelman and colleagues, we read:&lt;/p&gt;
-&lt;blockquote&gt;
-&lt;p&gt;When assuming exchangeability we assume there are no important covariates that might form the basis of a more complex model, and this assumption (perhaps misguidedly) is widely adopted in meta-analysis. What if other information (in addition to the data &lt;span class=&#34;math inline&#34;&gt;\((n, y)\)&lt;/span&gt;) is available to distinguish among the &lt;span class=&#34;math inline&#34;&gt;\(J\)&lt;/span&gt; studies in a meta-analysis, so that an exchangeable model is inappropriate? In this situation, we can expand the framework of the model to be exchangeable in the observed data and covariates, for example using a hierarchical regression model. (p. 126)&lt;/p&gt;
-&lt;/blockquote&gt;
-&lt;p&gt;One important covariate Gershoff and Grogan-Kaylor addressed in their meta-analysis was the type of study. The 76 papers they based their meta-analysis on contained both between- and within-participants designs. In the &lt;code&gt;spank&lt;/code&gt; data, we’ve dummy coded that information with the &lt;code&gt;between&lt;/code&gt; and &lt;code&gt;within&lt;/code&gt; vectors. Both are dummy variables and &lt;code&gt;within&lt;/code&gt; = 1 - &lt;code&gt;between&lt;/code&gt;. Here are the counts.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;spank %&amp;gt;% 
-  count(between)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## # A tibble: 2 x 2
-##   between     n
-##     &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt;
-## 1       0    71
-## 2       1    40&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;When I use dummies in my models, I prefer to have the majority group stand as the reference category. As such, I typically name those variables by the minority group. In this case, most occasions are based on within-participant designs. Thus, we’ll go ahead and add the &lt;code&gt;between&lt;/code&gt; variable to the model. While we’re at it, we’ll practice using the &lt;code&gt;0 + intercept&lt;/code&gt; syntax.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;b14.7 &amp;lt;- 
-  brm(data = spank, family = gaussian,
-      d | se(se) ~ 0 + intercept + between + (1 | study) + (1 | outcome),
-      prior = c(prior(normal(0, 1), class = b),
-                prior(cauchy(0, 1), class = sd)),
-      iter = 2000, warmup = 1000, cores = 4, chains = 4,
-      seed = 14)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;print(b14.7)&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;##  Family: gaussian 
-##   Links: mu = identity; sigma = identity 
-## Formula: d | se(se) ~ 0 + intercept + between + (1 | study) + (1 | outcome) 
-##    Data: spank (Number of observations: 111) 
-## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
-##          total post-warmup samples = 4000
-## 
-## Group-Level Effects: 
-## ~outcome (Number of levels: 17) 
-##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sd(Intercept)     0.08      0.02     0.04     0.14 1.00     1589     2516
-## 
-## ~study (Number of levels: 76) 
-##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sd(Intercept)     0.25      0.03     0.20     0.32 1.00     1200     1875
-## 
-## Population-Level Effects: 
-##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## intercept     0.38      0.05     0.28     0.48 1.00     1050     1621
-## between      -0.08      0.07    -0.22     0.07 1.00      986     1449
-## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
-## scale reduction factor on split chains (at convergence, Rhat = 1).&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;Let’s take a closer look at &lt;code&gt;b_between&lt;/code&gt;.&lt;/p&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;posterior_samples(b14.7) %&amp;gt;% 
-  
-  ggplot(aes(x = b_between, y = 0)) +
-  geom_halfeyeh(point_interval = median_qi, .width = c(.5, .95)) +
-  labs(x = &amp;quot;Overall difference for between- vs within-participant designs&amp;quot;,
-       y = NULL) +
-  scale_y_continuous(NULL, breaks = NULL) +
-  theme(panel.grid   = element_blank())&lt;/code&gt;&lt;/pre&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2018-10-14-bayesian-meta-analysis_files/figure-html/unnamed-chunk-12-1.png&#34; width=&#34;432&#34; /&gt;&lt;/p&gt;
-&lt;p&gt;That difference isn’t as large I’d expect it to be. But then again, I’m no spanking researcher. So what do I know?&lt;/p&gt;
-&lt;p&gt;There are other things you might do with these data. For example, you might check for trends by year or, as the authors did in their manuscript, distinguish among different severities of corporal punishment. But I think we’ve gone far enough to get you started.&lt;/p&gt;
-&lt;p&gt;If you’d like to learn more about these methods, do check out Vourre’s &lt;a href=&#34;https://vuorre.netlify.com/post/2016/2016-09-29-bayesian-meta-analysis/&#34;&gt;&lt;em&gt;Meta-analysis is a special case of Bayesian multilevel modeling&lt;/em&gt;&lt;/a&gt;. From his blog, you’ll learn additional tricks, like making a more traditional-looking forest plot with the &lt;code&gt;brmstools::forest()&lt;/code&gt; function and how our Bayesian brms method compares with Frequentist meta-analyses via the &lt;a href=&#34;http://www.metafor-project.org/doku.php/metafor&#34;&gt;metafor package&lt;/a&gt;. You might also check out Williams, Rast, and Bürkner’s manuscript, &lt;a href=&#34;https://psyarxiv.com/7tbrm/&#34;&gt;&lt;em&gt;Bayesian Meta-Analysis with Weakly Informative Prior Distributions&lt;/em&gt;&lt;/a&gt; to give you an empirical justification for using a half-Cauchy prior for your meta-analysis &lt;span class=&#34;math inline&#34;&gt;\(\tau\)&lt;/span&gt; parameters.&lt;/p&gt;
-&lt;/div&gt;
-&lt;div id=&#34;session-info&#34; class=&#34;section level2&#34;&gt;
-&lt;h2&gt;Session info&lt;/h2&gt;
-&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sessionInfo()&lt;/code&gt;&lt;/pre&gt;
-&lt;pre&gt;&lt;code&gt;## R version 3.6.0 (2019-04-26)
-## Platform: x86_64-apple-darwin15.6.0 (64-bit)
-## Running under: macOS High Sierra 10.13.6
-## 
-## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
-## 
-## Random number generation:
-##  RNG:     Mersenne-Twister 
-##  Normal:  Inversion 
-##  Sample:  Rounding 
-##  
-## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
-## 
-## attached base packages:
-## [1] stats     graphics  grDevices utils     datasets  methods   base     
-## 
-## other attached packages:
-##  [1] tidybayes_1.1.0 brms_2.10.0     Rcpp_1.0.2      forcats_0.4.0  
-##  [5] stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2     readr_1.3.1    
-##  [9] tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1
-## 
-## loaded via a namespace (and not attached):
-##   [1] colorspace_1.4-1          ellipsis_0.2.0.1         
-##   [3] ggridges_0.5.1            rsconnect_0.8.13         
-##   [5] ggstance_0.3.2            markdown_1.0             
-##   [7] base64enc_0.1-3           rstudioapi_0.10          
-##   [9] rstan_2.19.2              svUnit_0.7-12            
-##  [11] DT_0.7                    fansi_0.4.0              
-##  [13] mvtnorm_1.0-11            lubridate_1.7.4          
-##  [15] xml2_1.2.0                bridgesampling_0.6-0     
-##  [17] knitr_1.23                shinythemes_1.1.2        
-##  [19] zeallot_0.1.0             bayesplot_1.7.0          
-##  [21] jsonlite_1.6              broom_0.5.2              
-##  [23] shiny_1.3.2               compiler_3.6.0           
-##  [25] httr_1.4.0                backports_1.1.4          
-##  [27] assertthat_0.2.1          Matrix_1.2-17            
-##  [29] lazyeval_0.2.2            cli_1.1.0                
-##  [31] later_0.8.0               htmltools_0.3.6          
-##  [33] prettyunits_1.0.2         tools_3.6.0              
-##  [35] igraph_1.2.4.1            coda_0.19-2              
-##  [37] gtable_0.3.0              glue_1.3.1               
-##  [39] reshape2_1.4.3            cellranger_1.1.0         
-##  [41] vctrs_0.2.0               nlme_3.1-139             
-##  [43] blogdown_0.14             crosstalk_1.0.0          
-##  [45] xfun_0.8                  ps_1.3.0                 
-##  [47] rvest_0.3.4               mime_0.7                 
-##  [49] miniUI_0.1.1.1            lifecycle_0.1.0          
-##  [51] gtools_3.8.1              zoo_1.8-6                
-##  [53] scales_1.0.0              colourpicker_1.0         
-##  [55] hms_0.4.2                 promises_1.0.1           
-##  [57] Brobdingnag_1.2-6         parallel_3.6.0           
-##  [59] inline_0.3.15             shinystan_2.5.0          
-##  [61] yaml_2.2.0                gridExtra_2.3            
-##  [63] loo_2.1.0                 StanHeaders_2.18.1-10    
-##  [65] stringi_1.4.3             highr_0.8                
-##  [67] dygraphs_1.1.1.6          pkgbuild_1.0.3           
-##  [69] rlang_0.4.0               pkgconfig_2.0.2          
-##  [71] matrixStats_0.54.0        evaluate_0.14            
-##  [73] lattice_0.20-38           rstantools_1.5.1         
-##  [75] htmlwidgets_1.3           labeling_0.3             
-##  [77] tidyselect_0.2.5          processx_3.3.1           
-##  [79] plyr_1.8.4                magrittr_1.5             
-##  [81] bookdown_0.12             R6_2.4.0                 
-##  [83] generics_0.0.2            pillar_1.4.2             
-##  [85] haven_2.1.0               withr_2.1.2              
-##  [87] xts_0.11-2                abind_1.4-5              
-##  [89] modelr_0.1.4              crayon_1.3.4             
-##  [91] arrayhelpers_1.0-20160527 utf8_1.1.4               
-##  [93] rmarkdown_1.13            grid_3.6.0               
-##  [95] readxl_1.3.1              callr_3.2.0              
-##  [97] threejs_0.3.1             digest_0.6.20            
-##  [99] xtable_1.8-4              httpuv_1.5.1             
-## [101] stats4_3.6.0              munsell_0.5.0            
-## [103] viridisLite_0.3.0         shinyjs_1.0&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 </description>
     </item>

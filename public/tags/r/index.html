@@ -103,7 +103,7 @@
   <meta property="og:image" content="/img/Solomon%20at%20Double%20Decker.jpg">
   <meta property="og:locale" content="en-us">
   
-  <meta property="og:updated_time" content="2019-10-14T00:00:00&#43;00:00">
+  <meta property="og:updated_time" content="2019-10-31T00:00:00&#43;00:00">
   
 
   
@@ -256,6 +256,16 @@
   
   
   <div>
+    <h2><a href="/post/time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too/">Time-varying covariates in longitudinal multilevel models contain state- and trait-level information: This includes binary variables, too</a></h2>
+    <div class="article-style">
+      
+      tl;dr When you have a time-varying covariate you’d like to add to a multilevel growth model, it’s important to break that variable into two. One part of the variable will account for within-person variation. The other part will account for between person variation. Keep reading to learn how you might do so when your time-varying covariate is binary.
+ I assume things. For this post, I’m presuming you are familiar with longitudinal multilevel models and vaguely familiar with the basic differences between frequentist and Bayesian statistics.
+      
+    </div>
+  </div>
+  
+  <div>
     <h2><a href="/post/individuals-are-not-small-groups-ii-the-ecological-fallacy/">Individuals are not small groups, II: The ecological fallacy</a></h2>
     <div class="article-style">
       
@@ -339,17 +349,6 @@ which I originally got from Jenny Bryan’s great talk, Behind every great plot 
       
       tl;dr There’s more than one way to fit a Bayesian correlation in brms.
  Here’s the deal. In the last post, we considered how we might estimate correlations when our data contain influential outlier values. Our big insight was that if we use variants of Student’s \(t\)-distribution as the likelihood rather than the conventional normal distribution, our correlation estimates were less influenced by those outliers. And we mainly did that as Bayesians using the brms package.
-      
-    </div>
-  </div>
-  
-  <div>
-    <h2><a href="/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/">Bayesian robust correlations with brms (and why you should love Student’s $t$)</a></h2>
-    <div class="article-style">
-      
-      [edited June 18, 2019]
-In this post, we’ll show how Student’s \(t\)-distribution can produce better correlation estimates when your data have outliers. As is often the case, we’ll do so as Bayesians.
-This post is a direct consequence of Adrian Baez-Ortega’s great blog, “Bayesian robust correlation with Stan in R (and why you should use Bayesian methods)”. Baez-Ortega worked out the approach and code for direct use with Stan computational environment.
       
     </div>
   </div>

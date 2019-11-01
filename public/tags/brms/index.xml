@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Tue, 27 Aug 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 31 Oct 2019 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/brms/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Time-varying covariates in longitudinal multilevel models contain state- and trait-level information: This includes binary variables, too</title>
+      <link>/post/time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too/</link>
+      <pubDate>Thu, 31 Oct 2019 00:00:00 +0000</pubDate>
+      
+      <guid>/post/time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too/</guid>
+      <description>tl;dr When you have a time-varying covariate you’d like to add to a multilevel growth model, it’s important to break that variable into two. One part of the variable will account for within-person variation. The other part will account for between person variation. Keep reading to learn how you might do so when your time-varying covariate is binary.
+ I assume things. For this post, I’m presuming you are familiar with longitudinal multilevel models and vaguely familiar with the basic differences between frequentist and Bayesian statistics.</description>
+    </item>
     
     <item>
       <title>Bayesian power analysis: Part III.b. What about 0/1 data?</title>
