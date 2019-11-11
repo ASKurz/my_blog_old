@@ -402,3 +402,60 @@ If you look through our primary two references for this post, Enders & Tofighi (
 sessionInfo()
 ```
 
+
+```{r}
+d <-
+  d %>% 
+  mutate(unemp_cwc = unemp - unemp_id_mu)
+
+head(d)
+```
+
+```{r}
+d %>% 
+  distinct(unemp_cwc) %>% 
+  arrange(unemp_cwc)
+```
+
+
+```{r fit4, cache = T, warning = F, message = F, results = "hide"}
+d <-
+  d %>% 
+  mutate(unemp_cwc = unemp - unemp_id_mu)
+
+fit4 <-
+  brm(data = d, 
+      family = gaussian,
+      cesd ~ 0 + intercept + months + unemp_cwc + unemp_id_mu + unemp_id_mu:months + (1 + months | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = "intercept"),
+                prior(normal(0, 10),    class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)
+```
+
+
+
+```{r}
+posterior_summary(fit2)[1:5, ] %>% round(2)
+posterior_summary(fit4)[1:5, ] %>% round(2)
+```
+
+
+```{r}
+d %>% 
+  group_by(id) %>% 
+  summarise(min = min(unemp_cwc),
+            max = max(unemp_cwc)) %>% 
+  mutate(dif = max - min) %>% 
+  count(dif)
+```
+
+
+
+
+
+
+w
