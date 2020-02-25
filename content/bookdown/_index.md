@@ -19,7 +19,7 @@ At present, all of my book-length projects share a similar format and goal. I am
 
 In my experience, Bayesian methods are easiest to use within the **R** computing environment by way of Paul Bürkner's [**brms** package](https://github.com/paul-buerkner/brms). At present, I am not aware of any statistical books, introductory or otherwise, that show users how to use **brms** for applied Bayesian data analysis. My books are an effort to fill that content gap and to make the powerful techniques afforded by the Bayesian paradigm even more accessible to applied researchers. In addition, I make heavy use of the collection of **R** packages known as the [**tidyverse**](https://www.tidyverse.org) when manipulating and visualizing my data. The following books highlight these paradigms.
 
-* [*Doing Bayesian Data Analysis in brms and the tidyverse*, version 0.1.0](https://bookdown.org/ajkurz/recoding_Hayes_2018/) is a translatoin of the code from the second edition of John K. Kruschke's [*Doing Bayesian Data Analysis*](https://sites.google.com/site/doingbayesiandataanalysis/).
+* [*Doing Bayesian Data Analysis in brms and the tidyverse*, version 0.1.0](https://bookdown.org/content/3686) is a translatoin of the code from the second edition of John K. Kruschke's [*Doing Bayesian Data Analysis*](https://sites.google.com/site/doingbayesiandataanalysis/).
 
 * [*Recoding Introduction to Mediation, Moderation, and Conditional Process Analysis*, version 1.1.0](https://bookdown.org/ajkurz/recoding_Hayes_2018/) is a translatoin of the code from the second edition of Andrew F. Hayes's [*Introduction to Mediation, Moderation, and Conditional Process Analysis*](http://afhayes.com/introduction-to-mediation-moderation-and-conditional-process-analysis.html).
 
