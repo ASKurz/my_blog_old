@@ -23,7 +23,7 @@ In my experience, Bayesian methods are easiest to use within the **R** computing
 
 * [*Recoding Introduction to Mediation, Moderation, and Conditional Process Analysis*, version 1.1.0](https://bookdown.org/ajkurz/recoding_Hayes_2018/) is a translatoin of the code from the second edition of Andrew F. Hayes's [*Introduction to Mediation, Moderation, and Conditional Process Analysis*](http://afhayes.com/introduction-to-mediation-moderation-and-conditional-process-analysis.html).
 
-* [*Statistical Rethinking with brms, ggplot2, and the tidyverse*, version 1.0.1] (https://bookdown.org/ajkurz/Statistical_Rethinking_recoded/) is a translation of the code from the first edition of Richard McElreath's [*Statistical Rethinking*](http://xcelab.net/rm/statistical-rethinking/).
+* [*Statistical Rethinking with brms, ggplot2, and the tidyverse*, version 1.1.0] (https://bookdown.org/content/3890) is a translation of the code from the first edition of Richard McElreath's [*Statistical Rethinking*](http://xcelab.net/rm/statistical-rethinking/).
 
 I make periodic updates to these projects, which are reflected in their version numbers. These resources are now and will always be freely available to all. In all cases, however, these should be considered as supplements to the original source material.
 
