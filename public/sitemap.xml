@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
     
@@ -28,6 +27,94 @@
     
     <url>
     
+      <loc>/</loc>
+      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/bayesian/</loc>
+      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/kruschke/</loc>
+      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/post/make-model-diagrams-kruschke-style/</loc>
+      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/plot/</loc>
+      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/r/</loc>
+      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/</loc>
+      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/tidyverse/</loc>
+      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/tutorial/</loc>
+      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/brms/</loc>
+      <lastmod>2019-10-31T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/multilevel/</loc>
+      <lastmod>2019-10-31T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/post/time-varying-covariates-in-longitudinal-multilevel-models-contain-state-and-trait-level-information-this-includes-binary-variables-too/</loc>
       <lastmod>2019-10-31T00:00:00+00:00</lastmod>
     </url>
@@ -36,7 +123,31 @@
     
     <url>
     
+      <loc>/tags/dynamic-p-technique/</loc>
+      <lastmod>2019-10-14T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/idiographic/</loc>
+      <lastmod>2019-10-14T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/post/individuals-are-not-small-groups-ii-the-ecological-fallacy/</loc>
+      <lastmod>2019-10-14T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/single-case/</loc>
       <lastmod>2019-10-14T00:00:00+00:00</lastmod>
     </url>
     
@@ -68,6 +179,14 @@
     
     <url>
     
+      <loc>/tags/power/</loc>
+      <lastmod>2019-08-27T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/post/bayesian-power-analysis-part-iii-a/</loc>
       <lastmod>2019-08-11T00:00:00+00:00</lastmod>
     </url>
@@ -86,6 +205,14 @@
     
       <loc>/post/bayesian-power-analysis-part-i/</loc>
       <lastmod>2019-07-18T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/tidyerse/</loc>
+      <lastmod>2019-07-13T00:00:00+00:00</lastmod>
     </url>
     
   
@@ -117,6 +244,22 @@
     <url>
     
       <loc>/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/</loc>
+      <lastmod>2019-02-10T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/outlier/</loc>
+      <lastmod>2019-02-10T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/robust/</loc>
       <lastmod>2019-02-10T00:00:00+00:00</lastmod>
     </url>
     
@@ -156,6 +299,38 @@
     
     <url>
     
+      <loc>/tags/meta-analysis/</loc>
+      <lastmod>2018-10-14T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/spanking/</loc>
+      <lastmod>2018-10-14T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/statistical-rethinking/</loc>
+      <lastmod>2018-10-14T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/app/</loc>
+      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/post/dont-pay-to-meditate/</loc>
       <lastmod>2018-10-07T00:00:00+00:00</lastmod>
     </url>
@@ -164,7 +339,95 @@
     
     <url>
     
+      <loc>/tags/insight-timer/</loc>
+      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/mbct/</loc>
+      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/mbrp/</loc>
+      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/mbsr/</loc>
+      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/meditation/</loc>
+      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/mindfulness/</loc>
+      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/smartphone/</loc>
+      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/bookdown/</loc>
+      <lastmod>2018-10-04T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
       <loc>/post/how-bookdown/</loc>
+      <lastmod>2018-10-04T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/git/</loc>
+      <lastmod>2018-10-04T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/github/</loc>
+      <lastmod>2018-10-04T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/markdown/</loc>
       <lastmod>2018-10-04T00:00:00+00:00</lastmod>
     </url>
     
@@ -188,14 +451,6 @@
     
     <url>
     
-      <loc>/privacy/</loc>
-      <lastmod>2018-06-28T00:00:00-05:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
       <loc>/post/</loc>
       <lastmod>2017-01-01T00:00:00-06:00</lastmod>
     </url>
@@ -212,107 +467,14 @@
     
     <url>
     
-      <loc>/</loc>
-      <lastmod>2018-09-29T00:00:00-05:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/bayesian/</loc>
-      <lastmod>2019-10-31T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
       <loc>/categories/</loc>
-      <priority>0</priority>
     </url>
     
   
     
     <url>
     
-      <loc>/tags/git/</loc>
-      <lastmod>2018-10-04T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/github/</loc>
-      <lastmod>2018-10-04T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/hiv-aids/</loc>
-      <lastmod>2019-09-30T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/insight-timer/</loc>
-      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/kruschke/</loc>
-      <lastmod>2018-12-20T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/mbct/</loc>
-      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/mbrp/</loc>
-      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/mbsr/</loc>
-      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/markdown/</loc>
-      <lastmod>2018-10-04T00:00:00+00:00</lastmod>
-      <priority>0</priority>
+      <loc>/tags/hiv/aids/</loc>
     </url>
     
   
@@ -320,16 +482,6 @@
     <url>
     
       <loc>/publication_types/</loc>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/r/</loc>
-      <lastmod>2019-10-31T00:00:00+00:00</lastmod>
-      <priority>0</priority>
     </url>
     
   
@@ -337,7 +489,6 @@
     <url>
     
       <loc>/slides/</loc>
-      <priority>0</priority>
     </url>
     
   
@@ -345,195 +496,6 @@
     <url>
     
       <loc>/slides/example-slides/</loc>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/statistical-rethinking/</loc>
-      <lastmod>2018-10-14T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/</loc>
-      <lastmod>2019-10-31T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/app/</loc>
-      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/bookdown/</loc>
-      <lastmod>2018-10-04T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/brms/</loc>
-      <lastmod>2019-10-31T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/dynamic-p-technique/</loc>
-      <lastmod>2019-10-14T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/idiographic/</loc>
-      <lastmod>2019-10-14T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/meditation/</loc>
-      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/meta-analysis/</loc>
-      <lastmod>2018-10-14T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/mindfulness/</loc>
-      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/multilevel/</loc>
-      <lastmod>2019-10-31T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/outlier/</loc>
-      <lastmod>2019-02-10T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/plot/</loc>
-      <lastmod>2019-07-13T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/power/</loc>
-      <lastmod>2019-08-27T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/robust/</loc>
-      <lastmod>2019-02-10T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/single-case/</loc>
-      <lastmod>2019-10-14T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/smartphone/</loc>
-      <lastmod>2018-10-07T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/spanking/</loc>
-      <lastmod>2018-10-14T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/tidyerse/</loc>
-      <lastmod>2019-07-13T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/tidyverse/</loc>
-      <lastmod>2019-08-27T00:00:00+00:00</lastmod>
-      <priority>0</priority>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/tutorial/</loc>
-      <lastmod>2019-10-31T00:00:00+00:00</lastmod>
-      <priority>0</priority>
     </url>
     
   

@@ -154,6 +154,11 @@ baseball %&gt;%
                 point_range = median_qi, .width = .5, relative_scale = 4) +
   labs(x = &quot;batting average&quot;, y = NULL) +
   coord_cartesian(ylim = c(1.25, 5.25))</code></pre>
+<pre><code>## Warning: 
+## In geom_halfeyeh(): The `relative_scale` argument is a deprecated alias for `scale`.
+## Use the `scale` argument instead.
+## See help(&quot;tidybayes-deprecated&quot;).</code></pre>
+<pre><code>## Warning: Ignoring unknown parameters: point_range</code></pre>
 <p><img src="/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/figure-html/unnamed-chunk-7-1.png" width="480" /></p>
 <p>As implied in the formula, the James-Stein estimates are substantially shrunken towards the grand mean, <code>y_bar</code>. To get a sense of which estimate is better, we can subtract the estimate from <code>theta</code>, the end of the season batting average.</p>
 <pre class="r"><code>baseball &lt;-
@@ -173,6 +178,11 @@ baseball %&gt;%
                 point_range = median_qi, .width = .5, relative_scale = 2.5) +
   labs(x = NULL, y = NULL) +
   coord_cartesian(ylim = c(1.25, 4))</code></pre>
+<pre><code>## Warning: 
+## In geom_halfeyeh(): The `relative_scale` argument is a deprecated alias for `scale`.
+## Use the `scale` argument instead.
+## See help(&quot;tidybayes-deprecated&quot;).</code></pre>
+<pre><code>## Warning: Ignoring unknown parameters: point_range</code></pre>
 <p><img src="/post/2019-02-23-stein-s-paradox-and-what-partial-pooling-can-do-for-you_files/figure-html/unnamed-chunk-9-1.png" width="384" /></p>
 <p>The James-Stein errors (i.e., <code>z_error</code>) are much more concentrated toward zero. In the paper, we read: “One method of evaluating the two estimates is by simply counting their successes and failures. For 16 of the 18 players the James-Stein estimator <span class="math inline">\(z\)</span> is closer than the observed average <span class="math inline">\(y\)</span> to the ‘true,’ or seasonal, average <span class="math inline">\(\theta\)</span>” (pp. 119–121). We can compute that with a little <code>ifelse()</code>.</p>
 <pre class="r"><code>baseball %&gt;% 
@@ -500,7 +510,7 @@ grid.arrange(p3, p4, ncol = 2)</code></pre>
 <div id="session-info" class="section level2">
 <h2>Session info</h2>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R version 3.6.0 (2019-04-26)
+<pre><code>## R version 3.6.2 (2019-12-12)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
 ## 
@@ -520,43 +530,45 @@ grid.arrange(p3, p4, ncol = 2)</code></pre>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] gridExtra_2.3   brms_2.10.0     Rcpp_1.0.2      tidybayes_1.1.0 forcats_0.4.0   stringr_1.4.0  
-##  [7] dplyr_0.8.3     purrr_0.3.2     readr_1.3.1     tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1  
-## [13] tidyverse_1.2.1
+##  [1] gridExtra_2.3        brms_2.12.0          Rcpp_1.0.3           tidybayes_2.0.1.9000
+##  [5] forcats_0.4.0        stringr_1.4.0        dplyr_0.8.4          purrr_0.3.3         
+##  [9] readr_1.3.1          tidyr_1.0.2          tibble_2.1.3         ggplot2_3.2.1       
+## [13] tidyverse_1.3.0     
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] colorspace_1.4-1          ellipsis_0.2.0.1          ggridges_0.5.1           
-##   [4] rsconnect_0.8.13          ggstance_0.3.2            markdown_1.0             
-##   [7] base64enc_0.1-3           rstudioapi_0.10           rstan_2.19.2             
-##  [10] svUnit_0.7-12             DT_0.7                    fansi_0.4.0              
-##  [13] mvtnorm_1.0-11            lubridate_1.7.4           xml2_1.2.0               
-##  [16] bridgesampling_0.6-0      knitr_1.23                shinythemes_1.1.2        
-##  [19] zeallot_0.1.0             bayesplot_1.7.0           jsonlite_1.6             
-##  [22] broom_0.5.2               shiny_1.3.2               compiler_3.6.0           
-##  [25] httr_1.4.0                backports_1.1.4           assertthat_0.2.1         
-##  [28] Matrix_1.2-17             lazyeval_0.2.2            cli_1.1.0                
-##  [31] later_0.8.0               prettyunits_1.0.2         htmltools_0.3.6          
-##  [34] tools_3.6.0               igraph_1.2.4.1            coda_0.19-2              
-##  [37] gtable_0.3.0              glue_1.3.1                reshape2_1.4.3           
-##  [40] cellranger_1.1.0          vctrs_0.2.0               nlme_3.1-139             
-##  [43] blogdown_0.14             crosstalk_1.0.0           xfun_0.8                 
-##  [46] ps_1.3.0                  rvest_0.3.4               mime_0.7                 
-##  [49] miniUI_0.1.1.1            lifecycle_0.1.0           gtools_3.8.1             
-##  [52] zoo_1.8-6                 scales_1.0.0              colourpicker_1.0         
-##  [55] hms_0.4.2                 promises_1.0.1            Brobdingnag_1.2-6        
-##  [58] parallel_3.6.0            inline_0.3.15             shinystan_2.5.0          
-##  [61] yaml_2.2.0                StanHeaders_2.18.1-10     loo_2.1.0                
-##  [64] stringi_1.4.3             dygraphs_1.1.1.6          pkgbuild_1.0.3           
-##  [67] rlang_0.4.0               pkgconfig_2.0.2           matrixStats_0.54.0       
-##  [70] evaluate_0.14             lattice_0.20-38           rstantools_1.5.1         
-##  [73] htmlwidgets_1.3           labeling_0.3              processx_3.3.1           
-##  [76] tidyselect_0.2.5          plyr_1.8.4                magrittr_1.5             
-##  [79] bookdown_0.12             R6_2.4.0                  generics_0.0.2           
-##  [82] pillar_1.4.2              haven_2.1.0               withr_2.1.2              
-##  [85] xts_0.11-2                abind_1.4-5               modelr_0.1.4             
-##  [88] crayon_1.3.4              arrayhelpers_1.0-20160527 utf8_1.1.4               
-##  [91] rmarkdown_1.13            grid_3.6.0                readxl_1.3.1             
-##  [94] callr_3.2.0               threejs_0.3.1             digest_0.6.20            
-##  [97] xtable_1.8-4              httpuv_1.5.1              stats4_3.6.0             
-## [100] munsell_0.5.0             viridisLite_0.3.0         shinyjs_1.0</code></pre>
+##   [1] colorspace_1.4-1          ellipsis_0.3.0            ggridges_0.5.2           
+##   [4] rsconnect_0.8.16          markdown_1.1              base64enc_0.1-3          
+##   [7] fs_1.3.1                  rstudioapi_0.10           farver_2.0.3             
+##  [10] rstan_2.19.2              svUnit_0.7-12             DT_0.11                  
+##  [13] fansi_0.4.1               mvtnorm_1.0-12            lubridate_1.7.4          
+##  [16] xml2_1.2.2                bridgesampling_0.8-1      knitr_1.26               
+##  [19] shinythemes_1.1.2         bayesplot_1.7.1           jsonlite_1.6.1           
+##  [22] broom_0.5.3               dbplyr_1.4.2              shiny_1.4.0              
+##  [25] compiler_3.6.2            httr_1.4.1                backports_1.1.5          
+##  [28] assertthat_0.2.1          Matrix_1.2-18             fastmap_1.0.1            
+##  [31] lazyeval_0.2.2            cli_2.0.1                 later_1.0.0              
+##  [34] prettyunits_1.1.1         htmltools_0.4.0           tools_3.6.2              
+##  [37] igraph_1.2.4.2            coda_0.19-3               gtable_0.3.0             
+##  [40] glue_1.3.1                reshape2_1.4.3            cellranger_1.1.0         
+##  [43] vctrs_0.2.2               nlme_3.1-142              blogdown_0.17            
+##  [46] crosstalk_1.0.0           xfun_0.12                 ps_1.3.0                 
+##  [49] rvest_0.3.5               mime_0.8                  miniUI_0.1.1.1           
+##  [52] lifecycle_0.1.0           gtools_3.8.1              zoo_1.8-7                
+##  [55] scales_1.1.0              colourpicker_1.0          hms_0.5.3                
+##  [58] promises_1.1.0            Brobdingnag_1.2-6         parallel_3.6.2           
+##  [61] inline_0.3.15             shinystan_2.5.0           yaml_2.2.1               
+##  [64] StanHeaders_2.19.0        loo_2.2.0                 stringi_1.4.6            
+##  [67] dygraphs_1.1.1.6          pkgbuild_1.0.6            rlang_0.4.5              
+##  [70] pkgconfig_2.0.3           matrixStats_0.55.0        evaluate_0.14            
+##  [73] lattice_0.20-38           rstantools_2.0.0          htmlwidgets_1.5.1        
+##  [76] labeling_0.3              processx_3.4.1            tidyselect_1.0.0         
+##  [79] plyr_1.8.5                magrittr_1.5              bookdown_0.17            
+##  [82] R6_2.4.1                  generics_0.0.2            DBI_1.1.0                
+##  [85] pillar_1.4.3              haven_2.2.0               withr_2.1.2              
+##  [88] xts_0.12-0                abind_1.4-5               modelr_0.1.5             
+##  [91] crayon_1.3.4              arrayhelpers_1.0-20160527 utf8_1.1.4               
+##  [94] rmarkdown_2.0             grid_3.6.2                readxl_1.3.1             
+##  [97] callr_3.4.1               threejs_0.3.3             reprex_0.3.0             
+## [100] digest_0.6.23             xtable_1.8-4              httpuv_1.5.2             
+## [103] stats4_3.6.2              munsell_0.5.0             shinyjs_1.1</code></pre>
 </div>

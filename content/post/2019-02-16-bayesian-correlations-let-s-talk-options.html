@@ -115,8 +115,8 @@ head(d)</code></pre>
 ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
 ## sigma     0.42      0.04     0.35     0.52 1.00     3811     2729
 ## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p>The ‘Population-Level Effects’ has the summary information for our intercept and slope. Notice how our <code>x_s</code> slope is the same as the Pearson’s correlation.</p>
 <pre class="r"><code>cor(d$x, d$y)</code></pre>
@@ -201,8 +201,8 @@ f6 &lt;-
 ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
 ## sigma     0.42      0.04     0.35     0.51 1.00     2791     2916
 ## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p>Even though it may have seemed like we substantially changed the models by fixing the intercepts to 0, the summaries are essentially the same as when we estimated the intercepts. Here we’ll confirm the summaries with a plot, like above.</p>
 <pre class="r"><code># wrangle
@@ -255,6 +255,13 @@ fitted(f4,
                 prior(lkj(2), class = rescor)),
       chains = 4, cores = 4, 
       seed = 1)</code></pre>
+<pre><code>## Warning: Using &#39;cbind&#39; for multivariate models is deprecated. Please use
+## &#39;mvbind&#39; instead.
+
+## Warning: Using &#39;cbind&#39; for multivariate models is deprecated. Please use
+## &#39;mvbind&#39; instead.</code></pre>
+<pre><code>## Warning: Specifying global priors for regression coefficients in multivariate
+## models is deprecated and may not work as expected.</code></pre>
 <p>Behold the summary.</p>
 <pre class="r"><code>print(f7)</code></pre>
 <pre><code>##  Family: MV(gaussian, gaussian, gaussian) 
@@ -270,24 +277,24 @@ fitted(f4,
 ## 
 ## Population-Level Effects: 
 ##              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## xs_Intercept    -0.01      0.13    -0.27     0.24 1.00     2359     2462
-## ys_Intercept    -0.01      0.13    -0.28     0.25 1.00     2538     2458
-## zs_Intercept    -0.00      0.14    -0.28     0.28 1.00     3096     2643
+## xs_Intercept    -0.00      0.14    -0.27     0.27 1.00     2290     2309
+## ys_Intercept    -0.00      0.14    -0.28     0.26 1.00     2576     2541
+## zs_Intercept     0.00      0.14    -0.28     0.28 1.00     3207     2724
 ## 
 ## Family Specific Parameters: 
 ##          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sigma_xs     0.99      0.10     0.82     1.19 1.00     2273     2300
-## sigma_ys     1.00      0.10     0.83     1.23 1.00     2294     2296
-## sigma_zs     1.02      0.10     0.84     1.25 1.00     3161     2751
+## sigma_xs     0.98      0.10     0.82     1.19 1.00     2378     2551
+## sigma_ys     1.00      0.10     0.83     1.22 1.00     2596     2477
+## sigma_zs     1.02      0.10     0.84     1.25 1.00     2891     2257
 ## 
 ## Residual Correlations: 
 ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## rescor(xs,ys)     0.90      0.03     0.83     0.94 1.00     2432     2598
-## rescor(xs,zs)     0.55      0.09     0.35     0.71 1.00     3190     2990
-## rescor(ys,zs)     0.25      0.12     0.01     0.48 1.00     2919     2686
+## rescor(xs,ys)     0.89      0.03     0.83     0.94 1.00     2778     2696
+## rescor(xs,zs)     0.55      0.09     0.35     0.72 1.00     3279     2744
+## rescor(ys,zs)     0.25      0.13    -0.01     0.48 1.00     3036     2845
 ## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p>Look at the ‘Residual Correlations:’ section at the bottom of the output. Since there are no predictors in the model, the residual correlations are just correlations. Now notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too.</p>
 <pre class="r"><code>f8 &lt;- 
@@ -300,6 +307,11 @@ fitted(f4,
                 prior(lkj(2), class = rescor)),
       chains = 4, cores = 4, 
       seed = 1)</code></pre>
+<pre><code>## Warning: Using &#39;cbind&#39; for multivariate models is deprecated. Please use
+## &#39;mvbind&#39; instead.
+
+## Warning: Using &#39;cbind&#39; for multivariate models is deprecated. Please use
+## &#39;mvbind&#39; instead.</code></pre>
 <p>Without the intercepts, the rest of the model is the same within simulation variance.</p>
 <pre class="r"><code>print(f8)</code></pre>
 <pre><code>##  Family: MV(gaussian, gaussian, gaussian) 
@@ -315,18 +327,18 @@ fitted(f4,
 ## 
 ## Family Specific Parameters: 
 ##          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sigma_xs     0.98      0.09     0.81     1.19 1.00     1906     1751
-## sigma_ys     0.99      0.10     0.82     1.20 1.00     1948     1975
-## sigma_zs     1.02      0.10     0.84     1.24 1.00     2842     2253
+## sigma_xs     0.98      0.10     0.81     1.18 1.00     2128     2303
+## sigma_ys     0.99      0.10     0.82     1.19 1.00     2426     2507
+## sigma_zs     1.01      0.10     0.84     1.23 1.00     2749     2157
 ## 
 ## Residual Correlations: 
 ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## rescor(xs,ys)     0.90      0.03     0.83     0.94 1.00     2399     2234
-## rescor(xs,zs)     0.55      0.10     0.35     0.71 1.00     2631     2324
-## rescor(ys,zs)     0.26      0.13     0.01     0.50 1.00     2567     1730
+## rescor(xs,ys)     0.90      0.03     0.83     0.94 1.00     2497     2317
+## rescor(xs,zs)     0.55      0.09     0.35     0.72 1.00     2865     2147
+## rescor(ys,zs)     0.26      0.13    -0.00     0.50 1.00     2631     2201
 ## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p>If you wanna get silly, we can prune even further. Did you notice how the estimates for <span class="math inline">\(\sigma\)</span> are all hovering around 1? Since we have no predictors, <span class="math inline">\(\sigma\)</span> is just an estimate of the population standard deviation. And since we’re working with standardized data, the population standard deviation has to be 1. Any other estimate would be nonsensical. So why not fix it to 1?</p>
 <p>With brms, we can fix those <span class="math inline">\(\sigma\)</span>s to 1 with a trick of the nonlinear <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_distreg.html">distributional modeling syntax</a>. Recall when you model <span class="math inline">\(\sigma\)</span>, the brms default is to actually model its log. As is turns out, the log of 1 is zero.</p>
@@ -341,6 +353,11 @@ fitted(f4,
       prior = c(prior(lkj(2), class = rescor)),
       chains = 4, cores = 4, 
       seed = 1)</code></pre>
+<pre><code>## Warning: Using &#39;cbind&#39; for multivariate models is deprecated. Please use
+## &#39;mvbind&#39; instead.
+
+## Warning: Using &#39;cbind&#39; for multivariate models is deprecated. Please use
+## &#39;mvbind&#39; instead.</code></pre>
 <p>Other than the <code>sigma ~ 0</code> syntax, the main thing to notice is we’ve wrapped the entire model <code>formula</code> into the <code>bf()</code> function. Here are the results.</p>
 <pre class="r"><code>print(f9)</code></pre>
 <pre><code>##  Family: MV(gaussian, gaussian, gaussian) 
@@ -359,12 +376,12 @@ fitted(f4,
 ## 
 ## Residual Correlations: 
 ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## rescor(xs,ys)     0.91      0.02     0.87     0.93 1.00     2621     2710
-## rescor(xs,zs)     0.57      0.07     0.42     0.69 1.00     3307     2727
-## rescor(ys,zs)     0.29      0.09     0.11     0.47 1.00     3095     2393
+## rescor(xs,ys)     0.91      0.02     0.87     0.93 1.00     2984     2786
+## rescor(xs,zs)     0.57      0.07     0.42     0.69 1.00     3255     2990
+## rescor(ys,zs)     0.29      0.09     0.11     0.46 1.00     2854     2804
 ## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p>The correlations are the only things left in the model.</p>
 <p>Just to be clear, the multivariate approach does not require standardized data. To demonstrate, here we refit <code>f7</code>, but with the unstandardized variables. And, since we’re no longer in the standardized metric, we’ll be less certain with our priors.</p>
@@ -379,6 +396,13 @@ fitted(f4,
                 prior(lkj(2), class = rescor)),
       chains = 4, cores = 4, 
       seed = 1)</code></pre>
+<pre><code>## Warning: Using &#39;cbind&#39; for multivariate models is deprecated. Please use
+## &#39;mvbind&#39; instead.
+
+## Warning: Using &#39;cbind&#39; for multivariate models is deprecated. Please use
+## &#39;mvbind&#39; instead.</code></pre>
+<pre><code>## Warning: Specifying global priors for regression coefficients in multivariate
+## models is deprecated and may not work as expected.</code></pre>
 <p>See, the ‘rescor()’ results are about the same as with <code>f7</code>.</p>
 <pre class="r"><code>print(f10)</code></pre>
 <pre><code>##  Family: MV(gaussian, gaussian, gaussian) 
@@ -394,24 +418,24 @@ fitted(f4,
 ## 
 ## Population-Level Effects: 
 ##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## x_Intercept     9.64      1.20     7.29    12.00 1.00     1864     2582
-## y_Intercept    15.57      2.47    10.69    20.34 1.00     2079     2631
-## z_Intercept    14.85      3.38     8.00    21.42 1.00     2780     2773
+## x_Intercept     9.65      1.21     7.20    12.01 1.00     2188     2301
+## y_Intercept    15.61      2.46    10.81    20.39 1.00     2554     2435
+## z_Intercept    14.85      3.43     7.94    21.40 1.00     2849     2571
 ## 
 ## Family Specific Parameters: 
 ##         Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sigma_x     8.99      0.87     7.50    10.91 1.00     2108     2278
-## sigma_y    18.24      1.81    15.18    22.05 1.00     2114     2240
-## sigma_z    26.09      2.62    21.58    31.77 1.00     3099     2736
+## sigma_x     8.96      0.86     7.46    10.81 1.00     1760     2061
+## sigma_y    18.14      1.78    15.01    22.04 1.00     1992     2509
+## sigma_z    26.07      2.58    21.68    31.70 1.00     2921     2633
 ## 
 ## Residual Correlations: 
 ##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## rescor(x,y)     0.89      0.03     0.83     0.94 1.00     2252     2314
-## rescor(x,z)     0.54      0.09     0.34     0.70 1.00     3067     2982
-## rescor(y,z)     0.24      0.12    -0.00     0.47 1.00     2826     2709
+## rescor(x,y)     0.89      0.03     0.83     0.94 1.00     2244     2470
+## rescor(x,z)     0.54      0.09     0.34     0.71 1.00     3330     2827
+## rescor(y,z)     0.25      0.12    -0.01     0.48 1.00     2824     2438
 ## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 </div>
 <div id="its-time-to-compare-methods." class="section level2">
@@ -483,7 +507,7 @@ tibble(name = str_c(&quot;f&quot;, 1:6)) %&gt;%
 <p>Both univariate and multivariate approaches appear to have their strengths and weaknesses. Choose which methods seems most appropriate for your correlation needs.</p>
 <p>Happy modeling.</p>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R version 3.6.0 (2019-04-26)
+<pre><code>## R version 3.6.2 (2019-12-12)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
 ## 
@@ -491,11 +515,6 @@ tibble(name = str_c(&quot;f&quot;, 1:6)) %&gt;%
 ## BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
 ## LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
 ## 
-## Random number generation:
-##  RNG:     Mersenne-Twister 
-##  Normal:  Inversion 
-##  Sample:  Rounding 
-##  
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
@@ -503,62 +522,66 @@ tibble(name = str_c(&quot;f&quot;, 1:6)) %&gt;%
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] tidybayes_1.1.0 GGally_1.4.0    forcats_0.4.0   stringr_1.4.0  
-##  [5] dplyr_0.8.3     purrr_0.3.2     readr_1.3.1     tidyr_1.0.0    
-##  [9] tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1 brms_2.10.0    
-## [13] Rcpp_1.0.2      mvtnorm_1.0-11 
+##  [1] tidybayes_2.0.1.9000 bindrcpp_0.2.2       GGally_1.4.0        
+##  [4] forcats_0.4.0        stringr_1.4.0        dplyr_0.8.4         
+##  [7] purrr_0.3.3          readr_1.3.1          tidyr_1.0.2         
+## [10] tibble_2.1.3         ggplot2_3.2.1        tidyverse_1.3.0     
+## [13] brms_2.12.0          Rcpp_1.0.3           mvtnorm_1.0-12      
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] colorspace_1.4-1          ellipsis_0.2.0.1         
-##   [3] ggridges_0.5.1            rsconnect_0.8.13         
-##   [5] ggstance_0.3.2            markdown_1.0             
-##   [7] base64enc_0.1-3           rstudioapi_0.10          
-##   [9] rstan_2.19.2              svUnit_0.7-12            
-##  [11] DT_0.7                    fansi_0.4.0              
-##  [13] lubridate_1.7.4           xml2_1.2.0               
-##  [15] bridgesampling_0.6-0      codetools_0.2-16         
-##  [17] knitr_1.23                shinythemes_1.1.2        
-##  [19] zeallot_0.1.0             bayesplot_1.7.0          
-##  [21] jsonlite_1.6              broom_0.5.2              
-##  [23] shiny_1.3.2               compiler_3.6.0           
-##  [25] httr_1.4.0                backports_1.1.4          
-##  [27] assertthat_0.2.1          Matrix_1.2-17            
-##  [29] lazyeval_0.2.2            cli_1.1.0                
-##  [31] later_0.8.0               htmltools_0.3.6          
-##  [33] prettyunits_1.0.2         tools_3.6.0              
-##  [35] igraph_1.2.4.1            coda_0.19-2              
-##  [37] gtable_0.3.0              glue_1.3.1               
-##  [39] reshape2_1.4.3            cellranger_1.1.0         
-##  [41] vctrs_0.2.0               nlme_3.1-139             
-##  [43] blogdown_0.14             crosstalk_1.0.0          
-##  [45] xfun_0.8                  ps_1.3.0                 
-##  [47] rvest_0.3.4               mime_0.7                 
-##  [49] miniUI_0.1.1.1            lifecycle_0.1.0          
-##  [51] gtools_3.8.1              zoo_1.8-6                
-##  [53] scales_1.0.0              colourpicker_1.0         
-##  [55] hms_0.4.2                 promises_1.0.1           
-##  [57] Brobdingnag_1.2-6         parallel_3.6.0           
-##  [59] inline_0.3.15             shinystan_2.5.0          
-##  [61] RColorBrewer_1.1-2        yaml_2.2.0               
-##  [63] gridExtra_2.3             loo_2.1.0                
-##  [65] StanHeaders_2.18.1-10     reshape_0.8.8            
-##  [67] stringi_1.4.3             dygraphs_1.1.1.6         
-##  [69] pkgbuild_1.0.3            rlang_0.4.0              
-##  [71] pkgconfig_2.0.2           matrixStats_0.54.0       
-##  [73] evaluate_0.14             lattice_0.20-38          
-##  [75] rstantools_1.5.1          htmlwidgets_1.3          
-##  [77] labeling_0.3              processx_3.3.1           
-##  [79] tidyselect_0.2.5          plyr_1.8.4               
-##  [81] magrittr_1.5              bookdown_0.12            
-##  [83] R6_2.4.0                  generics_0.0.2           
-##  [85] pillar_1.4.2              haven_2.1.0              
-##  [87] withr_2.1.2               xts_0.11-2               
-##  [89] abind_1.4-5               modelr_0.1.4             
-##  [91] crayon_1.3.4              arrayhelpers_1.0-20160527
-##  [93] utf8_1.1.4                rmarkdown_1.13           
-##  [95] grid_3.6.0                readxl_1.3.1             
-##  [97] callr_3.2.0               threejs_0.3.1            
-##  [99] digest_0.6.20             xtable_1.8-4             
-## [101] httpuv_1.5.1              stats4_3.6.0             
-## [103] munsell_0.5.0             shinyjs_1.0</code></pre>
+##   [1] colorspace_1.4-1          ellipsis_0.3.0           
+##   [3] ggridges_0.5.2            rsconnect_0.8.16         
+##   [5] markdown_1.1              base64enc_0.1-3          
+##   [7] fs_1.3.1                  rstudioapi_0.10          
+##   [9] farver_2.0.3              rstan_2.19.2             
+##  [11] svUnit_0.7-12             DT_0.11                  
+##  [13] fansi_0.4.1               lubridate_1.7.4          
+##  [15] xml2_1.2.2                codetools_0.2-16         
+##  [17] bridgesampling_0.8-1      knitr_1.26               
+##  [19] shinythemes_1.1.2         bayesplot_1.7.1          
+##  [21] jsonlite_1.6.1            broom_0.5.3              
+##  [23] dbplyr_1.4.2              shiny_1.4.0              
+##  [25] compiler_3.6.2            httr_1.4.1               
+##  [27] backports_1.1.5           assertthat_0.2.1         
+##  [29] Matrix_1.2-18             fastmap_1.0.1            
+##  [31] lazyeval_0.2.2            cli_2.0.1                
+##  [33] later_1.0.0               htmltools_0.4.0          
+##  [35] prettyunits_1.1.1         tools_3.6.2              
+##  [37] igraph_1.2.4.2            coda_0.19-3              
+##  [39] gtable_0.3.0              glue_1.3.1               
+##  [41] reshape2_1.4.3            cellranger_1.1.0         
+##  [43] vctrs_0.2.2               nlme_3.1-142             
+##  [45] blogdown_0.17             crosstalk_1.0.0          
+##  [47] xfun_0.12                 ps_1.3.0                 
+##  [49] rvest_0.3.5               mime_0.8                 
+##  [51] miniUI_0.1.1.1            lifecycle_0.1.0          
+##  [53] gtools_3.8.1              zoo_1.8-7                
+##  [55] scales_1.1.0              colourpicker_1.0         
+##  [57] hms_0.5.3                 promises_1.1.0           
+##  [59] Brobdingnag_1.2-6         parallel_3.6.2           
+##  [61] inline_0.3.15             shinystan_2.5.0          
+##  [63] RColorBrewer_1.1-2        yaml_2.2.1               
+##  [65] gridExtra_2.3             loo_2.2.0                
+##  [67] StanHeaders_2.19.0        reshape_0.8.8            
+##  [69] stringi_1.4.6             dygraphs_1.1.1.6         
+##  [71] pkgbuild_1.0.6            rlang_0.4.5              
+##  [73] pkgconfig_2.0.3           matrixStats_0.55.0       
+##  [75] evaluate_0.14             lattice_0.20-38          
+##  [77] bindr_0.1.1               rstantools_2.0.0         
+##  [79] htmlwidgets_1.5.1         labeling_0.3             
+##  [81] processx_3.4.1            tidyselect_1.0.0         
+##  [83] plyr_1.8.5                magrittr_1.5             
+##  [85] bookdown_0.17             R6_2.4.1                 
+##  [87] generics_0.0.2            DBI_1.1.0                
+##  [89] pillar_1.4.3              haven_2.2.0              
+##  [91] withr_2.1.2               xts_0.12-0               
+##  [93] abind_1.4-5               modelr_0.1.5             
+##  [95] crayon_1.3.4              arrayhelpers_1.0-20160527
+##  [97] utf8_1.1.4                rmarkdown_2.0            
+##  [99] grid_3.6.2                readxl_1.3.1             
+## [101] callr_3.4.1               threejs_0.3.3            
+## [103] reprex_0.3.0              digest_0.6.23            
+## [105] xtable_1.8-4              httpuv_1.5.2             
+## [107] stats4_3.6.2              munsell_0.5.0            
+## [109] shinyjs_1.1</code></pre>
 </div>

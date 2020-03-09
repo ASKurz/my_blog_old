@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>tutorial on A. Solomon Kurz</title>
@@ -7,10 +7,20 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Thu, 31 Oct 2019 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 09 Mar 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/tutorial/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Make model diagrams, Kruschke style</title>
+      <link>/post/make-model-diagrams-kruschke-style/</link>
+      <pubDate>Mon, 09 Mar 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/post/make-model-diagrams-kruschke-style/</guid>
+      <description>tl;dr You too can make model diagrams with the tidyverse and patchwork packages. Here’s how.
+ Diagrams can help us understand statistical models. I’ve been working through John Kruschke’s Doing Bayesian data analysis, Second Edition: A tutorial with R, JAGS, and Stan and translating it into brms and tidyverse-style workflow. At this point, the bulk of the work is done and you can check it out at https://bookdown.org/content/3686/. One of Kruschke’s unique contributions was the way he used diagrams to depict his statistical models.</description>
+    </item>
     
     <item>
       <title>Time-varying covariates in longitudinal multilevel models contain state- and trait-level information: This includes binary variables, too</title>

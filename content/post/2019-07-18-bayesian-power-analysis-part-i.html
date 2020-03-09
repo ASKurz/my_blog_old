@@ -128,14 +128,16 @@ d &lt;-
 glimpse(d)</code></pre>
 <pre><code>## Observations: 100
 ## Variables: 3
-## $ group     &lt;chr&gt; &quot;control&quot;, &quot;control&quot;, &quot;control&quot;, &quot;control&quot;, &quot;control&quot;,…
-## $ treatment &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, …
-## $ y         &lt;dbl&gt; -0.62645381, 0.18364332, -0.83562861, 1.59528080, 0.32…</code></pre>
+## $ group     &lt;chr&gt; &quot;control&quot;, &quot;control&quot;, &quot;control&quot;, &quot;control&quot;, &quot;control&quot;, &quot;con…
+## $ treatment &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,…
+## $ y         &lt;dbl&gt; -0.62645381, 0.18364332, -0.83562861, 1.59528080, 0.3295077…</code></pre>
 <p>In case it wasn’t clear, the two variables <code>group</code> and <code>treatment</code> are redundant. Whereas the former is composed of names, the latter is the dummy-variable equivalent (i.e., control = 0, treatment = 1). The main event was how we used the <code>rnorm()</code> function to simulate the normally-distributed values for <code>y</code>.</p>
 <p>Before we fit our model, we need to decide on priors. To give us ideas, here are the <strong>brms</strong> defaults for our model and data.</p>
 <pre class="r"><code>get_prior(data = d,
           family = gaussian,
           y ~ 0 + intercept + treatment)</code></pre>
+<pre><code>## Warning: Reserved variable name &#39;intercept&#39; is deprecated. Please use
+## &#39;Intercept&#39; instead.</code></pre>
 <pre><code>##                 prior class      coef group resp dpar nlpar bound
 ## 1                         b                                      
 ## 2                         b intercept                            
@@ -167,24 +169,24 @@ glimpse(d)</code></pre>
 ## 
 ## Population-Level Effects: 
 ##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## intercept     0.10      0.13    -0.16     0.36 1.00     2047     1943
-## treatment     0.52      0.18     0.16     0.89 1.00     2149     1874
+## intercept     0.10      0.13    -0.15     0.36 1.00     2175     2124
+## treatment     0.52      0.18     0.14     0.87 1.00     2217     2229
 ## 
 ## Family Specific Parameters: 
 ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sigma     0.91      0.07     0.80     1.05 1.00     2971     2371
+## sigma     0.92      0.06     0.80     1.05 1.00     2830     2928
 ## 
-## Samples were drawn using sampling(NUTS). For each parameter, Eff.Sample 
-## is a crude measure of effective sample size, and Rhat is the potential 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p>The 95% credible intervals for our <span class="math inline">\(\beta_1\)</span> parameter, termed <code>treatment</code> in the output, are well above zero.</p>
 <p>Another way to look at the model summary is with the handy <code>broom::tidy()</code> function.</p>
 <pre class="r"><code>tidy(fit, prob = .95)</code></pre>
 <pre><code>##          term     estimate  std.error        lower        upper
-## 1 b_intercept    0.1000063 0.12981873   -0.1556717    0.3562807
-## 2 b_treatment    0.5184121 0.18434842    0.1586011    0.8917591
-## 3       sigma    0.9142217 0.06608646    0.7958666    1.0544574
-## 4        lp__ -136.3247589 1.22142888 -139.4496219 -134.9134606</code></pre>
+## 1 b_intercept    0.1011677 0.12936169   -0.1487509    0.3642305
+## 2 b_treatment    0.5150431 0.18212531    0.1361263    0.8679215
+## 3       sigma    0.9151098 0.06435803    0.7973278    1.0494317
+## 4        lp__ -136.2938204 1.20114254 -139.3421602 -134.9235233</code></pre>
 <p>It’s important to keep in mind that by default, <code>tidy()</code> returns 90% intervals for <code>brm()</code> fit objects. To get the conventional 95% intervals, you’ll need to specify <code>prob = .95</code>. The intervals are presented for each parameter in the <code>lower</code> and <code>upper</code> columns. Once we start simulating in bulk, the <code>tidy()</code> function will come in handy. You’ll see.</p>
 </div>
 <div id="you-can-reuse-a-fit." class="section level3">
@@ -208,10 +210,10 @@ updated_fit &lt;-
 <p>Behold the <code>tidy()</code> summary of our updated model.</p>
 <pre class="r"><code>tidy(updated_fit, prob = .95)</code></pre>
 <pre><code>##          term      estimate  std.error        lower        upper
-## 1 b_intercept    0.07077122 0.16805743   -0.2543290    0.3985108
-## 2 b_treatment    0.29682847 0.23684942   -0.1755861    0.7650373
-## 3       sigma    1.17641197 0.08439262    1.0282814    1.3555727
-## 4        lp__ -161.29465297 1.27330433 -164.6938052 -159.8778327</code></pre>
+## 1 b_intercept    0.06912108 0.16709614   -0.2625520    0.3906774
+## 2 b_treatment    0.29851785 0.23781391   -0.1678053    0.7678243
+## 3       sigma    1.17336167 0.08401594    1.0214857    1.3530547
+## 4        lp__ -161.29828347 1.26162981 -164.5327492 -159.8776688</code></pre>
 <p>Well how about that? In this case, our 95% credible intervals for <span class="math inline">\(\beta_1\)</span> did include zero within their bounds. Though the posterior mean, 0.30, is still well away from zero, here we’d fail to reject <span class="math inline">\(H_0\)</span> at the conventional level. This is why we simulate.</p>
 <p>To recap, we’ve</p>
 <ol style="list-style-type: lower-alpha">
@@ -274,7 +276,7 @@ s &lt;-
 t2 &lt;- Sys.time()</code></pre>
 <p>The entire simulation took just a couple minutes on my several-year-old laptop.</p>
 <pre class="r"><code>t2 - t1</code></pre>
-<pre><code>## Time difference of 1.952482 mins</code></pre>
+<pre><code>## Time difference of 1.808923 mins</code></pre>
 <p>Your mileage may vary.</p>
 <p>Let’s take a look at what we’ve done.</p>
 <pre class="r"><code>head(s)</code></pre>
@@ -294,14 +296,14 @@ t2 &lt;- Sys.time()</code></pre>
   filter(term == &quot;b_treatment&quot;) %&gt;% 
   head()</code></pre>
 <pre><code>## # A tibble: 6 x 8
-##    seed d               fit      term      estimate std.error   lower upper
-##   &lt;int&gt; &lt;list&gt;          &lt;list&gt;   &lt;chr&gt;        &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
-## 1     1 &lt;tibble [100 ×… &lt;brmsfi… b_treatm…    0.518     0.184  0.159  0.892
-## 2     2 &lt;tibble [100 ×… &lt;brmsfi… b_treatm…    0.297     0.237 -0.176  0.765
-## 3     3 &lt;tibble [100 ×… &lt;brmsfi… b_treatm…    0.641     0.178  0.296  0.982
-## 4     4 &lt;tibble [100 ×… &lt;brmsfi… b_treatm…    0.224     0.178 -0.124  0.582
-## 5     5 &lt;tibble [100 ×… &lt;brmsfi… b_treatm…    0.436     0.190  0.0560 0.796
-## 6     6 &lt;tibble [100 ×… &lt;brmsfi… b_treatm…    0.300     0.206 -0.106  0.694</code></pre>
+##    seed d                  fit       term       estimate std.error   lower upper
+##   &lt;int&gt; &lt;list&gt;             &lt;list&gt;    &lt;chr&gt;         &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
+## 1     1 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt; b_treatme…    0.515     0.182  0.136  0.868
+## 2     2 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt; b_treatme…    0.299     0.238 -0.168  0.768
+## 3     3 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt; b_treatme…    0.644     0.171  0.312  0.985
+## 4     4 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt; b_treatme…    0.223     0.184 -0.132  0.580
+## 5     5 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt; b_treatme…    0.426     0.194  0.0535 0.815
+## 6     6 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt; b_treatme…    0.303     0.214 -0.113  0.720</code></pre>
 <p>As an aside, I know I’m moving kinda fast with all this wacky <code>purrr::map()</code>/<code>purrr::map2()</code> stuff. If you’re new to using the <strong>tidyverse</strong> for iterating and saving the results in nested data structures, I recommend fixing an adult beverage and cozying up with Hadley Wickham’s presentation, <a href="https://www.youtube.com/watch?v=rz3_FDVt9eg"><em>Managing many models</em></a>. And if you really hate it, both Kruschke and McElreath texts contain many examples of how to iterate in a more base <strong>R</strong> sort of way.</p>
 <p>Anyway, here’s what those 100 <span class="math inline">\(\beta_1\)</span> summaries look like in bulk.</p>
 <pre class="r"><code>s %&gt;% 
@@ -325,7 +327,7 @@ t2 &lt;- Sys.time()</code></pre>
 <pre><code>## # A tibble: 1 x 1
 ##   power
 ##   &lt;dbl&gt;
-## 1  0.67</code></pre>
+## 1  0.65</code></pre>
 <p>With the second <code>mutate()</code> line, we used a logical statement within <code>ifelse()</code> to code all instances where the lower limit of the 95% interval was greater than 0 as a 1, with the rest as 0. That left us with a vector of 1s and 0s, which we saved as <code>check</code>. In the <code>summarise()</code> line, we took the mean of that column, which returned our Bayesian power estimate.</p>
 <p>That is, in 67 of our 100 simulations, an <span class="math inline">\(n = 50\)</span> per group was enough to produce a 95% Bayesian credible interval that did not straddle 0.</p>
 <p>I should probably point out that a 95% interval for which <code>upper &lt; 0</code> would have also been consistent with the alternative hypothesis of <span class="math inline">\(\mu_c \neq \mu_t\)</span>. However, I didn’t bother to work that option into the definition of our <code>check</code> variable because I knew from the outset that that would be a highly unlikely result. But if you’d like to work more rigor into your checks, by all means do.</p>
@@ -355,10 +357,10 @@ s2 &lt;-
 t4 &lt;- Sys.time()</code></pre>
 <p>Like before, this only took a couple minutes.</p>
 <pre class="r"><code>t4 - t3</code></pre>
-<pre><code>## Time difference of 1.713578 mins</code></pre>
+<pre><code>## Time difference of 1.490414 mins</code></pre>
 <p>As a point of comparison, here are the sizes of the results from our first approach to those from the second.</p>
 <pre class="r"><code>object.size(s)</code></pre>
-<pre><code>## 79664720 bytes</code></pre>
+<pre><code>## 79586320 bytes</code></pre>
 <pre class="r"><code>object.size(s2)</code></pre>
 <pre><code>## 502320 bytes</code></pre>
 <p>That’s a big difference. Hopefully you get the idea. With more complicated models and 10+ times the number of simulations, size will eventually matter.</p>
@@ -423,21 +425,21 @@ s3 &lt;-
 t6 &lt;- Sys.time()</code></pre>
 <p>That was pretty quick.</p>
 <pre class="r"><code>t6 - t5</code></pre>
-<pre><code>## Time difference of 1.612013 mins</code></pre>
+<pre><code>## Time difference of 1.52791 mins</code></pre>
 <p>Here’s what it returned.</p>
 <pre class="r"><code>head(s3)</code></pre>
 <pre><code>## # A tibble: 6 x 6
 ##    seed term        estimate std.error   lower upper
 ##   &lt;int&gt; &lt;chr&gt;          &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
-## 1     1 b_treatment    0.518     0.184  0.159  0.892
-## 2     2 b_treatment    0.297     0.237 -0.176  0.765
-## 3     3 b_treatment    0.641     0.178  0.296  0.982
-## 4     4 b_treatment    0.224     0.178 -0.124  0.582
-## 5     5 b_treatment    0.436     0.190  0.0560 0.796
-## 6     6 b_treatment    0.300     0.206 -0.106  0.694</code></pre>
+## 1     1 b_treatment    0.515     0.182  0.136  0.868
+## 2     2 b_treatment    0.299     0.238 -0.168  0.768
+## 3     3 b_treatment    0.644     0.171  0.312  0.985
+## 4     4 b_treatment    0.223     0.184 -0.132  0.580
+## 5     5 b_treatment    0.426     0.194  0.0535 0.815
+## 6     6 b_treatment    0.303     0.214 -0.113  0.720</code></pre>
 <p>By wrapping our data simulation, model fitting, and parameter extraction steps all in one function, we simplified the output such that we’re no longer holding on to the data simulations or the <strong>brms</strong> fit objects. We just have the parameter summaries and the <code>seed</code>, making the product even smaller.</p>
 <pre class="r"><code>object.size(s)</code></pre>
-<pre><code>## 79664720 bytes</code></pre>
+<pre><code>## 79586320 bytes</code></pre>
 <pre class="r"><code>object.size(s2)</code></pre>
 <pre><code>## 502320 bytes</code></pre>
 <pre class="r"><code>object.size(s3)</code></pre>
@@ -457,7 +459,7 @@ t6 &lt;- Sys.time()</code></pre>
 <pre><code>## # A tibble: 1 x 1
 ##   power
 ##   &lt;dbl&gt;
-## 1  0.67</code></pre>
+## 1  0.65</code></pre>
 </div>
 </div>
 <div id="next-steps" class="section level2">
@@ -487,7 +489,7 @@ t6 &lt;- Sys.time()</code></pre>
 <div id="session-info" class="section level2">
 <h2>Session info</h2>
 <pre class="r"><code>sessionInfo()</code></pre>
-<pre><code>## R version 3.6.0 (2019-04-26)
+<pre><code>## R version 3.6.2 (2019-12-12)
 ## Platform: x86_64-apple-darwin15.6.0 (64-bit)
 ## Running under: macOS High Sierra 10.13.6
 ## 
@@ -502,44 +504,46 @@ t6 &lt;- Sys.time()</code></pre>
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] broom_0.5.2     brms_2.10.0     Rcpp_1.0.2      forcats_0.4.0  
-##  [5] stringr_1.4.0   dplyr_0.8.3     purrr_0.3.2     readr_1.3.1    
-##  [9] tidyr_1.0.0     tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.2.1
+##  [1] broom_0.5.3     brms_2.12.0     Rcpp_1.0.3      forcats_0.4.0  
+##  [5] stringr_1.4.0   dplyr_0.8.4     purrr_0.3.3     readr_1.3.1    
+##  [9] tidyr_1.0.2     tibble_2.1.3    ggplot2_3.2.1   tidyverse_1.3.0
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] nlme_3.1-139          matrixStats_0.54.0    xts_0.11-2           
-##  [4] lubridate_1.7.4       threejs_0.3.1         httr_1.4.0           
-##  [7] rstan_2.19.2          tools_3.6.0           backports_1.1.4      
-## [10] utf8_1.1.4            R6_2.4.0              DT_0.7               
-## [13] lazyeval_0.2.2        colorspace_1.4-1      withr_2.1.2          
-## [16] prettyunits_1.0.2     processx_3.3.1        tidyselect_0.2.5     
-## [19] gridExtra_2.3         Brobdingnag_1.2-6     compiler_3.6.0       
-## [22] cli_1.1.0             rvest_0.3.4           xml2_1.2.0           
-## [25] shinyjs_1.0           labeling_0.3          colourpicker_1.0     
-## [28] bookdown_0.12         scales_1.0.0          dygraphs_1.1.1.6     
-## [31] mvtnorm_1.0-11        callr_3.2.0           ggridges_0.5.1       
-## [34] StanHeaders_2.18.1-10 digest_0.6.20         rmarkdown_1.13       
-## [37] base64enc_0.1-3       pkgconfig_2.0.2       htmltools_0.3.6      
-## [40] htmlwidgets_1.3       rlang_0.4.0           readxl_1.3.1         
-## [43] rstudioapi_0.10       shiny_1.3.2           generics_0.0.2       
-## [46] zoo_1.8-6             jsonlite_1.6          crosstalk_1.0.0      
-## [49] gtools_3.8.1          inline_0.3.15         magrittr_1.5         
-## [52] loo_2.1.0             bayesplot_1.7.0       Matrix_1.2-17        
-## [55] fansi_0.4.0           munsell_0.5.0         abind_1.4-5          
-## [58] lifecycle_0.1.0       stringi_1.4.3         yaml_2.2.0           
-## [61] pkgbuild_1.0.3        plyr_1.8.4            grid_3.6.0           
-## [64] parallel_3.6.0        promises_1.0.1        crayon_1.3.4         
-## [67] miniUI_0.1.1.1        lattice_0.20-38       haven_2.1.0          
-## [70] hms_0.4.2             ps_1.3.0              zeallot_0.1.0        
-## [73] knitr_1.23            pillar_1.4.2          igraph_1.2.4.1       
-## [76] markdown_1.0          shinystan_2.5.0       stats4_3.6.0         
-## [79] reshape2_1.4.3        rstantools_1.5.1      glue_1.3.1           
-## [82] evaluate_0.14         blogdown_0.14         modelr_0.1.4         
-## [85] vctrs_0.2.0           httpuv_1.5.1          cellranger_1.1.0     
-## [88] gtable_0.3.0          assertthat_0.2.1      xfun_0.8             
-## [91] mime_0.7              xtable_1.8-4          coda_0.19-2          
-## [94] later_0.8.0           rsconnect_0.8.13      shinythemes_1.1.2    
-## [97] bridgesampling_0.6-0</code></pre>
+##   [1] colorspace_1.4-1     ggridges_0.5.2       rsconnect_0.8.16    
+##   [4] markdown_1.1         base64enc_0.1-3      fs_1.3.1            
+##   [7] rstudioapi_0.10      farver_2.0.3         rstan_2.19.2        
+##  [10] DT_0.11              fansi_0.4.1          mvtnorm_1.0-12      
+##  [13] lubridate_1.7.4      xml2_1.2.2           codetools_0.2-16    
+##  [16] bridgesampling_0.8-1 knitr_1.26           shinythemes_1.1.2   
+##  [19] bayesplot_1.7.1      jsonlite_1.6.1       dbplyr_1.4.2        
+##  [22] shiny_1.4.0          compiler_3.6.2       httr_1.4.1          
+##  [25] backports_1.1.5      assertthat_0.2.1     Matrix_1.2-18       
+##  [28] fastmap_1.0.1        lazyeval_0.2.2       cli_2.0.1           
+##  [31] later_1.0.0          htmltools_0.4.0      prettyunits_1.1.1   
+##  [34] tools_3.6.2          igraph_1.2.4.2       coda_0.19-3         
+##  [37] gtable_0.3.0         glue_1.3.1           reshape2_1.4.3      
+##  [40] cellranger_1.1.0     vctrs_0.2.2          nlme_3.1-142        
+##  [43] blogdown_0.17        crosstalk_1.0.0      xfun_0.12           
+##  [46] ps_1.3.0             rvest_0.3.5          mime_0.8            
+##  [49] miniUI_0.1.1.1       lifecycle_0.1.0      gtools_3.8.1        
+##  [52] zoo_1.8-7            scales_1.1.0         colourpicker_1.0    
+##  [55] hms_0.5.3            promises_1.1.0       Brobdingnag_1.2-6   
+##  [58] parallel_3.6.2       inline_0.3.15        shinystan_2.5.0     
+##  [61] yaml_2.2.1           gridExtra_2.3        loo_2.2.0           
+##  [64] StanHeaders_2.19.0   stringi_1.4.6        dygraphs_1.1.1.6    
+##  [67] pkgbuild_1.0.6       rlang_0.4.5          pkgconfig_2.0.3     
+##  [70] matrixStats_0.55.0   evaluate_0.14        lattice_0.20-38     
+##  [73] labeling_0.3         rstantools_2.0.0     htmlwidgets_1.5.1   
+##  [76] tidyselect_1.0.0     processx_3.4.1       plyr_1.8.5          
+##  [79] magrittr_1.5         bookdown_0.17        R6_2.4.1            
+##  [82] generics_0.0.2       DBI_1.1.0            pillar_1.4.3        
+##  [85] haven_2.2.0          withr_2.1.2          xts_0.12-0          
+##  [88] abind_1.4-5          modelr_0.1.5         crayon_1.3.4        
+##  [91] utf8_1.1.4           rmarkdown_2.0        grid_3.6.2          
+##  [94] readxl_1.3.1         callr_3.4.1          threejs_0.3.3       
+##  [97] reprex_0.3.0         digest_0.6.23        xtable_1.8-4        
+## [100] httpuv_1.5.2         stats4_3.6.2         munsell_0.5.0       
+## [103] shinyjs_1.1</code></pre>
 <pre class="r"><code># for the hard-core scrollers:
 # if you increase n to 65, the power becomes about .84
 n_sim &lt;- 100
