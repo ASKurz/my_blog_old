@@ -27,14 +27,6 @@
     
     <url>
     
-      <loc>/</loc>
-      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
       <loc>/tags/bayesian/</loc>
       <lastmod>2020-03-09T00:00:00+00:00</lastmod>
     </url>
@@ -445,6 +437,22 @@
     
       <loc>/tutorial/</loc>
       <lastmod>2018-09-09T00:00:00-05:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/</loc>
+      <lastmod>2018-06-28T00:00:00-05:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/privacy/</loc>
+      <lastmod>2018-06-28T00:00:00-05:00</lastmod>
     </url>
     
   
