@@ -255,8 +255,9 @@ enableGitInfo = false
   [[params.social]]
     icon      = "github"
     icon_pack = "fab"
-    link      = "//github.com/ASKurz"
-
+    # link      = "//github.com/ASKurz"
+    link      = "https://github.com/ASKurz"
+    
   [[params.social]]
     icon      = "osf"
     icon_pack = "ai"
