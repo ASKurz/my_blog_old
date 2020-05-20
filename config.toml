@@ -250,12 +250,13 @@ enableGitInfo = false
   [[params.social]]
     icon      = "google-scholar"
     icon_pack = "ai"
-    link      = "https://scholar.google.com/citations?user=bvaDZ9UAAAAJ&hl=en"
+    # link      = "https://scholar.google.com/citations?user=bvaDZ9UAAAAJ&hl=en" # this is the old one based on my UM email address
+    link      = "https://scholar.google.com/citations?user=P8JWywQAAAAJ&hl=en"
 
   [[params.social]]
     icon      = "github"
     icon_pack = "fab"
-    # link      = "//github.com/ASKurz"
+    # link      = "//github.com/ASKurz" # this appears to have been a typo
     link      = "https://github.com/ASKurz"
     
   [[params.social]]
