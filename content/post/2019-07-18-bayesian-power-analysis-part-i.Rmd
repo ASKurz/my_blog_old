@@ -16,9 +16,13 @@ header:
   caption: ''
   image: ''
   preview: yes
+bibliography: my_blog.bib
+biblio-style: apalike
+csl: apa.csl  
+link-citations: yes
 ---
 
-## Version 1.0.0
+## Version 1.0.1
 
 ## tl;dr
 
@@ -28,7 +32,7 @@ If you'd like to learn how to do Bayesian power calculations using **brms**, sti
 
 Many journals, funding agencies, and dissertation committees require power calculations for your primary analyses. Frequentists have a variety of tools available to perform these calculations (e.g., [here](https://rpsychologist.com/analytical-and-simulation-based-power-analyses-for-mixed-design-anovas)). Bayesians, however, have a more difficult time of it. Most of our research questions and data issues are sufficiently complicated that we cannot solve the problems by hand. We need Markov chain Monte Carlo methods to iteratively sample from the posterior to summarize the parameters from our models. Same deal for power. If you'd like to compute the power for a given combination of $N$, likelihood $p(\text{data} | \theta)$, and set of priors $p (\theta)$, you'll need to simulate. 
 
-It's been one of my recent career goals to learn how to do this. You know how they say: *The best way to learn is to teach*. This series of blog posts is the evidence of me learning by teaching. It will be an exploration of what a Bayesian power simulation workflow might look like. The overall statistical framework will be **R**, with an emphasis on code style based on the [**tidyverse**](https://www.tidyverse.org). We'll be fitting our Bayesian models with Bürkner's [**brms**](https://github.com/paul-buerkner/brms).
+It's been one of my recent career goals to learn how to do this. You know how they say: *The best way to learn is to teach*. This series of blog posts is the evidence of me learning by teaching. It will be an exploration of what a Bayesian power simulation workflow might look like. The overall statistical framework will be within **R** [@R-base], with an emphasis on code style based on the [**tidyverse**](https://www.tidyverse.org) [@R-tidyverse; @wickhamWelcomeTidyverse2019]. We'll be fitting our Bayesian models with Bürkner's [**brms** package](https://github.com/paul-buerkner/brms) [@R-brms; @burknerBrmsPackageBayesian2017; @burknerAdvancedBayesianMultilevel2018].
 
 What this series is not, however, is an introduction to statistical power itself. Keep reading if you're ready to roll up your sleeves, put on your applied hat, and learn how to get things done. If you're more interested in introductions to power, see the references in the next section.
 
@@ -36,12 +40,12 @@ What this series is not, however, is an introduction to statistical power itself
 
 For this series, I'm presuming you are familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to statistics, and have a basic sense of what we mean by statistical power. Here are some resources if you'd like to shore up.
 
-* If you're unfamiliar with statistical power, Kruschke covered it in chapter 13 of his [text](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/). You might also check out [this review paper](https://www3.nd.edu/~kkelley/publications/articles/Maxwell_Kelley_Rausch_2008.pdf) by Maxwell, Kelley, and Rausch. There's always, of course, the original work by Cohen (e.g., [here](https://www.worldcat.org/title/statistical-power-analysis-for-the-behavioral-sciences/oclc/17877467)). You might also like this [Khan Academy video](https://www.khanacademy.org/math/ap-statistics/tests-significance-ap/error-probabilities-power/v/introduction-to-power-in-significance-tests).
-* To learn about Bayesian regression, I recommend the introductory text books by either McElreath ([here](https://xcelab.net/rm/statistical-rethinking/)) or Kruschke ([here](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/)). Both authors host blogs ([here](http://doingbayesiandataanalysis.blogspot.com) and [here](http://elevanth.org/blog/), respectively). If you go with McElreath, do check out his [online lectures](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists) and [my project](https://bookdown.org/connect/#/apps/1850/access) translating his text to **brms** and **tidyverse** code. I'm working on a [similar project](https://github.com/ASKurz/Doing-Bayesian-Data-Analysis-in-brms-and-the-tidyverse) for Kruschke's text, but it still has a ways to go before I release it in full.
-* For even more **brms**-related resources, you can find vignettes and documentation [here](https://cran.r-project.org/web/packages/brms/index.html).
-* For **tidyverse** introductions, your best bets are [*R4DS*](https://r4ds.had.co.nz) and [*The tidyverse style guide*](https://style.tidyverse.org).
+* If you're unfamiliar with statistical power, Kruschke covered it in chapter 13 of his [-@kruschkeDoingBayesianData2015] [text](http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/). You might also check out the [-@maxwellSampleSizePlanning2008] [review paper](https://www3.nd.edu/~kkelley/publications/articles/Maxwell_Kelley_Rausch_2008.pdf) by Maxwell, Kelley, and Rausch. There's always, of course, the original work by Cohen [e.g., @cohenStatisticalPowerAnalysis1988a]. You might also like this [Khan Academy video](https://www.khanacademy.org/math/ap-statistics/tests-significance-ap/error-probabilities-power/v/introduction-to-power-in-significance-tests).
+* To learn about Bayesian regression, I recommend the introductory text books by either McElreath [-@mcelreathStatisticalRethinkingBayesian2015; -@mcelreathStatisticalRethinkingBayesian2020] or @kruschkeDoingBayesianData2015. Both authors host blogs ([here](http://doingbayesiandataanalysis.blogspot.com) and [here](http://elevanth.org/blog/), respectively). If you go with McElreath, do check out his [online lectures](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists) and my [-@kurzStatisticalRethinkingBrms2020; -@kurzStatisticalRethinkingSecondEd2020] ebooks translating his text to **brms** and **tidyverse** code. I have an ebook for Kruschke's text [@kurzDoingBayesianData2020], too.
+* For even more **brms**-related resources, you can find vignettes and documentation at [https://cran.r-project.org/package=brms/index.html](https://cran.r-project.org/package=brms/index.html).
+* For **tidyverse** introductions, your best bets are Grolemund and Wickham's [-@grolemundDataScience2017] [*R for data science*](https://r4ds.had.co.nz) and Wickham's [-@wickhamTidyverseStyleGuide2020] [*The tidyverse style guide*](https://style.tidyverse.org).
 * We'll be simulating data. If that's new to you, both Kruschke and McElreath cover that a little in their texts. You can find nice online tutorials [here](https://debruine.github.io/tutorials/sim-data.html) and [here](https://aosmith.rbind.io/2018/08/29/getting-started-simulating-data/), too.
-* We'll also be making a couple custom functions. If that's new, you might check out [*R4DS*, chapter 19](https://r4ds.had.co.nz/functions.html) or [chapter 14](https://bookdown.org/rdpeng/rprogdatascience/functions.html) of Roger Peng's *R Programming for Data Science*.
+* We'll also be making a couple custom functions. If that's new, you might check out [*R4DS*, chapter 19](https://r4ds.had.co.nz/functions.html) or [chapter 14](https://bookdown.org/rdpeng/rprogdatascience/functions.html) of Roger Peng's [-@pengProgrammingDataScience2019] *R Programming for Data Science*.
 
 ## We need to warm up before jumping into power.
 
@@ -53,7 +57,7 @@ library(brms)
 library(broom)
 ```
 
-Consider a case where you have some dependent variable $Y$ that you'd like to compare between two groups, which we'll call treatment and control. Here we presume $Y$ is continuous and, for the sake of simplicity, is in a standardized metric for the control condition. Letting $c$ stand for control and $i$ index the data row for a given case, we might write that as $y_{i, c} \sim \text{Normal} (0, 1)$. The mean for our treatment condition is 0.5, with the standard deviation still in the standardized metric. In the social sciences a standardized mean difference of 0.5 would typically be considered a medium effect size. Here's what that'd look like.
+Consider a case where you have some dependent variable $Y$ that you'd like to compare between two groups, which we'll call treatment and control. Here we presume $Y$ is continuous and, for the sake of simplicity, is in a standardized metric for the control condition. Letting $c$ stand for control and $i$ index the data row for a given case, we might write that as $y_{i, c} \sim \operatorname{Normal} (0, 1)$. The mean for our treatment condition is 0.5, with the standard deviation still in the standardized metric. In the social sciences a standardized mean difference of 0.5 would typically be considered a medium effect size. Here's what that'd look like.
 
 ```{r, fig.width = 6, fig.height = 2.25}
 # set our theme because, though I love the default ggplot theme, I hate gridlines
@@ -112,7 +116,7 @@ Within the regression framework, we'll be comparing $\mu$s using the formula
 
 $$
 \begin{align*}
-y_i & \sim \text{Normal} (\mu_i, \sigma) \\
+y_i & \sim \operatorname{Normal}(\mu_i, \sigma) \\
 \mu_i & = \beta_0 + \beta_1 \text{treatment}_i,
 \end{align*}
 $$
@@ -135,8 +139,8 @@ We already decided above that
 
 $$
 \begin{align*}
-y_{i, c} & \sim \text{Normal} (0, 1) \text{ and}\\
-y_{i, t} & \sim \text{Normal} (0.5, 1).
+y_{i, c} & \sim \operatorname{Normal}(0, 1) \text{ and}\\
+y_{i, t} & \sim \operatorname{Normal}(0.5, 1).
 \end{align*}
 $$
 
@@ -155,31 +159,31 @@ d <-
 glimpse(d)
 ```
 
-In case it wasn’t clear, the two variables `group` and `treatment` are redundant. Whereas the former is composed of names, the latter is the dummy-variable equivalent (i.e., control = 0, treatment = 1). The main event was how we used the `rnorm()` function to simulate the normally-distributed values for `y`.
+In case it wasn't clear, the two variables `group` and `treatment` are redundant. Whereas the former is composed of names, the latter is the dummy-variable equivalent (i.e., control = 0, treatment = 1). The main event was how we used the `rnorm()` function to simulate the normally-distributed values for `y`.
 	
 Before we fit our model, we need to decide on priors. To give us ideas, here are the **brms** defaults for our model and data.
 
 ```{r}
 get_prior(data = d,
           family = gaussian,
-          y ~ 0 + intercept + treatment)
+          y ~ 0 + Intercept + treatment)
 ```
 
-A few things: Notice that here we’re using the `0 + intercept` syntax. This is because **brms** handles the priors for the default intercept under the presumption you’ve mean-centered all your predictor variables. However, since our `treatment` variable is a dummy, that assumption won’t fly. The `0 + intercept` allows us to treat the model intercept as just another $\beta$ parameter, which makes no assumptions about centering. Along those lines, you’ll notice **brms** currently defaults to flat priors for the $\beta$ parameters (i.e., those for which `class = b`). And finally, the default prior on $\sigma$ is rather wide `student_t(3, 0, 10)`. By default, **brms** also sets the left bounds for $\sigma$ parameters at zero, making that a folded-$t$ distribution. If you're confused by these details, spend some time with the [**brms** reference manual](https://cran.r-project.org/web/packages/brms/brms.pdf), particularly the `brm` and `brmsformula` sections.
-	
+A few things: Notice that here we're using the `0 + Intercept` syntax. This is because **brms** handles the priors for the default intercept under the presumption you've mean-centered all your predictor variables. However, since our `treatment` variable is a dummy, that assumption won't fly. The `0 + Intercept` allows us to treat the model intercept as just another $\beta$ parameter, which makes no assumptions about centering. Along those lines, you'll notice **brms** currently defaults to flat priors for the $\beta$ parameters (i.e., those for which `class = b`). And finally, the default prior on $\sigma$ is moderately wide `student_t(3, 0, 2.5)`. By default, **brms** also sets the left bounds for $\sigma$ parameters at zero, making that a folded-$t$ distribution. If you're confused by these details, spend some time with the [**brms** reference manual](https://cran.r-project.org/package=brms/brms.pdf) [@brms2020RM], particularly the `brm` and `brmsformula` sections.
+
 In this project, we'll be primarily using two kinds of priors: default flat priors and weakly-regularizing priors. Hopefully flat priors are self-explanatory. They let the likelihood (data) dominate the posterior and tend to produce results similar to those from frequentist estimators.
 
-As for weakly-regularizing priors, McElreath covered them in his text. They're mentioned a bit in the **Stan** team's [*Prior Choice Recommendations*](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) wiki, and you can learn even more from Gelman, Simpson, and Betancourt's [*The prior can only be understood in the context of the likelihood*](http://www.stat.columbia.edu/~gelman/research/published/entropy-19-00555-v2.pdf). These priors aren’t strongly informative and aren't really representative of our research hypotheses. But they're not as absurd as flat priors, either. Rather, with just a little bit of knowledge about the data, these priors are set to keep the MCMC chains on target. Since our `y` variable has a mean near zero and a standard deviation near one and since our sole predictor, `treatment` is a dummy, setting $\text{Normal} (0, 2)$ as the prior for both $\beta$ parameters might be a good place to start. The prior is permissive enough that it will let likelihood dominate the posterior, but it also rules out ridiculous parts of the parameter space (e.g., a standardized mean difference of 20, an intercept of -93). And since we know the data are on the unit scale, we might just center our folded-Student-$t$ prior on one and add a gentle scale setting of one.
+As for weakly-regularizing priors, McElreath covered them in his text. They're mentioned a bit in the **Stan** team's [*Prior Choice Recommendations*](https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations) wiki, and you can learn even more from Gelman, Simpson, and Betancourt's [-@gelmanPriorCanOften2017] [*The prior can only be understood in the context of the likelihood*](http://www.stat.columbia.edu/~gelman/research/published/entropy-19-00555-v2.pdf). These priors aren't strongly informative and aren't really representative of our research hypotheses. But they're not as absurd as flat priors, either. Rather, with just a little bit of knowledge about the data, these priors are set to keep the MCMC chains on target. Since our `y` variable has a mean near zero and a standard deviation near one and since our sole predictor, `treatment` is a dummy, setting $\operatorname{Normal}(0, 2)$ as the prior for both $\beta$ parameters might be a good place to start. The prior is permissive enough that it will let likelihood dominate the posterior, but it also rules out ridiculous parts of the parameter space (e.g., a standardized mean difference of 20, an intercept of -93). And since we know the data are on the unit scale, we might just center our folded-Student-$t$ prior on one and add a gentle scale setting of one.
 
 Feel free to disagree and use your own priors. The great thing about priors is that they can be proposed, defended, criticized and improved. The point is to settle on the priors you can defend with written reasons. Select ones you'd feel comfortable defending to a skeptical reviewer.
 
-Here's how we might fit the model:
+Here's how we might fit the model.
 
 ```{r fit, cache = T, warning = F, message = F, results = "hide"}
 fit <-
   brm(data = d,
       family = gaussian,
-      y ~ 0 + intercept + treatment,
+      y ~ 0 + Intercept + treatment,
       prior = c(prior(normal(0, 2), class = b),
                 prior(student_t(3, 1, 1), class = sigma)),
       seed = 1)
@@ -209,7 +213,7 @@ It's important to keep in mind that by default, `tidy()` returns 90% intervals f
 
 ### You can reuse a fit.
 
-Especially with simple models like this, a lot of the time we spend waiting for `brms::brm()` to return the model is wrapped up in compilation. This is because **brms** is a collection of user-friendly functions designed to fit models with [**Stan**](https://mc-stan.org). With each new model, `brm()` translates your model into **Stan** code, which then gets translated to C++ and is compiled afterwards (see [here](https://cran.r-project.org/web/packages/brms/vignettes/brms_overview.pdf) or [here](https://cran.r-project.org/web/packages/brms/brms.pdf)). However, we can use the `update()` function to update a previously-compiled fit object with new data. This cuts out the compilation time and allows us to get directly to sampling. Here’s how to do it.
+Especially with simple models like this, a lot of the time we spend waiting for `brms::brm()` to return the model is wrapped up in compilation. This is because **brms** is a collection of user-friendly functions designed to fit models with [**Stan**](https://mc-stan.org) [@standevelopmentteamRStanInterfaceStan2020; @standevelopmentteamStanReferenceManual2020; @standevelopmentteamStanUserGuide2020]. With each new model, `brm()` translates your model into **Stan** code, which then gets translated to C++ and is compiled afterwards (see [here](https://cran.r-project.org/package=brms/vignettes/brms_overview.pdf) or [here](https://cran.r-project.org/package=brms/brms.pdf)). However, we can use the `update()` function to update a previously-compiled fit object with new data. This cuts out the compilation time and allows us to get directly to sampling. Here's how to do it.
 
 ```{r updated_fit, cache = T, warning = F, message = F, results = "hide"}
 # set a new seed
@@ -251,7 +255,7 @@ We're more than half way there! It's time to do our first power simulation.
 
 ## Simulate to determine power.
 
-In this post, we'll play with three ways to do a Bayesian power simulation. They'll all be similar, but hopefully you'll learn a bit as we transition from one to the next. Though if you're impatient and all this seems remedial, you could probably just skip down to the final example, Version 3.
+In this post, we'll play with three ways to do a Bayesian power simulation. They'll all be similar, but hopefully you'll learn a bit as we transition from one to the next. Though if you're impatient and all this seems remedial, you could probably just skip down to the final example, [Version 3][Version 3: Still talking about memory, we can be even stingier.].
 
 ### Version 1: Let's introduce making a custom model-fitting function.
 
@@ -285,7 +289,7 @@ For our second step, we add the data simulations and save them in a nested colum
 
 For the third step, we expand our `purrr::map()` skills from above to `purrr::map2()`, which allows us to iteratively insert two arguments into a function. Within this paradigm, the two arguments are generically termed `.x` and `.y`. Thus our approach will be `.x = d, .y = seed`. For our function, we specify `~update(fit, newdata = .x, seed = .y)`. Thus we'll be iteratively inserting our simulated `d` data into the `newdata` argument and will be simultaneously inserting our `seed` values into the `seed` argument.
 
-Also notice that the number of iterations we'll be working with is determined by the number of rows in the `seed` column. We are defining that number as `n_sim`. Since this is just a blog post, I'm going to take it easy and use 100. But if this was a real power analysis for one of your projects, something like 1000 would be better.
+Also notice that the number of iterations we'll be working with is determined by the number of rows in the `seed` column. We are defining that number as `n_sim`. Since this is just a blog post, I'm going to take it easy and use 100. But if this was a real power analysis for one of your projects, something like 1,000 would be better.
 
 Finally, you don’t have to do this, but I'm timing my simulation by saving `Sys.time()` values at the beginning and end of the simulation.
 
@@ -305,7 +309,7 @@ s <-
 t2 <- Sys.time()
 ```
 
-The entire simulation took just a couple minutes on my several-year-old laptop. 
+The entire simulation took just over a minute on my [new laptop](https://twitter.com/SolomonKurz/status/1250193047096299520).
 
 ```{r}
 t2 - t1
@@ -357,7 +361,7 @@ s %>%
   summarise(power = mean(check))
 ```
 
-With the second `mutate()` line, we used a logical statement within `ifelse()` to code all instances where the lower limit of the 95% interval was greater than 0 as a 1, with the rest as 0. That left us with a vector of 1s and 0s, which we saved as `check`. In the `summarise()` line, we took the mean of that column, which returned our Bayesian power estimate.
+With the second `mutate()` line, we used a logical statement within `ifelse()` to code all instances where the lower limit of the 95% interval was greater than 0 as a 1, with the rest as 0. That left us with a vector of 1's and 0's, which we saved as `check`. In the `summarise()` line, we took the mean of that column, which returned our Bayesian power estimate.
 
 That is, in 67 of our 100 simulations, an $n = 50$ per group was enough to produce a 95% Bayesian credible interval that did not straddle 0.
 
@@ -367,7 +371,7 @@ And if you've gotten this far and have been following along with code of your ow
 
 ### Version 2: We might should be more careful with memory.
 
-I really like it that our `s` object contains all our `brm()` fits. It makes it really handy to do global diagnostics like making sure our $\hat R$ values are all within a respectable range.
+I really like it that our `s` object contains all our `brm()` fits. It makes it really handy to do global diagnostics like making sure our $\widehat R$ values are all within a respectable range.
 
 ```{r, fig.width = 3, fig.height = 2.5}
 s %>% 
@@ -378,7 +382,7 @@ s %>%
   geom_histogram(bins = 20)
 ```
 
-Man those $\hat R$ values look sweet. It's great to have a workflow that lets you check them. But holding on to all those fits can take up a lot of memory. If the only thing you're interested in are the parameter summaries, a better approach might be to do the model refitting and parameter extraction in one step. That way you only save the parameter summaries. Here's how you might do that.
+Man those $\widehat R$ values look sweet. It's great to have a workflow that lets you check them. But holding on to all those fits can take up a lot of memory. If the only thing you're interested in are the parameter summaries, a better approach might be to do the model refitting and parameter extraction in one step. That way you only save the parameter summaries. Here's how you might do that.
 
 ```{r s2, cache = T, warning = F, message = F, results = "hide"}
 t3 <- Sys.time()
@@ -394,7 +398,7 @@ s2 <-
 t4 <- Sys.time()
 ```
 
-Like before, this only took a couple minutes.
+Like before, this only about a minute.
 
 ```{r}
 t4 - t3
@@ -443,7 +447,7 @@ s2 %>%
   facet_wrap(~seed)
 ```
 
-In this case, it's no big deal if we keep the data around or not. The data sets are fairly small and we're only simulating 100 of them. But in cases where the data are larger and you're doing 1000s of simulations, keeping the data could become a memory drain.
+In this case, it's no big deal if we keep the data around or not. The data sets are fairly small and we're only simulating 100 of them. But in cases where the data are larger and you're doing thousands of simulations, keeping the data could become a memory drain.
 
 If you're willing to forgo the luxury of inspecting your data simulations, it might make sense to run our power analysis in a way that avoids saving them. One way to do so would be to just wrap the data simulation and model fitting all in one function. We'll call it `sim_d_and_fit()`.
 
@@ -498,9 +502,8 @@ head(s3)
 By wrapping our data simulation, model fitting, and parameter extraction steps all in one function, we simplified the output such that we're no longer holding on to the data simulations or the **brms** fit objects. We just have the parameter summaries and the `seed`, making the product even smaller.
 
 ```{r}
-object.size(s)
-object.size(s2)
-object.size(s3)
+tibble(object = c("s", "s2", "s3")) %>% 
+  mutate(bytes = map_dbl(object, ~get(.) %>% object.size()))
 ```
 
 But the primary results are the same.
@@ -541,7 +544,7 @@ Anyway, that's the essence of the **brms/tidyverse** workflow for Bayesian power
 7. Extract the parameter(s) of interest.
 8. Summarize.
 
-In addition, we played with a few approaches based on logistical concerns like memory. In the next post, part II, we'll see how the precision-oriented approach to sample-size planning is a viable alternative to power focused on rejecting null hypotheses.
+In addition, we played with a few approaches based on logistical concerns like memory. In the next post, [part II](https://solomonkurz.netlify.app/post/bayesian-power-analysis-part-ii/), we'll see how the precision-oriented approach to sample-size planning is a viable alternative to power focused on rejecting null hypotheses.
 
 ## I had help.
 
@@ -575,4 +578,6 @@ s4 %>%
   mutate(check = ifelse(lower > 0, 1, 0)) %>% 
   summarise(power = mean(check))
 ```
+
+## References
 
