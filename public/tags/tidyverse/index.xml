@@ -56,7 +56,7 @@
       <pubDate>Thu, 18 Jul 2019 00:00:00 +0000</pubDate>
       
       <guid>/post/bayesian-power-analysis-part-i/</guid>
-      <description>Version 1.0.0  tl;dr If you’d like to learn how to do Bayesian power calculations using brms, stick around for this multi-part blog series. Here with part I, we’ll set the foundation.
+      <description>Version 1.0.1  tl;dr If you’d like to learn how to do Bayesian power calculations using brms, stick around for this multi-part blog series. Here with part I, we’ll set the foundation.
  Power is hard, especially for Bayesians. Many journals, funding agencies, and dissertation committees require power calculations for your primary analyses. Frequentists have a variety of tools available to perform these calculations (e.g., here). Bayesians, however, have a more difficult time of it.</description>
     </item>
     
