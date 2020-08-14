@@ -6,7 +6,7 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Thu, 28 Jun 2018 00:00:00 -0500</lastBuildDate>
+    <lastBuildDate>Mon, 09 Mar 2020 00:00:00 +0000</lastBuildDate>
     <atom:link href="/" rel="self" type="application/rss+xml" />
     
     <item>
@@ -19,10 +19,13 @@
 &lt;p&gt;In my experience, Bayesian methods are easiest to use within the &lt;strong&gt;R&lt;/strong&gt; computing environment by way of Paul Bürkner&amp;rsquo;s &lt;a href=&#34;https://github.com/paul-buerkner/brms&#34;&gt;&lt;strong&gt;brms&lt;/strong&gt; package&lt;/a&gt;. At present, I am not aware of any statistical books, introductory or otherwise, that show users how to use &lt;strong&gt;brms&lt;/strong&gt; for applied Bayesian data analysis. My books are an effort to fill that content gap and to make the powerful techniques afforded by the Bayesian paradigm even more accessible to applied researchers. In addition, I make heavy use of the collection of &lt;strong&gt;R&lt;/strong&gt; packages known as the &lt;a href=&#34;https://www.tidyverse.org&#34;&gt;&lt;strong&gt;tidyverse&lt;/strong&gt;&lt;/a&gt; when manipulating and visualizing my data. The following books highlight these paradigms.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;
-&lt;p&gt;&lt;a href=&#34;https://bookdown.org/content/3686&#34;&gt;&lt;em&gt;Doing Bayesian Data Analysis in brms and the tidyverse&lt;/em&gt;, version 0.1.0&lt;/a&gt; is a translatoin of the code from the second edition of John K. Kruschke&amp;rsquo;s &lt;a href=&#34;https://sites.google.com/site/doingbayesiandataanalysis/&#34;&gt;&lt;em&gt;Doing Bayesian Data Analysis&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://bookdown.org/content/4253/&#34;&gt;&lt;em&gt;Applied Longitudinal Data Analysis in brms and the tidyverse&lt;/em&gt;, version 0.0.1&lt;/a&gt; is a translation of the examples and figures from Singer and Willett&amp;rsquo;s classic &lt;a href=&#34;https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968&#34;&gt;&lt;em&gt;Applied longitudinal data analysis: Modeling change and event occurrence&lt;/em&gt;&lt;/a&gt;. Caution: this project is in the very early stages.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
-&lt;p&gt;&lt;a href=&#34;https://bookdown.org/ajkurz/recoding_Hayes_2018/&#34;&gt;&lt;em&gt;Recoding Introduction to Mediation, Moderation, and Conditional Process Analysis&lt;/em&gt;, version 1.1.0&lt;/a&gt; is a translatoin of the code from the second edition of Andrew F. Hayes&amp;rsquo;s &lt;a href=&#34;http://afhayes.com/introduction-to-mediation-moderation-and-conditional-process-analysis.html&#34;&gt;&lt;em&gt;Introduction to Mediation, Moderation, and Conditional Process Analysis&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&#34;https://bookdown.org/content/3686&#34;&gt;&lt;em&gt;Doing Bayesian Data Analysis in brms and the tidyverse&lt;/em&gt;, version 0.2.0&lt;/a&gt; is a translation of the code from the second edition of John K. Kruschke&amp;rsquo;s &lt;a href=&#34;https://sites.google.com/site/doingbayesiandataanalysis/&#34;&gt;&lt;em&gt;Doing Bayesian Data Analysis&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&#34;https://bookdown.org/ajkurz/recoding_Hayes_2018/&#34;&gt;&lt;em&gt;Recoding Introduction to Mediation, Moderation, and Conditional Process Analysis&lt;/em&gt;, version 1.1.0&lt;/a&gt; is a translation of the code from the second edition of Andrew F. Hayes&amp;rsquo;s &lt;a href=&#34;http://afhayes.com/introduction-to-mediation-moderation-and-conditional-process-analysis.html&#34;&gt;&lt;em&gt;Introduction to Mediation, Moderation, and Conditional Process Analysis&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;[&lt;em&gt;Statistical Rethinking with brms, ggplot2, and the tidyverse&lt;/em&gt;, version 1.1.0] (&lt;a href=&#34;https://bookdown.org/content/3890&#34;&gt;https://bookdown.org/content/3890&lt;/a&gt;) is a translation of the code from the first edition of Richard McElreath&amp;rsquo;s &lt;a href=&#34;http://xcelab.net/rm/statistical-rethinking/&#34;&gt;&lt;em&gt;Statistical Rethinking&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;
