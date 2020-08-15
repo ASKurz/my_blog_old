@@ -20,7 +20,9 @@ bibliography: my_blog.bib
 biblio-style: apalike
 csl: apa.csl  
 link-citations: yes
-toc: true  
+output:
+  blogdown::html_page:
+    toc: true 
 ---
 
 ## Version 1.0.1
