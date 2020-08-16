@@ -356,7 +356,7 @@
 <li>How many pets do you have at home?</li>
 <li>How many cigarettes did you smoke, yesterday?</li>
 </ul>
-<p>The values these data will take are discrete <a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> in that you’ve either slept with 9 or 10 people, but definitely not 9.5. The values cannot go below zero in that even if you quit smoking cold turkey 15 years ago and have been a health nut since, you still could not have smoked -3 cigarettes, yesterday. Zero is as low as it goes.</p>
+<p>The values these data will take are discrete<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> in that you’ve either slept with 9 or 10 people, but definitely not 9.5. The values cannot go below zero in that even if you quit smoking cold turkey 15 years ago and have been a health nut since, you still could not have smoked -3 cigarettes, yesterday. Zero is as low as it goes.</p>
 <p>The canonical distribution for data of this type–non-negative integers–is the Poisson. It’s named after the French mathematician Siméon Denis Poisson, <a href="https://upload.wikimedia.org/wikipedia/commons/e/e8/E._Marcellot_Siméon-Denis_Poisson_1804.jpg">who had quite the confident stare in his youth</a>. The Poisson distribution has one parameter, <span class="math inline">\(\lambda\)</span>, which controls both its mean and variance. Although the numbers the Poisson describes are counts, the <span class="math inline">\(\lambda\)</span> parameter does not need to be an integer. For example, here’s the plot of 1,000 draws from a Poisson for which <span class="math inline">\(\lambda = 3.2\)</span>.</p>
 <pre class="r"><code>library(tidyverse)
 
@@ -368,8 +368,8 @@ tibble(x = rpois(n = 1e3, lambda = 3.2)) %&gt;%
   ggplot(aes(x = x)) +
   geom_bar()</code></pre>
 <p><img src="/post/2019-08-11-bayesian-power-analysis-part-iii-a_files/figure-html/unnamed-chunk-1-1.png" width="384" /></p>
-<p>In case you missed it, the key function for generating those data was <code>rpois()</code> (see <code>?rpois</code>). I’m not going to go into a full-blown tutorial on the Poisson distribution or on count regression. For more thorough introductions, check out Atkins et al’s <span class="citation">[-@atkinsTutorialOnCount2013]</span> <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3513584/pdf/nihms396181.pdf"><em>A tutorial on count regression and zero-altered count models for longitudinal substance use data</em></a>, chapters 9 through 11 in McElreath’s <span class="citation">[-@mcelreathStatisticalRethinkingBayesian2015]</span> <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical Rethinking</em></a>, or, if you really want to dive in, Agresti’s <span class="citation">[-@agrestiFoundationsLinearGeneralized2015]</span> <a href="https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034"><em>Foundations of linear and generalized linear models</em></a>.</p>
-<p>For our power example, let’s say you were interested in drinking. Using data from <a href="https://pubs.niaaa.nih.gov/publications/AA70/AA70.htm">the National Epidemiologic Survey on Alcohol and Related Conditions</a> <span class="citation">[@niaaaNationalEpidemiologicSurvey2006]</span>, Christopher Ingraham <span class="citation">[-@ingrahamThinkYouDrink2014]</span> presented <a href="https://www.washingtonpost.com/news/wonk/wp/2014/09/25/think-you-drink-a-lot-this-chart-will-tell-you/?utm_term=.b81599bbbe25">a data visualization</a> of the average number of alcoholic drinks American adults consume, per week. By decile, the numbers were:</p>
+<p>In case you missed it, the key function for generating those data was <code>rpois()</code> (see <code>?rpois</code>). I’m not going to go into a full-blown tutorial on the Poisson distribution or on count regression. For more thorough introductions, check out Atkins et al’s <span class="citation">(<a href="#ref-atkinsTutorialOnCount2013">2013</a>)</span> <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3513584/pdf/nihms396181.pdf"><em>A tutorial on count regression and zero-altered count models for longitudinal substance use data</em></a>, chapters 9 through 11 in McElreath’s <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2015">2015</a>)</span> <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical Rethinking</em></a>, or, if you really want to dive in, Agresti’s <span class="citation">(<a href="#ref-agrestiFoundationsLinearGeneralized2015">2015</a>)</span> <a href="https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034"><em>Foundations of linear and generalized linear models</em></a>.</p>
+<p>For our power example, let’s say you were interested in drinking. Using data from <a href="https://pubs.niaaa.nih.gov/publications/AA70/AA70.htm">the National Epidemiologic Survey on Alcohol and Related Conditions</a> <span class="citation">(Abuse &amp; Alcoholism, <a href="#ref-niaaaNationalEpidemiologicSurvey2006">2006</a>)</span>, Christopher Ingraham <span class="citation">(<a href="#ref-ingrahamThinkYouDrink2014">2014</a>)</span> presented <a href="https://www.washingtonpost.com/news/wonk/wp/2014/09/25/think-you-drink-a-lot-this-chart-will-tell-you/?utm_term=.b81599bbbe25">a data visualization</a> of the average number of alcoholic drinks American adults consume, per week. By decile, the numbers were:</p>
 <ol style="list-style-type: decimal">
 <li>0.00</li>
 <li>0.00</li>
@@ -692,8 +692,25 @@ fit2 %&gt;%
 ## [109] digest_0.6.25        xtable_1.8-4         httpuv_1.5.4        
 ## [112] stats4_3.6.3         munsell_0.5.0        shinyjs_1.1</code></pre>
 </div>
-<div id="references" class="section level2">
+<div id="references" class="section level2 unnumbered">
 <h2>References</h2>
+<div id="refs" class="references">
+<div id="ref-niaaaNationalEpidemiologicSurvey2006">
+<p>Abuse, N. I. on A., &amp; Alcoholism. (2006). <em>National epidemiologic survey on alcohol and related conditions</em>. <a href="https://pubs.niaaa.nih.gov/publications/AA70/AA70.htm">https://pubs.niaaa.nih.gov/publications/AA70/AA70.htm</a></p>
+</div>
+<div id="ref-agrestiFoundationsLinearGeneralized2015">
+<p>Agresti, A. (2015). <em>Foundations of linear and generalized linear models</em>. John Wiley &amp; Sons. <a href="https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034">https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034</a></p>
+</div>
+<div id="ref-atkinsTutorialOnCount2013">
+<p>Atkins, D. C., Baldwin, S. A., Zheng, C., Gallop, R. J., &amp; Neighbors, C. (2013). A tutorial on count regression and zero-altered count models for longitudinal substance use data. <em>Psychology of Addictive Behaviors</em>, <em>27</em>(1), 166. <a href="https://doi.org/10.1037/a0029508">https://doi.org/10.1037/a0029508</a></p>
+</div>
+<div id="ref-ingrahamThinkYouDrink2014">
+<p>Ingraham, C. (2014). Think you drink a lot? This chart will tell you. <em>Wonkblog. The Washington Post</em>. <a href="https://www.washingtonpost.com/news/wonk/wp/2014/09/25/think-you-drink-a-lot-this-chart-will-tell-you/?utm_term=.b81599bbbe25">https://www.washingtonpost.com/news/wonk/wp/2014/09/25/think-you-drink-a-lot-this-chart-will-tell-you/?utm_term=.b81599bbbe25</a></p>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2015">
+<p>McElreath, R. (2015). <em>Statistical rethinking: A Bayesian course with examples in R and Stan</em>. CRC press. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a></p>
+</div>
+</div>
 </div>
 <div class="footnotes">
 <hr />
