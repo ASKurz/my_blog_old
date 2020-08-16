@@ -23,6 +23,7 @@ link-citations: yes
 output: 
   html_document:
     toc: true
+    toc_float: true
 ---
 
 ## Version 1.0.1
