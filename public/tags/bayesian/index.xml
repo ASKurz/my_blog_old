@@ -47,7 +47,7 @@
       <pubDate>Sun, 11 Aug 2019 00:00:00 +0000</pubDate>
       
       <guid>/post/bayesian-power-analysis-part-iii-a/</guid>
-      <description>Version 1.0.0  tl;dr So far we’ve covered Bayesian power simulations from both a null hypothesis orientation (see part I) and a parameter width perspective (see part II). In both instances, we kept things simple and stayed with Gaussian (i.e., normally distributed) data. But not all data follow that form, so it might do us well to expand our skill set a bit. In the next few posts, we’ll cover how we might perform power simulations with other kinds of data.</description>
+      <description>Version 1.0.1  Orientation So far we’ve covered Bayesian power simulations from both a null hypothesis orientation (see part I) and a parameter width perspective (see part II). In both instances, we kept things simple and stayed with Gaussian (i.e., normally distributed) data. But not all data follow that form, so it might do us well to expand our skill set a bit. In the next few posts, we’ll cover how we might perform power simulations with other kinds of data.</description>
     </item>
     
     <item>
