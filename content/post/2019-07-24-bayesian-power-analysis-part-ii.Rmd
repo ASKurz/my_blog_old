@@ -20,10 +20,7 @@ bibliography: my_blog.bib
 biblio-style: apalike
 csl: apa.csl  
 link-citations: yes
-output: 
-  html_document:
-    toc: true
-    toc_float: true
+toc: true
 ---
 
 ## Version 1.0.1
