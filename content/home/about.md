@@ -22,7 +22,7 @@ weight = 5
 [[education.courses]]
   course = "OAA Advanced Postdoctoral Fellow in Mental Illness Research & Treatment"
   institution = "VISN 17 Center of Excellence for Research on Returning War Veterans at Central Texas Veterans Healthcare System"
-  year = 2018--2020
+  year = 2018-2020
   
   [[education.courses]]
   course = "PhD in Clinical Psychology"
