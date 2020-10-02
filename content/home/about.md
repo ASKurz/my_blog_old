@@ -20,6 +20,11 @@ weight = 5
 
 # List your qualifications (such as academic degrees).
 [[education.courses]]
+  course = "OAA Advanced Postdoctoral Fellow in Mental Illness Research & Treatment"
+  institution = "VISN 17 Center of Excellence for Research on Returning War Veterans at Central Texas Veterans Healthcare System"
+  year = 2018--2020
+  
+  [[education.courses]]
   course = "PhD in Clinical Psychology"
   institution = "University of Mississippi"
   year = 2018
