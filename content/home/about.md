@@ -48,5 +48,5 @@ weight = 5
 
 # About Me
 
-I am a clinical psychology researcher, currently working to improve the lives of post-deployment veterans. My primary therapeutic orientations are ACT and mindfulness-based interventions. In my spare time, I also make online tutorials for data analysis.
+I am a clinical psychology researcher, currently working to improve the lives of post-deployment veterans. My primary therapeutic orientations are ACT and mindfulness-based interventions. In my spare time, I make online tutorials for data analysis.
 

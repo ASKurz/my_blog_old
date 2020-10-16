@@ -288,7 +288,7 @@ enableGitInfo = false
   weight = 2
 
 [[menu.main]]
-  name   = "Book-length projects"
+  name   = "Books"
   url    = "/bookdown/"
   weight = 3
 
