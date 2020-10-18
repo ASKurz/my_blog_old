@@ -462,7 +462,7 @@ post %>%
         panel.border = element_rect(color = "transparent"))
 ```
 
-You may have noticed this plot is based on the results of our multilevel model, `me1`. We could have done the same basic thing with the results from the more conventional meta-analysis mode, `me0`, too.
+You may have noticed this plot is based on the results of our multilevel model, `me1`. We could have done the same basic thing with the results from the more conventional meta-analysis model, `me0`, too.
 
 I'm not aware this it typical in random effect meta-analyses, but it might be useful to further clarify the meaning of the two primary parameters, $\mu$ and $\tau$. Like with the forest plot, above, we could examine these with either `me0` or `me1`. For kicks, we'll use `me0` (the conventional Bayesian meta-analysis). In the output from `posterior_samples(me0)`, $\mu$ and $\tau$ are in the columns named `b_Intercept` and `sd_loc__Intercept`, respectively.
 
@@ -502,7 +502,7 @@ Both panels show 1,000 draws, each of which is depicted by a single dot. If we w
 
 There are other things you might do with these data. For example, you might inspect how much the effect size varies between those from WEIRD and non-WEIRD countries. You might also model the data as clustered by `Language` rather than by `Location`. But I think we've gone far enough to get you started.
 
-If you'd like to learn more about these methods, do check out Vourre's [*Meta-analysis is a special case of Bayesian multilevel modeling*](https://mvuorre.github.io/post/2016/09/29/meta-analysis-is-a-special-case-of-bayesian-multilevel-modeling/). You might also read out Williams, Rast, and Bürkner's [-@williamsBayesianMetaanalysisWeakly2018] manuscript, [*Bayesian meta-analysis with weakly informative prior distributions*](https://psyarxiv.com/7tbrm/). For an alternative workflow, consider the [**baggr** package](https://github.com/wwiecek/baggr) [@R-baggr], which is designed to fit hierarchical Bayesian meta-analyses with Stan under the hood.
+If you'd like to learn more about these methods, do check out Vourre's [*Meta-analysis is a special case of Bayesian multilevel modeling*](https://mvuorre.github.io/post/2016/09/29/meta-analysis-is-a-special-case-of-bayesian-multilevel-modeling/). You might also read Williams, Rast, and Bürkner's [-@williamsBayesianMetaanalysisWeakly2018] manuscript, [*Bayesian meta-analysis with weakly informative prior distributions*](https://psyarxiv.com/7tbrm/). For an alternative workflow, consider the [**baggr** package](https://github.com/wwiecek/baggr) [@R-baggr], which is designed to fit hierarchical Bayesian meta-analyses with Stan under the hood.
 
 ## References
 
