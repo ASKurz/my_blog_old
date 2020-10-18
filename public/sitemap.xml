@@ -28,7 +28,7 @@
     <url>
     
       <loc>/</loc>
-      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+      <lastmod>2020-10-16T00:00:00+00:00</lastmod>
     </url>
     
   
@@ -36,7 +36,63 @@
     <url>
     
       <loc>/tags/bayesian/</loc>
-      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
+      <lastmod>2020-10-16T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/post/bayesian-meta-analysis-in-brms-ii/</loc>
+      <lastmod>2020-10-16T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/brms/</loc>
+      <lastmod>2020-10-16T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/meta-analysis/</loc>
+      <lastmod>2020-10-16T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/r/</loc>
+      <lastmod>2020-10-16T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/statistical-rethinking/</loc>
+      <lastmod>2020-10-16T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/</loc>
+      <lastmod>2020-10-16T00:00:00+00:00</lastmod>
+    </url>
+    
+  
+    
+    <url>
+    
+      <loc>/tags/tutorial/</loc>
+      <lastmod>2020-10-16T00:00:00+00:00</lastmod>
     </url>
     
   
@@ -67,40 +123,8 @@
     
     <url>
     
-      <loc>/tags/r/</loc>
-      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/</loc>
-      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
       <loc>/tags/tidyverse/</loc>
       <lastmod>2020-03-09T00:00:00+00:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/tutorial/</loc>
-      <lastmod>2020-03-09T00:00:00+00:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/brms/</loc>
-      <lastmod>2019-10-31T00:00:00+00:00</lastmod>
     </url>
     
   
@@ -299,23 +323,7 @@
     
     <url>
     
-      <loc>/tags/meta-analysis/</loc>
-      <lastmod>2018-10-14T00:00:00+00:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
       <loc>/tags/spanking/</loc>
-      <lastmod>2018-10-14T00:00:00+00:00</lastmod>
-    </url>
-    
-  
-    
-    <url>
-    
-      <loc>/tags/statistical-rethinking/</loc>
       <lastmod>2018-10-14T00:00:00+00:00</lastmod>
     </url>
     

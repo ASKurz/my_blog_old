@@ -7,10 +7,19 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <copyright>&amp;copy; 2018</copyright>
-    <lastBuildDate>Mon, 09 Mar 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 16 Oct 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="/tags/r/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Bayesian meta-analysis in brms-II</title>
+      <link>/post/bayesian-meta-analysis-in-brms-ii/</link>
+      <pubDate>Fri, 16 Oct 2020 00:00:00 +0000</pubDate>
+      
+      <guid>/post/bayesian-meta-analysis-in-brms-ii/</guid>
+      <description>Preamble In Section 14.3 of my (2020a) translation of the first edition of McElreath’s (2015) Statistical rethinking, I included a bonus section covering Bayesian meta-analysis. For my (2020b) translation of the second edition of the text (McElreath, 2020), I’d like to include another section on the topic, but from a different perspective. The first time around, we focused on standardized mean differences. This time, I’d like to tackle odds ratios and, while we’re at it, give a little bit of a plug for open science practices.</description>
+    </item>
     
     <item>
       <title>Make model diagrams, Kruschke style</title>
