@@ -132,9 +132,7 @@ h %>%
 
 Here's how Klein and colleagues summarized their primary results:
 
-> 
-
-In the aggregate replication sample $(N = 6,842$ after removing participants who responded in less than $4$ s$), 71\%$ of participants judged the action in the foreseen-side-effect scenario as permissible, but only $17\%$ of participants in the greater-good scenario judged it as permissible. The difference between the percentages was significant, $p = 2.2 \text e^{-16},$ $\text{OR} = 11.54,$ $d = 1.35,$ $95\% \; \text{CI} = [1.28, 1.41]$. The replication results were consistent with the double-effect hypothesis, and the effect was about half the magnitude of the original $(d = 1.35,$ $95\% \; \text{CI} = [1.28, 1.41],$ vs. original $d = 2.50)$. (p. 459)
+> In the aggregate replication sample $(N = 6,842$ after removing participants who responded in less than $4$ s$), 71\%$ of participants judged the action in the foreseen-side-effect scenario as permissible, but only $17\%$ of participants in the greater-good scenario judged it as permissible. The difference between the percentages was significant, $p = 2.2 \text e^{-16},$ $\text{OR} = 11.54,$ $d = 1.35,$ $95\% \; \text{CI} = [1.28, 1.41]$. The replication results were consistent with the double-effect hypothesis, and the effect was about half the magnitude of the original $(d = 1.35,$ $95\% \; \text{CI} = [1.28, 1.41],$ vs. original $d = 2.50)$. (p. 459)
 
 Here is the breakdown of the outcome and primary experimental condition, which will confirm the two empirical percentages mentioned, above.
 
