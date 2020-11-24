@@ -27,7 +27,7 @@ In my experience, Bayesian methods are easiest to use within the **R** computing
 
 * [*Statistical rethinking with brms, ggplot2, and the tidyverse*, version 1.2.0](https://bookdown.org/content/3890) is a translation of the code from the first edition of Richard McElreath's [*Statistical rethinking*](http://xcelab.net/rm/statistical-rethinking/).
 
-* [*Statistical Rethinking with brms, ggplot2, and the tidyverse: Second edition*, version 0.0.3.1](https://bookdown.org/content/4857) is a translation of the code from the second edition of Richard McElreath's [*Statistical rethinking*](http://xcelab.net/rm/statistical-rethinking/). Caution: this project is in the very early stages.
+* [*Statistical rethinking with brms, ggplot2, and the tidyverse: Second edition*, version 0.1.0](https://bookdown.org/content/4857) is a translation of the code from the second edition of Richard McElreath's [*Statistical rethinking*](http://xcelab.net/rm/statistical-rethinking/).
 
 I make periodic updates to these projects, which are reflected in their version numbers. These resources are now and will always be freely available to all. In all cases, however, these should be considered as supplements to the original source material.
 
