@@ -146,9 +146,9 @@ This post is a direct consequence of Adrian Baez-Ortega’s great blog, “Bayes
       <pubDate>Sat, 02 Feb 2019 00:00:00 +0000</pubDate>
       
       <guid>/post/robust-linear-regression-with-the-robust-student-s-t-distribution/</guid>
-      <description>[edited Feb 3, 2019]
+      <description>[edited Nov 25, 2020]
 The purpose of this post is to demonstrate the advantages of the Student’s \(t\)-distribution for regression with outliers, particularly within a Bayesian framework.
-I make assumptions I’m presuming you are familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting regression models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is R, with a heavy use of the tidyverse–which you might learn a lot about here, especially chapter 5– and Paul Bürkner’s brms package.</description>
+I make assumptions I’m presuming you are familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to fitting regression models, and have a sense that the issue of outlier values is a pickle worth contending with. All code in is R, with a heavy use of the tidyverse (Wickham, 2019; Wickham et al.</description>
     </item>
     
     <item>
