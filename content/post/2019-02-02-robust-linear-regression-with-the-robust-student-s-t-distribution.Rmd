@@ -20,7 +20,7 @@ csl: apa.csl
 link-citations: yes  
 ---
 
-[edited Nov 25, 2020]
+[edited Nov 30, 2020]
 
 The purpose of this post is to demonstrate the advantages of the Student's $t$-distribution for regression with outliers, particularly within a [Bayesian framework](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists).
 
@@ -269,11 +269,11 @@ b1 <-
 Here are the model summaries.
 
 ```{r}
-tidy(b0) %>% slice(1:3) %>% mutate_if(is.double, round, digits = 2)
-tidy(b1) %>% slice(1:3) %>% mutate_if(is.double, round, digits = 2)
+posterior_summary(b0)[1:3, ] %>% round(digits = 2)
+posterior_summary(b1)[1:3, ] %>% round(digits = 2)
 ```
 
-These should look familiar. They're very much like the results from the OLS models. Hopefully this isn't surprising. Our priors were quite weak, so there's no reason to suspect the results would differ much.
+We summarized our model parameters with `brms::posterior_summary()` rather than `broom::tid()`. Otherwise, these should look familiar. They're very much like the results from the OLS models. Hopefully this isn't surprising. Our priors were quite weak, so there's no reason to suspect the results would differ much.
 
 #### The LOO and other goodies help with diagnostics.
 
@@ -364,8 +364,8 @@ b1.2 <-
 Here are the summaries for our models based on the `slice[d]` data.
 
 ```{r}
-tidy(b1.1) %>% slice(1:3) %>% mutate_if(is.double, round, digits = 2)
-tidy(b1.2) %>% slice(1:3) %>% mutate_if(is.double, round, digits = 2)
+posterior_summary(b1.1)[1:3, ] %>% round(digits = 2)
+posterior_summary(b1.2)[1:3, ] %>% round(digits = 2)
 ```
 
 They are closer to the true data generating model (i.e., the code we used to make `d`), especially `b1.2`. However, there are other ways to handle the influential cases without dropping them. Finally, we're ready to switch to Student's $t$!
@@ -432,14 +432,17 @@ b4 <-
          seed = 1)
 ```
 
-Now we've got all those models, we can gather their results into a sole tibble.
+Now we've got all those models, we can gather their results into a single tibble.
 
 ```{r}
 b_estimates <-
   tibble(model = c("b0", "b1", "b1.1", "b1.2", "b2", "b3", "b4")) %>% 
   mutate(fit = map(model, get)) %>% 
-  mutate(tidy = map(fit, tidy)) %>% 
-  unnest(tidy) %>% 
+  mutate(posterior_summary = map(fit, ~posterior_summary(.) %>% 
+                                   data.frame() %>% 
+                                   rownames_to_column("term"))) %>% 
+  unnest(posterior_summary) %>% 
+  select(-fit) %>% 
   filter(term %in% c("b_Intercept", "b_x")) %>%
   arrange(term)
 ```
@@ -458,9 +461,9 @@ b_estimates %>%
   filter(term == "b_x") %>% # b_Intercept b_x
   
   ggplot(aes(x = model)) +
-  geom_pointrange(aes(y    = estimate,
-                      ymin = lower,
-                      ymax = upper),
+  geom_pointrange(aes(y    = Estimate,
+                      ymin = Q2.5,
+                      ymax = Q97.5),
                   shape = 20) +
   coord_flip(ylim = c(-.2, 1)) +
   labs(title    = "The x slope, varying by model",
