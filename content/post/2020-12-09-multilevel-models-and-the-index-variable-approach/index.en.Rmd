@@ -2,7 +2,7 @@
 title: Multilevel models and the index-variable approach
 author: Solomon Kurz
 date: '2020-12-09'
-slug: multilevel-models-and-the-index-variable-approach
+slug:
 categories: []
 tags:
   - Bayesian
