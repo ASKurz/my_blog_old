@@ -1,0 +1,526 @@
+---
+title: Multilevel models and the index-variable approach
+author: Solomon Kurz
+date: '2020-12-09'
+slug: multilevel-models-and-the-index-variable-approach
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - Kruschke
+  - McElreath
+  - multilevel
+  - R
+  - tidyverse
+  - tutorial
+authors: []
+header:
+  caption: ''
+  image: ''
+  preview: yes
+bibliography: my_blog.bib
+biblio-style: apalike
+csl: apa.csl  
+link-citations: yes
+---
+
+<link href="/rmarkdown-libs/anchor-sections/anchor-sections.css" rel="stylesheet" />
+<script src="/rmarkdown-libs/anchor-sections/anchor-sections.js"></script>
+
+
+<div id="the-set-up" class="section level2">
+<h2>The set-up</h2>
+<p>Someone recently reached out with a question about how to analyze clustered data. The basic setup was they had an experiment with four conditions. The dependent variable was binary, where success = 1, fail = 0. Each participant completed multiple trials under each of the four conditions. The sticking point was the data analyst wanted to model those four conditions with a multilevel model using the index variable approach McElreath advocated for in the second edition of his text <span class="citation">(McElreath, <a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a><a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">b</a>)</span>.</p>
+<p>The purpose of this post will be to show how to model data like this two different ways.</p>
+<div id="i-make-assumptions." class="section level3">
+<h3>I make assumptions.</h3>
+<p>In this post, I’m presuming you are familiar with Bayesian multilevel models. All code is in <strong>R</strong> <span class="citation">(R Core Team, <a href="#ref-R-base" role="doc-biblioref">2020</a>)</span>, with healthy doses of the <strong>tidyverse</strong> <span class="citation">(Wickham, <a href="#ref-R-tidyverse" role="doc-biblioref">2019</a>; Wickham et al., <a href="#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">2019</a>)</span>. The statistical models will be fit with <strong>brms</strong> <span class="citation">(Bürkner, <a href="#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">2017</a>, <a href="#ref-burknerAdvancedBayesianMultilevel2018" role="doc-biblioref">2018</a>, <a href="#ref-R-brms" role="doc-biblioref">2020</a>)</span>. We’ll also make a little use of the <strong>tidybayes</strong> <span class="citation">(Kay, <a href="#ref-R-tidybayes" role="doc-biblioref">2020</a>)</span> and <strong>rethinking</strong> <span class="citation">(McElreath, <a href="#ref-R-rethinking" role="doc-biblioref">2020</a><a href="#ref-R-rethinking" role="doc-biblioref">a</a>)</span> packages.</p>
+<p>Load the packages.</p>
+<pre class="r"><code>library(tidyverse)
+library(brms)
+library(tidybayes)</code></pre>
+</div>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>The data for our friend’s question had the same basic structure as the <code>chimpanzees</code> data from the <strong>rethinking</strong> package. It’s also the case that our friend wanted to fit a model that was very similar to model <code>m14.3</code> from Chapter 14 of McElreath’s text. Here we’ll load the data and wrangle a little.</p>
+<pre class="r"><code>data(chimpanzees, package = &quot;rethinking&quot;)
+d &lt;- chimpanzees
+rm(chimpanzees)
+
+# wrangle
+d &lt;-
+  d %&gt;% 
+  mutate(actor = factor(actor),
+         treatment = factor(1 + prosoc_left + 2 * condition),
+         # this will come in handy, later
+         labels    = factor(treatment,
+                            levels = 1:4,
+                            labels = c(&quot;r/n&quot;, &quot;l/n&quot;, &quot;r/p&quot;, &quot;l/p&quot;)))
+
+glimpse(d)</code></pre>
+<pre><code>## Rows: 504
+## Columns: 10
+## $ actor        &lt;fct&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ recipient    &lt;int&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, …
+## $ condition    &lt;int&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0…
+## $ block        &lt;int&gt; 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5…
+## $ trial        &lt;int&gt; 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, …
+## $ prosoc_left  &lt;int&gt; 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0…
+## $ chose_prosoc &lt;int&gt; 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0…
+## $ pulled_left  &lt;int&gt; 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1…
+## $ treatment    &lt;fct&gt; 1, 1, 2, 1, 2, 2, 2, 2, 1, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 1, 1, 1, 2, 2, 1, 1…
+## $ labels       &lt;fct&gt; r/n, r/n, l/n, r/n, l/n, l/n, l/n, l/n, r/n, r/n, r/n, l/n, r/n, l/n, r/n, l…</code></pre>
+<p>The focal variable will be <code>pulled_left</code>, which is binary and coded yes = 1, no = 0. We have four experimental conditions, which are indexed <code>1</code> through <code>4</code> in the <code>treatment</code> variable. The shorthand labels for those conditions are saved as <code>labels</code>. These data are simple in that there are only seven participants, who are indexed in the <code>actor</code> column.</p>
+<p>Within the generalized linear model framework, we typically model binary variables with binomial likelihood. When you use the conventional link function, you can call this <em>logistic regression</em>. When you have a binary variable, the parameter of interest is the probability of a 1 in your criterion variable. When you want a quick sample statistic, you can estimate those probabilities with the mean. To get a sense of the data, here are the sample probabilities <code>pulled_left == 1</code> for each of our seven participants, by the four levels of <code>treatment</code>.</p>
+<pre class="r"><code>d %&gt;% 
+  mutate(treatment = str_c(&quot;treatment &quot;, treatment)) %&gt;% 
+  group_by(actor, treatment) %&gt;% 
+  summarise(p = mean(pulled_left) %&gt;% round(digits = 2)) %&gt;% 
+  pivot_wider(values_from = p, names_from = treatment) %&gt;% 
+  knitr::kable()</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">actor</th>
+<th align="right">treatment 1</th>
+<th align="right">treatment 2</th>
+<th align="right">treatment 3</th>
+<th align="right">treatment 4</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">1</td>
+<td align="right">0.33</td>
+<td align="right">0.50</td>
+<td align="right">0.28</td>
+<td align="right">0.56</td>
+</tr>
+<tr class="even">
+<td align="left">2</td>
+<td align="right">1.00</td>
+<td align="right">1.00</td>
+<td align="right">1.00</td>
+<td align="right">1.00</td>
+</tr>
+<tr class="odd">
+<td align="left">3</td>
+<td align="right">0.28</td>
+<td align="right">0.61</td>
+<td align="right">0.17</td>
+<td align="right">0.33</td>
+</tr>
+<tr class="even">
+<td align="left">4</td>
+<td align="right">0.33</td>
+<td align="right">0.50</td>
+<td align="right">0.11</td>
+<td align="right">0.44</td>
+</tr>
+<tr class="odd">
+<td align="left">5</td>
+<td align="right">0.33</td>
+<td align="right">0.56</td>
+<td align="right">0.28</td>
+<td align="right">0.50</td>
+</tr>
+<tr class="even">
+<td align="left">6</td>
+<td align="right">0.78</td>
+<td align="right">0.61</td>
+<td align="right">0.56</td>
+<td align="right">0.61</td>
+</tr>
+<tr class="odd">
+<td align="left">7</td>
+<td align="right">0.78</td>
+<td align="right">0.83</td>
+<td align="right">0.94</td>
+<td align="right">1.00</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="models." class="section level2">
+<h2>Models.</h2>
+<p>We are going to analyze these data two ways. The first way is the direct analogue to McElreath’s <code>m14.3</code>. The second way is a multilevel Bayesian alternative to the ANOVA, based on Kruschke’s <span class="citation">(<a href="#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">2015</a>)</span> text.</p>
+<div id="mcelreaths-approach." class="section level3">
+<h3>McElreath’s approach.</h3>
+<div id="the-statistical-model." class="section level4">
+<h4>The statistical model.</h4>
+<p>Here’s how we might express McElreath’s approach to these data in statistical notation:</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{left_pull}_i &amp; \sim \operatorname{Binomial}(n_i = 1, p_i) \\
+\operatorname{logit} (p_i) &amp; = \gamma_{\text{treatment}[i]} + \alpha_{\text{actor}[i], \text{treatment}[i]} \\
+\gamma_j &amp; \sim \operatorname{Normal}(0, 1), \;\;\; \text{for } j = 1, \dots, 4 \\
+\begin{bmatrix} \alpha_{j, 1} \\ \alpha_{j, 2} \\ \alpha_{j, 3} \\ \alpha_{j, 4} \end{bmatrix} &amp; \sim \operatorname{MVNormal} \begin{pmatrix} \begin{bmatrix} 0 \\ 0 \\ 0 \\ 0 \end{bmatrix}, \mathbf \Sigma_\text{actor} \end{pmatrix} \\
+\mathbf \Sigma_\text{actor} &amp; = \mathbf{S_\alpha R_\alpha S_\alpha} \\
+\sigma_{\alpha, [1]}, \dots, \sigma_{\alpha, [4]} &amp; \sim \operatorname{Exponential}(1) \\
+\mathbf R_\alpha &amp; \sim \operatorname{LKJ}(2).
+\end{align*}
+\]</span></p>
+<p>In this model, we have four population-level intercepts, <span class="math inline">\(\gamma_1, \dots, \gamma_4\)</span>, one for each of the four levels of <code>treatment</code>. This is one of the features our friend originally wanted when they analyzed their own data. <code>actor</code> is our higher-level grouping variable. The term <span class="math inline">\(\alpha_{\text{actor}[i], \text{treatment}[i]}\)</span> is meant to convey that each of the <code>treatment</code> effects can vary by <code>actor</code>. The line containing the <span class="math inline">\(\operatorname{MVNormal}(\cdot)\)</span> operator indicates the seven <code>actor</code>-level deviations from the population-level estimates for <span class="math inline">\(\gamma_j\)</span> follow the multivariate normal distribution where the four means are set to zero (i.e., they are deviations) and their spread around those zeros are controlled by <span class="math inline">\(\Sigma_\text{actor}\)</span>. In the next line, we learn that <span class="math inline">\(\Sigma_\text{actor}\)</span> can be decomposed into two terms, <span class="math inline">\(\mathbf S_\alpha\)</span> and <span class="math inline">\(\mathbf R_\alpha\)</span>. It may not yet be clear by the notation, but <span class="math inline">\(\mathbf S_\alpha\)</span> is a <span class="math inline">\(4 \times 4\)</span> matrix,</p>
+<p><span class="math display">\[
+\mathbf S_\alpha = \begin{bmatrix} \sigma_{\alpha, [1]} &amp; 0 &amp; 0 &amp; 0 \\ 0 &amp; \sigma_{\alpha, [2]} &amp; 0 &amp; 0 \\ 0 &amp; 0 &amp; \sigma_{\alpha, [3]} &amp; 0 \\ 0 &amp; 0 &amp; 0 &amp; \sigma_{\alpha, [4]} \end{bmatrix}.
+\]</span></p>
+<p>In a similar way, <span class="math inline">\(\mathbf R_\alpha\)</span> is a <span class="math inline">\(4 \times 4\)</span> matrix,</p>
+<p><span class="math display">\[
+\mathbf R_\alpha = \begin{bmatrix} 1 &amp; \rho_{\alpha, [1, 2]} &amp; \rho_{\alpha, [1, 3]} &amp; \rho_{\alpha, [1, 4]} \\ \rho_{\alpha, [2, 1]} &amp; 1 &amp; \rho_{\alpha, [2, 3]} &amp; \rho_{\alpha, [2, 4]} \\ \rho_{\alpha, [3, 1]} &amp; \rho_{\alpha, [3, 2]} &amp; 1 &amp; \rho_{\alpha, [3, 4]} \\ \rho_{\alpha, [4, 1]} &amp; \rho_{\alpha, [4, 2]} &amp; \rho_{\alpha, [4, 3]} &amp; 1 \end{bmatrix}.
+\]</span></p>
+<p>All the <span class="math inline">\(\sigma_\alpha\)</span> parameters have individual <span class="math inline">\(\operatorname{Exponential}(1)\)</span> priors. The two <span class="math inline">\(\mathbf R_\alpha\)</span> matrix has the <span class="math inline">\(\operatorname{LKJ}(2)\)</span> prior. Though you could certainly use different priors, here we’re sticking close to those McElreath used in his text.</p>
+</div>
+<div id="fit-the-model." class="section level4">
+<h4>Fit the model.</h4>
+<p>Though the statistical model might look a little intimidating, we can fit it pretty easily with <code>brms::brm()</code>. We’ll call this <code>fit1</code>.</p>
+<pre class="r"><code>fit1 &lt;- 
+  brm(data = d, 
+      family = binomial,
+      pulled_left | trials(1) ~ 0 + treatment + (0 + treatment | actor),
+      prior = c(prior(normal(0, 1), class = b),
+                prior(exponential(1), class = sd),
+                prior(lkj(2), class = cor)),
+      cores = 4, seed = 1)</code></pre>
+<p>Check the model summary.</p>
+<pre class="r"><code>print(fit1)</code></pre>
+<pre><code>##  Family: binomial 
+##   Links: mu = logit 
+## Formula: pulled_left | trials(1) ~ 0 + treatment + (0 + treatment | actor) 
+##    Data: d (Number of observations: 504) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Group-Level Effects: 
+## ~actor (Number of levels: 7) 
+##                            Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(treatment1)                 1.36      0.48     0.69     2.52 1.00     1979     2494
+## sd(treatment2)                 0.90      0.40     0.34     1.89 1.00     2188     2451
+## sd(treatment3)                 1.84      0.56     1.00     3.15 1.00     2999     3036
+## sd(treatment4)                 1.55      0.60     0.73     2.97 1.00     2550     2518
+## cor(treatment1,treatment2)     0.42      0.28    -0.21     0.87 1.00     2511     2461
+## cor(treatment1,treatment3)     0.52      0.25    -0.07     0.90 1.00     2313     2619
+## cor(treatment2,treatment3)     0.48      0.27    -0.12     0.89 1.00     2989     3261
+## cor(treatment1,treatment4)     0.44      0.27    -0.17     0.86 1.00     2515     3034
+## cor(treatment2,treatment4)     0.44      0.28    -0.17     0.87 1.00     3205     3217
+## cor(treatment3,treatment4)     0.57      0.24     0.00     0.92 1.00     3165     3234
+## 
+## Population-Level Effects: 
+##            Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## treatment1     0.23      0.46    -0.66     1.16 1.00     1871     2504
+## treatment2     0.66      0.36    -0.06     1.39 1.00     2780     2687
+## treatment3    -0.02      0.56    -1.14     1.07 1.00     3017     2966
+## treatment4     0.69      0.51    -0.32     1.72 1.00     3006     2575
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>If you look at the lower level of the output, the four levels in the ‘Population-Level Effects’ section are the four levels of <span class="math inline">\(\gamma_{\text{treatment}[i]}\)</span> from our statistical formula. If you look above at the ‘Group-Level Effects’ section, the four lines beginning with “sd”
+correspond to our four <span class="math inline">\(\sigma_{\alpha, [1]}, \dots, \sigma_{\alpha, [4]}\)</span> parameters. The correlations among those are depicted in the six rows beginning with “cor,” which correspond to the elements within our <span class="math inline">\(\mathbf R_\alpha\)</span> matrix.</p>
+<p>It might help if we visualized the model in a plot. Here are the results depicted in a streamlined version of McElreath’s Figure 14.7 <span class="citation">(McElreath, <a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a><a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">b</a>, p. 452)</span>.</p>
+<pre class="r"><code># for annotation
+text &lt;-
+  distinct(d, labels) %&gt;% 
+  mutate(actor = &quot;actor[1]&quot;,
+         prop  = c(.07, .8, .08, .795))
+
+# define the new data
+nd &lt;-
+  d %&gt;% 
+  distinct(actor, condition, labels, prosoc_left, treatment)
+
+# get the fitted draws
+fitted(fit1,
+       newdata = nd) %&gt;% 
+  data.frame() %&gt;% 
+  bind_cols(nd) %&gt;% 
+  mutate(actor     = str_c(&quot;actor[&quot;, actor, &quot;]&quot;),
+         condition = factor(condition)) %&gt;% 
+  
+  # plot!
+  ggplot(aes(x = labels)) +
+  geom_hline(yintercept = .5, color = &quot;white&quot;, linetype = 2) +
+  # posterior predictions
+  geom_line(aes(y = Estimate, group = prosoc_left),
+            size = 3/4) +
+  geom_pointrange(aes(y = Estimate, ymin = Q2.5, ymax = Q97.5, shape = condition),
+                  fill = &quot;transparent&quot;, fatten = 10, size = 1/3, show.legend = F) + 
+  # annotation for the conditions
+  geom_text(data = text,
+            aes(y = prop, label = labels), 
+            size = 3) +
+  scale_shape_manual(values = c(21, 19)) +
+  scale_x_discrete(NULL, breaks = NULL) +
+  scale_y_continuous(&quot;proportion left lever&quot;, breaks = 0:2 / 2, labels = c(&quot;0&quot;, &quot;.5&quot;, &quot;1&quot;)) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~actor, nrow = 1, labeller = label_parsed)</code></pre>
+<p><img src="/post/2020-12-09-multilevel-models-and-the-index-variable-approach/index.en_files/figure-html/fig1-1.png" width="768" style="display: block; margin: auto;" /></p>
+<p>Here’s an alternative version, this time faceting by treatment.</p>
+<pre class="r"><code>fitted(fit1,
+       newdata = nd) %&gt;% 
+  data.frame() %&gt;% 
+  bind_cols(nd) %&gt;% 
+  # add the gamma summaries
+  left_join(
+    tibble(treatment = as.character(1:4),
+       gamma = inv_logit_scaled(fixef(fit1)[, 1])),
+    by = &quot;treatment&quot;
+  )  %&gt;% 
+  mutate(treatment = str_c(&quot;treatment[&quot;, treatment, &quot;]&quot;)) %&gt;% 
+  
+  # plot!
+  ggplot(aes(x = reorder(actor, Estimate), y = Estimate, ymin = Q2.5, ymax = Q97.5)) +
+  geom_hline(aes(yintercept = gamma),
+             color = &quot;white&quot;) +
+  geom_pointrange(size = 1/3) +
+  scale_x_discrete(breaks = NULL) +
+  labs(x = &quot;actor, rank orderred by their average probability&quot;,
+       y = &quot;probability of pulling the lever&quot;) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~treatment, nrow = 1, labeller = label_parsed)</code></pre>
+<p><img src="/post/2020-12-09-multilevel-models-and-the-index-variable-approach/index.en_files/figure-html/fig2-1.png" width="480" style="display: block; margin: auto;" /></p>
+<p>The horizontal white lines mark off the posterior means for the <span class="math inline">\(\gamma_{\text{treatment}[i]}\)</span> parameters.</p>
+</div>
+</div>
+<div id="kruschkes-approach." class="section level3">
+<h3>Kruschke’s approach.</h3>
+<p>One way to think about our <code>pulled_left</code> data is they are grouped by two factors. The first factor is the experimental condition, <code>treatment</code>. The second factor is participant, <code>actor</code>. Now imagine you arrange the number of times <code>pulled_left == 1</code> based in a <span class="math inline">\(2 \times 2\)</span> contingency table where the four levels of <code>treatment</code> factor are in the rows and the seven levels of <code>actor</code> are in the columns. Here’s what that might look like in a plot.</p>
+<pre class="r"><code>d %&gt;% 
+  group_by(actor, treatment) %&gt;% 
+  summarise(count = sum(pulled_left)) %&gt;% 
+  
+  ggplot(aes(x = actor, y = treatment, fill = count, label = count)) +
+  geom_tile() +
+  geom_text(aes(color = count &gt; 6)) +
+  scale_color_viridis_d(option = &quot;E&quot;, direction = -1, breaks = NULL) +
+  scale_fill_viridis_c(option = &quot;E&quot;, limits = c(0, 18), breaks = NULL) +
+  scale_x_discrete(position = &quot;top&quot;, expand = c(0, 0)) +
+  scale_y_discrete(expand = c(0, 0)) +
+  theme(axis.ticks = element_blank())</code></pre>
+<p><img src="/post/2020-12-09-multilevel-models-and-the-index-variable-approach/index.en_files/figure-html/fig3-1.png" width="480" style="display: block; margin: auto;" /></p>
+<p>With this arrangement, we can model <span class="math inline">\(\text{left_pull}_i \sim \operatorname{Binomial}(n_i = 1, p_i)\)</span>, with three hierarchical grouping factors. The first will be <code>actor</code>, the second will be <code>treatment</code>, and the third will be their interaction. Kruschke gave a general depiction of this kind of statistical model in Figure 20.2 of his text <span class="citation">(Kruschke, <a href="#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">2015</a>, p. 588)</span>. However, I generally prefer expressing my models using statistical notation similar to McElreath. Though I’m not exactly sure how McElreath would express a model like this, here’s my best attempt using his style of notation:</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{left_pull}_i &amp; \sim \operatorname{Binomial}(n_i = 1, p_i) \\
+\operatorname{logit} (p_i) &amp; = \gamma + \alpha_{\text{actor}[i]} + \alpha_{\text{treatment}[i]} + \alpha_{\text{actor}[i] \times \text{treatment}[i]} \\
+\gamma &amp; \sim \operatorname{Normal}(0, 1) \\
+\alpha_\text{actor}  &amp; \sim \operatorname{Normal}(0, \sigma_\text{actor}) \\
+\alpha_\text{treatment}  &amp; \sim \operatorname{Normal}(0, \sigma_\text{treatment}) \\
+\alpha_{\text{actor} \times \text{treatment}} &amp; \sim \operatorname{Normal}(0, \sigma_{\text{actor} \times \text{treatment}}) \\
+\sigma_\text{actor} &amp; \sim \operatorname{Exponential}(1) \\
+\sigma_\text{treatment} &amp; \sim \operatorname{Exponential}(1) \\
+\sigma_{\text{actor} \times \text{treatment}} &amp; \sim \operatorname{Exponential}(1).
+\end{align*}
+\]</span></p>
+<p>Here <span class="math inline">\(\gamma\)</span> is our overall intercept and the three <span class="math inline">\(\alpha_{\text{&lt;group&gt;}[i]}\)</span> terms are our multilevel deviations around that overall intercept. Notice that because <span class="math inline">\(\gamma\)</span> nas no <span class="math inline">\(j\)</span> index, we are not technically using the index variable approach we discussed earlier in this post. But we are still indexing the four levels of <code>treatment</code> by way of higher-level deviations depicted by the <span class="math inline">\(\alpha_{\text{treatment}[i]}\)</span> and <span class="math inline">\(\alpha_{\text{actor}[i] \times \text{treatment}[i]}\)</span> parameters in the second line.</p>
+<div id="fit-the-second-model." class="section level4">
+<h4>Fit the second model.</h4>
+<p>Here’s how to fit the model with <strong>brms</strong>. We’ll call it <code>fit2</code>.</p>
+<pre class="r"><code>fit2 &lt;- 
+  brm(data = d, 
+      family = binomial,
+      pulled_left | trials(1) ~ 1 + (1 | actor) + (1 | treatment) + (1 | actor:treatment),
+      prior = c(prior(normal(0, 1), class = Intercept),
+                prior(exponential(1), class = sd)),
+      cores = 4, seed = 1)</code></pre>
+<p>Check the summary.</p>
+<pre class="r"><code>print(fit2)</code></pre>
+<pre><code>##  Family: binomial 
+##   Links: mu = logit 
+## Formula: pulled_left | trials(1) ~ 1 + (1 | actor) + (1 | treatment) + (1 | actor:treatment) 
+##    Data: d (Number of observations: 504) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Group-Level Effects: 
+## ~actor (Number of levels: 7) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     2.00      0.66     1.07     3.68 1.00     1270     1894
+## 
+## ~actor:treatment (Number of levels: 28) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.25      0.18     0.01     0.70 1.00     1296     1810
+## 
+## ~treatment (Number of levels: 4) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.53      0.36     0.07     1.46 1.00     1144     1032
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     0.46      0.63    -0.81     1.71 1.00      989     1969
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>With a model like this, a natural first question is: <em>Where is the variance at?</em> We can answer that by plotting the posteriors for our <span class="math inline">\(\sigma_\text{&lt;group&gt;}\)</span> parameters.</p>
+<pre class="r"><code>library(tidybayes)
+
+posterior_samples(fit2) %&gt;% 
+  select(starts_with(&quot;sd&quot;)) %&gt;% 
+  set_names(str_c(&quot;sigma[&quot;, c(&quot;actor&quot;, &quot;actor~X~treatment&quot;, &quot;treatment&quot;), &quot;]&quot;)) %&gt;% 
+  pivot_longer(everything()) %&gt;% 
+  mutate(name = factor(name,
+                       levels = str_c(&quot;sigma[&quot;, c(&quot;actor~X~treatment&quot;, &quot;treatment&quot;, &quot;actor&quot;), &quot;]&quot;))) %&gt;% 
+  
+  ggplot(aes(x = value, y = name)) +
+  stat_halfeye() +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  xlab(NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        panel.grid = element_blank())</code></pre>
+<p><img src="/post/2020-12-09-multilevel-models-and-the-index-variable-approach/index.en_files/figure-html/fig4-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>It looks like most of the action was between the seven actors. But there was some variation among the four levels of <code>treatment</code> and even the interaction between the two factors wasn’t completely pushed against zero.</p>
+<p>Okay, here’s an alternative version of the first plot from <code>fit1</code>, above.</p>
+<pre class="r"><code>fitted(fit2,
+       newdata = nd) %&gt;% 
+  data.frame() %&gt;% 
+  bind_cols(nd) %&gt;% 
+  mutate(actor     = str_c(&quot;actor[&quot;, actor, &quot;]&quot;),
+         condition = factor(condition)) %&gt;% 
+  
+  # plot!
+  ggplot(aes(x = labels)) +
+  geom_hline(yintercept = .5, color = &quot;white&quot;, linetype = 2) +
+  # posterior predictions
+  geom_line(aes(y = Estimate, group = prosoc_left),
+            size = 3/4) +
+  geom_pointrange(aes(y = Estimate, ymin = Q2.5, ymax = Q97.5, shape = condition),
+                  fill = &quot;transparent&quot;, fatten = 10, size = 1/3, show.legend = F) + 
+  scale_shape_manual(values = c(21, 19)) +
+  scale_x_discrete(NULL, breaks = NULL) +
+  scale_y_continuous(&quot;proportion left lever&quot;, limits = 0:1,
+                     breaks = 0:2 / 2, labels = c(&quot;0&quot;, &quot;.5&quot;, &quot;1&quot;)) +
+  theme(panel.grid = element_blank()) +
+  facet_wrap(~actor, nrow = 1, labeller = label_parsed)</code></pre>
+<p><img src="/post/2020-12-09-multilevel-models-and-the-index-variable-approach/index.en_files/figure-html/fig5-1.png" width="768" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="why-not-make-the-horse-race-official" class="section level3">
+<h3>Why not make the horse race official?</h3>
+<p>Just for kicks and giggles, we’ll compare the two models with the LOO.</p>
+<pre class="r"><code>fit1 &lt;- add_criterion(fit1, criterion = &quot;loo&quot;)
+fit2 &lt;- add_criterion(fit2, criterion = &quot;loo&quot;)
+
+# LOO differences
+loo_compare(fit1, fit2) %&gt;% print(simplify = F)</code></pre>
+<pre><code>##      elpd_diff se_diff elpd_loo se_elpd_loo p_loo  se_p_loo looic  se_looic
+## fit2    0.0       0.0  -266.8      9.5        12.2    0.6    533.7   19.1  
+## fit1   -4.5       3.0  -271.3      9.7        19.3    1.2    542.6   19.4</code></pre>
+<pre class="r"><code># Loo weights
+model_weights(fit1, fit2, weights = &quot;loo&quot;)</code></pre>
+<pre><code>##       fit1       fit2 
+## 0.01111874 0.98888126</code></pre>
+<p>It looks like there’s a little bit of an edge for the multilevel Bayesian ANOVA model.</p>
+</div>
+<div id="but-whats-the-difference-anyway" class="section level3">
+<h3>But what’s the difference, anyway?</h3>
+<p>Rather than attempt to chose one model based on information criteria, we might back up and focus on the conceptual differences between the two models.</p>
+<p>Our first model, based on McElreath’s index-variable approach, explicitly emphasized the four levels of <code>treatment</code>. Each one got its own <span class="math inline">\(\gamma_j\)</span>. By modeling those <span class="math inline">\(\gamma_j\)</span>’s with the multivariate normal distribution, we also got an explicit accounting of the <span class="math inline">\(4 \times 4\)</span> correlation structure for those parameters.</p>
+<p>Our second model, based on Kruschke’s multilevel ANOVA approach, took a more general perspective. By modeling <code>actor</code>, <code>treatment</code> and their interaction as higher-level grouping factors, <code>fit2</code> conceptualized both participants and experimental conditions as coming from populations of potential participants and conditions, respectively. No longer are those four <code>treatment</code> levels inherently special. They’re just the four we happen to have in this iteration of the experiment. Were we to run the experiment again, after all, we might want to alter them a little. The <span class="math inline">\(\sigma_\text{treatment}\)</span> and <span class="math inline">\(\sigma_{\text{actor} \times \text{treatment}}\)</span> parameters can help give us a sense of how much variation we’d expect among other similar experimental conditions.</p>
+<p>Since I’m not a chimpanzee researcher, I’m in no position to say which perspective is better for these data. At a predictive level, the models perform similarly. But if I were a researcher wanting to analyze these data or others with a similar structure, I’d want to think clearly about what kinds of points I’d want to make to my target audience. Would I want to make focused points about the four levels of <code>treatment</code>, or would it make sense to generalize from those four levels to other similar conditions? Also, with its four <span class="math inline">\(\gamma_j\)</span>’s and <span class="math inline">\(\mathbf R_\alpha\)</span> matrix, the <code>fit1</code> model is a bit more complex than the ANOVA-like <code>fit2</code>. If you look at the <span class="math inline">\(p_\text{LOO}\)</span> column from the <code>loo_compare()</code> output in the last section, you’ll see <code>fit1</code> had about 7 more ‘effective parameters’ than <code>fit2</code>, which helps quantify that complexity. Even those extra parameters didn’t help much with predictive accuracy, it’s possible they’d offer something from a rhetorical standpoint.</p>
+</div>
+</div>
+<div id="next-steps." class="section level2">
+<h2>Next steps.</h2>
+<p>If you’re new to the Bayesian multilevel model, I recommend the introductory text by either McElreath <span class="citation">(McElreath, <a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a><a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">b</a>)</span> or Kruschke <span class="citation">(Kruschke, <a href="#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">2015</a>)</span>. I have ebook versions of both wherein I translated their code into the <strong>tityverse</strong> style and fit their models with <strong>brms</strong> <span class="citation">(Kurz, <a href="#ref-kurzDoingBayesianData2020" role="doc-biblioref">2020</a><a href="#ref-kurzDoingBayesianData2020" role="doc-biblioref">a</a>, <a href="#ref-kurzStatisticalRethinkingSecondEd2020" role="doc-biblioref">2020</a><a href="#ref-kurzStatisticalRethinkingSecondEd2020" role="doc-biblioref">b</a>)</span>. Both McElreath and Kruschke have blogs (<a href="https://elevanth.org/blog/">here</a> and <a href="https://doingbayesiandataanalysis.blogspot.com/">here</a>). Also, though it doesn’t cover the multilevel model, you can get a lot of practice with Bayesian regression with the new book by Gelman, Hill, and Vehtari <span class="citation">(<a href="#ref-gelmanRegressionOtherStories2020" role="doc-biblioref">2020</a>)</span>. And for more hot Bayesian regression talk, you always have the Stan forums, which even have a <a href="https://discourse.mc-stan.org/c/interfaces/brms/36"><strong>brms</strong> section</a>.</p>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.3 (2020-10-10)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] tidybayes_2.3.1 brms_2.14.4     Rcpp_1.0.5      forcats_0.5.0   stringr_1.4.0   dplyr_1.0.2    
+##  [7] purrr_0.3.4     readr_1.4.0     tidyr_1.1.2     tibble_3.0.4    ggplot2_3.3.2   tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.0      plyr_1.8.6           igraph_1.2.6        
+##   [5] splines_4.0.3        svUnit_1.0.3         crosstalk_1.1.0.1    rstantools_2.1.1    
+##   [9] inline_0.3.17        digest_0.6.27        htmltools_0.5.0      rsconnect_0.8.16    
+##  [13] fansi_0.4.1          magrittr_2.0.1       modelr_0.1.8         RcppParallel_5.0.2  
+##  [17] matrixStats_0.57.0   xts_0.12.1           prettyunits_1.1.1    colorspace_2.0-0    
+##  [21] rvest_0.3.6          ggdist_2.3.0         haven_2.3.1          xfun_0.19           
+##  [25] callr_3.5.1          crayon_1.3.4         jsonlite_1.7.1       lme4_1.1-25         
+##  [29] zoo_1.8-8            glue_1.4.2           gtable_0.3.0         emmeans_1.5.2-1     
+##  [33] V8_3.4.0             distributional_0.2.1 pkgbuild_1.1.0       rstan_2.21.2        
+##  [37] abind_1.4-5          scales_1.1.1         mvtnorm_1.1-1        DBI_1.1.0           
+##  [41] miniUI_0.1.1.1       viridisLite_0.3.0    xtable_1.8-4         stats4_4.0.3        
+##  [45] StanHeaders_2.21.0-6 DT_0.16              htmlwidgets_1.5.2    httr_1.4.2          
+##  [49] threejs_0.3.3        arrayhelpers_1.1-0   ellipsis_0.3.1       pkgconfig_2.0.3     
+##  [53] loo_2.3.1            farver_2.0.3         dbplyr_2.0.0         utf8_1.1.4          
+##  [57] labeling_0.4.2       tidyselect_1.1.0     rlang_0.4.9          reshape2_1.4.4      
+##  [61] later_1.1.0.1        munsell_0.5.0        cellranger_1.1.0     tools_4.0.3         
+##  [65] cli_2.2.0            generics_0.1.0       broom_0.7.2          ggridges_0.5.2      
+##  [69] evaluate_0.14        fastmap_1.0.1        yaml_2.2.1           processx_3.4.5      
+##  [73] knitr_1.30           fs_1.5.0             nlme_3.1-149         mime_0.9            
+##  [77] projpred_2.0.2       xml2_1.3.2           compiler_4.0.3       bayesplot_1.7.2     
+##  [81] shinythemes_1.1.2    rstudioapi_0.13      gamm4_0.2-6          curl_4.3            
+##  [85] reprex_0.3.0         statmod_1.4.35       stringi_1.5.3        highr_0.8           
+##  [89] ps_1.5.0             blogdown_0.21        Brobdingnag_1.2-6    lattice_0.20-41     
+##  [93] Matrix_1.2-18        nloptr_1.2.2.2       markdown_1.1         shinyjs_2.0.0       
+##  [97] vctrs_0.3.5          pillar_1.4.7         lifecycle_0.2.0      bridgesampling_1.0-0
+## [101] estimability_1.3     httpuv_1.5.4         R6_2.5.0             bookdown_0.21       
+## [105] promises_1.1.1       gridExtra_2.3        codetools_0.2-16     boot_1.3-25         
+## [109] colourpicker_1.1.0   MASS_7.3-53          gtools_3.8.2         assertthat_0.2.1    
+## [113] withr_2.3.0          shinystan_2.5.0      mgcv_1.8-33          parallel_4.0.3      
+## [117] hms_0.5.3            grid_4.0.3           coda_0.19-4          minqa_1.2.4         
+## [121] rmarkdown_2.5        shiny_1.5.0          lubridate_1.7.9.2    base64enc_0.1-3     
+## [125] dygraphs_1.1.1.6</code></pre>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references">
+<div id="ref-burknerBrmsPackageBayesian2017">
+<p>Bürkner, P.-C. (2017). brms: An R package for Bayesian multilevel models using Stan. <em>Journal of Statistical Software</em>, <em>80</em>(1), 1–28. <a href="https://doi.org/10.18637/jss.v080.i01">https://doi.org/10.18637/jss.v080.i01</a></p>
+</div>
+<div id="ref-burknerAdvancedBayesianMultilevel2018">
+<p>Bürkner, P.-C. (2018). Advanced Bayesian multilevel modeling with the R package brms. <em>The R Journal</em>, <em>10</em>(1), 395–411. <a href="https://doi.org/10.32614/RJ-2018-017">https://doi.org/10.32614/RJ-2018-017</a></p>
+</div>
+<div id="ref-R-brms">
+<p>Bürkner, P.-C. (2020). <em>brms: Bayesian regression models using ’Stan’</em>. <a href="https://CRAN.R-project.org/package=brms">https://CRAN.R-project.org/package=brms</a></p>
+</div>
+<div id="ref-gelmanRegressionOtherStories2020">
+<p>Gelman, A., Hill, J., &amp; Vehtari, A. (2020). <em>Regression and Other Stories</em>. Cambridge University Press. <a href="https://doi.org/10.1017/9781139161879">https://doi.org/10.1017/9781139161879</a></p>
+</div>
+<div id="ref-R-tidybayes">
+<p>Kay, M. (2020). <em>tidybayes: Tidy data and ’geoms’ for Bayesian models</em>. <a href="http://mjskay.github.io/tidybayes">http://mjskay.github.io/tidybayes</a></p>
+</div>
+<div id="ref-kruschkeDoingBayesianData2015">
+<p>Kruschke, J. K. (2015). <em>Doing Bayesian data analysis: A tutorial with R, JAGS, and Stan</em>. Academic Press. <a href="https://sites.google.com/site/doingbayesiandataanalysis/">https://sites.google.com/site/doingbayesiandataanalysis/</a></p>
+</div>
+<div id="ref-kurzDoingBayesianData2020">
+<p>Kurz, A. S. (2020a). <em>Doing Bayesian data analysis in brms and the tidyverse</em> (version 0.3.0). <a href="https://bookdown.org/content/3686/">https://bookdown.org/content/3686/</a></p>
+</div>
+<div id="ref-kurzStatisticalRethinkingSecondEd2020">
+<p>Kurz, A. S. (2020b). <em>Statistical rethinking with brms, ggplot2, and the tidyverse: Second edition</em> (version 0.1.1). <a href="https://bookdown.org/content/4857/">https://bookdown.org/content/4857/</a></p>
+</div>
+<div id="ref-R-rethinking">
+<p>McElreath, R. (2020a). <em>rethinking R package</em>. <a href="https://xcelab.net/rm/software/">https://xcelab.net/rm/software/</a></p>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2020">
+<p>McElreath, R. (2020b). <em>Statistical rethinking: A Bayesian course with examples in R and Stan</em> (Second Edition). CRC Press. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a></p>
+</div>
+<div id="ref-R-base">
+<p>R Core Team. (2020). <em>R: A language and environment for statistical computing</em>. R Foundation for Statistical Computing. <a href="https://www.R-project.org/">https://www.R-project.org/</a></p>
+</div>
+<div id="ref-R-tidyverse">
+<p>Wickham, H. (2019). <em>tidyverse: Easily install and load the ’tidyverse’</em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a></p>
+</div>
+<div id="ref-wickhamWelcomeTidyverse2019">
+<p>Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. <em>Journal of Open Source Software</em>, <em>4</em>(43), 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a></p>
+</div>
+</div>
+</div>
