@@ -421,8 +421,8 @@ model_weights(fit1, fit2, weights = &quot;loo&quot;)</code></pre>
 <p>Since I’m not a chimpanzee researcher, I’m in no position to say which perspective is better for these data. At a predictive level, the models perform similarly. But if I were a researcher wanting to analyze these data or others with a similar structure, I’d want to think clearly about what kinds of points I’d want to make to my target audience. Would I want to make focused points about the four levels of <code>treatment</code>, or would it make sense to generalize from those four levels to other similar conditions? Also, with its four <span class="math inline">\(\gamma_j\)</span>’s and <span class="math inline">\(\mathbf R_\alpha\)</span> matrix, the <code>fit1</code> model is a bit more complex than the ANOVA-like <code>fit2</code>. If you look at the <span class="math inline">\(p_\text{LOO}\)</span> column from the <code>loo_compare()</code> output in the last section, you’ll see <code>fit1</code> had about 7 more ‘effective parameters’ than <code>fit2</code>, which helps quantify that complexity. Even those extra parameters didn’t help much with predictive accuracy, it’s possible they’d offer something from a rhetorical standpoint.</p>
 </div>
 </div>
-<div id="next-steps." class="section level2">
-<h2>Next steps.</h2>
+<div id="next-steps" class="section level2">
+<h2>Next steps</h2>
 <p>If you’re new to the Bayesian multilevel model, I recommend the introductory text by either McElreath <span class="citation">(McElreath, <a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a><a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">b</a>)</span> or Kruschke <span class="citation">(Kruschke, <a href="#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">2015</a>)</span>. I have ebook versions of both wherein I translated their code into the <strong>tityverse</strong> style and fit their models with <strong>brms</strong> <span class="citation">(Kurz, <a href="#ref-kurzDoingBayesianData2020" role="doc-biblioref">2020</a><a href="#ref-kurzDoingBayesianData2020" role="doc-biblioref">a</a>, <a href="#ref-kurzStatisticalRethinkingSecondEd2020" role="doc-biblioref">2020</a><a href="#ref-kurzStatisticalRethinkingSecondEd2020" role="doc-biblioref">b</a>)</span>. Both McElreath and Kruschke have blogs (<a href="https://elevanth.org/blog/">here</a> and <a href="https://doingbayesiandataanalysis.blogspot.com/">here</a>). Also, though it doesn’t cover the multilevel model, you can get a lot of practice with Bayesian regression with the new book by Gelman, Hill, and Vehtari <span class="citation">(<a href="#ref-gelmanRegressionOtherStories2020" role="doc-biblioref">2020</a>)</span>. And for more hot Bayesian regression talk, you always have the Stan forums, which even have a <a href="https://discourse.mc-stan.org/c/interfaces/brms/36"><strong>brms</strong> section</a>.</p>
 </div>
 <div id="session-info" class="section level2">
@@ -493,7 +493,7 @@ model_weights(fit1, fit2, weights = &quot;loo&quot;)</code></pre>
 <p>Bürkner, P.-C. (2020). <em>brms: Bayesian regression models using ’Stan’</em>. <a href="https://CRAN.R-project.org/package=brms">https://CRAN.R-project.org/package=brms</a></p>
 </div>
 <div id="ref-gelmanRegressionOtherStories2020">
-<p>Gelman, A., Hill, J., &amp; Vehtari, A. (2020). <em>Regression and Other Stories</em>. Cambridge University Press. <a href="https://doi.org/10.1017/9781139161879">https://doi.org/10.1017/9781139161879</a></p>
+<p>Gelman, A., Hill, J., &amp; Vehtari, A. (2020). <em>Regression and other stories</em>. Cambridge University Press. <a href="https://doi.org/10.1017/9781139161879">https://doi.org/10.1017/9781139161879</a></p>
 </div>
 <div id="ref-R-tidybayes">
 <p>Kay, M. (2020). <em>tidybayes: Tidy data and ’geoms’ for Bayesian models</em>. <a href="http://mjskay.github.io/tidybayes">http://mjskay.github.io/tidybayes</a></p>
