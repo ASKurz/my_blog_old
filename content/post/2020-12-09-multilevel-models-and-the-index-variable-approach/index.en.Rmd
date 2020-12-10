@@ -33,7 +33,7 @@ options(width = 100)
 
 Phd candidate Huaiyu Liu recently reached out with a question about how to analyze clustered data. Liu's basic setup was an experiment with four conditions. The dependent variable was binary, where success = 1, fail = 0. Each participant completed multiple trials under each of the four conditions. The catch was Liu wanted to model those four conditions with a multilevel model using the index-variable approach McElreath advocated for in the second edition of his text [@mcelreathStatisticalRethinkingBayesian2020].
 
-The purpose of this post will be to show how to model data like this two different ways.
+Like any good question, this one got my gears turning. Thanks, Liu! The purpose of this post will be to show how to model data like this two different ways.
 
 ### I make assumptions.
 
