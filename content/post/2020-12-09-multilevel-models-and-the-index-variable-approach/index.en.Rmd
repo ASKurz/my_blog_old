@@ -37,9 +37,9 @@ The purpose of this post will be to show how to model data like this two differe
 
 ### I make assumptions.
 
-In this post, I'm presuming you are familiar with Bayesian multilevel models. All code is in **R** [@R-base], with healthy doses of the **tidyverse** [@R-tidyverse; @wickhamWelcomeTidyverse2019]. The statistical models will be fit with **brms** [@R-brms; @burknerBrmsPackageBayesian2017; @burknerAdvancedBayesianMultilevel2018]. We'll also make a little use of the **tidybayes** [@R-tidybayes] and **rethinking** [@R-rethinking] packages.
+In this post, I'm presuming you are familiar with Bayesian multilevel models. All code is in **R** [@R-base], with healthy doses of the **tidyverse** [@R-tidyverse; @wickhamWelcomeTidyverse2019]. The statistical models will be fit with **brms** [@R-brms; @burknerBrmsPackageBayesian2017; @burknerAdvancedBayesianMultilevel2018]. We'll also make a little use of the **tidybayes** [@R-tidybayes] and **rethinking** [@R-rethinking] packages. If you need to shore up, I list some educational resources at the [end of the post][Next steps].
 
-Load the packages.
+Load the primary packages.
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -283,7 +283,7 @@ posterior_samples(fit2) %>%
                        levels = str_c("sigma[", c("actor~X~treatment", "treatment", "actor"), "]"))) %>% 
   
   ggplot(aes(x = value, y = name)) +
-  stat_halfeye() +
+  stat_halfeye(.width = .95, size = 1/2) +
   scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
   xlab("marginal posterior (log-odds scale)") +
   theme(axis.text.y = element_text(hjust = 0),
