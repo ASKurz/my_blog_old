@@ -71,7 +71,7 @@ glimpse(d)
 
 The focal variable will be `pulled_left`, which is binary and coded yes = 1, no = 0. We have four experimental conditions, which are indexed `1` through `4` in the `treatment` variable. The shorthand labels for those conditions are saved as `labels`. These data are simple in that there are only seven participants, who are indexed in the `actor` column.
 
-Within the generalized linear model framework, we typically model binary variables with binomial likelihood. When you use the conventional link function, you can call this *logistic regression*. When you have a binary variable, the parameter of interest is the probability of a 1 in your criterion variable. When you want a quick sample statistic, you can estimate those probabilities with the mean. To get a sense of the data, here are the sample probabilities `pulled_left == 1` for each of our seven participants, by the four levels of `treatment`.
+Within the generalized linear model framework, we typically model binary variables with binomial likelihood [^1]. When you use the conventional link function, you can call this *logistic regression*. When you have a binary variable, the parameter of interest is the probability of a 1 in your criterion variable. When you want a quick sample statistic, you can estimate those probabilities with the mean. To get a sense of the data, here are the sample probabilities `pulled_left == 1` for each of our seven participants, by the four levels of `treatment`.
 
 ```{r kable, message = F}
 d %>% 
@@ -357,4 +357,6 @@ sessionInfo()
 ```
 
 ## References
+
+[^1]: Given the data are coded 0/1, one could also use the Bernoulli likelihood [@Bürkner2020Parameterization, [*Binary and count data models*](https://CRAN.R-project.org/package=brms/vignettes/brms_families.html#binary-and-count-data-models)]. I'm just partial to the binomial.
 

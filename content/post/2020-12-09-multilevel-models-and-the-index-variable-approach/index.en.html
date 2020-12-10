@@ -72,7 +72,7 @@ glimpse(d)</code></pre>
 ## $ treatment    &lt;fct&gt; 1, 1, 2, 1, 2, 2, 2, 2, 1, 1, 1, 2, 1, 2, 1, 2, 2, 1, 2, 1, 1, 1, 2, 2, 1, 1…
 ## $ labels       &lt;fct&gt; r/n, r/n, l/n, r/n, l/n, l/n, l/n, l/n, r/n, r/n, r/n, l/n, r/n, l/n, r/n, l…</code></pre>
 <p>The focal variable will be <code>pulled_left</code>, which is binary and coded yes = 1, no = 0. We have four experimental conditions, which are indexed <code>1</code> through <code>4</code> in the <code>treatment</code> variable. The shorthand labels for those conditions are saved as <code>labels</code>. These data are simple in that there are only seven participants, who are indexed in the <code>actor</code> column.</p>
-<p>Within the generalized linear model framework, we typically model binary variables with binomial likelihood. When you use the conventional link function, you can call this <em>logistic regression</em>. When you have a binary variable, the parameter of interest is the probability of a 1 in your criterion variable. When you want a quick sample statistic, you can estimate those probabilities with the mean. To get a sense of the data, here are the sample probabilities <code>pulled_left == 1</code> for each of our seven participants, by the four levels of <code>treatment</code>.</p>
+<p>Within the generalized linear model framework, we typically model binary variables with binomial likelihood.<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> When you use the conventional link function, you can call this <em>logistic regression</em>. When you have a binary variable, the parameter of interest is the probability of a 1 in your criterion variable. When you want a quick sample statistic, you can estimate those probabilities with the mean. To get a sense of the data, here are the sample probabilities <code>pulled_left == 1</code> for each of our seven participants, by the four levels of <code>treatment</code>.</p>
 <pre class="r"><code>d %&gt;% 
   mutate(treatment = str_c(&quot;treatment &quot;, treatment)) %&gt;% 
   group_by(actor, treatment) %&gt;% 
@@ -524,4 +524,10 @@ model_weights(fit1, fit2, weights = &quot;loo&quot;)</code></pre>
 <p>Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. <em>Journal of Open Source Software</em>, <em>4</em>(43), 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a></p>
 </div>
 </div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Given the data are coded 0/1, one could also use the Bernoulli likelihood <span class="citation">(<span class="citeproc-not-found" data-reference-id="Bürkner2020Parameterization"><strong>???</strong></span>, <a href="https://CRAN.R-project.org/package=brms/vignettes/brms_families.html#binary-and-count-data-models" role="doc-biblioref"><em>Binary and count data models</em></a>)</span>. I’m just partial to the binomial.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
 </div>
