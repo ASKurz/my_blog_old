@@ -303,7 +303,7 @@ $$
 \end{align*}
 $$
 
-Here $\gamma$ is our overall intercept and the three $\alpha_{\text{<group>}[i]}$ terms are our multilevel deviations around that overall intercept. Notice that because $\gamma$ nas no $j$ index, we are not technically using the index variable approach we discussed earlier in this post. But we are still indexing the four levels of `treatment` by way of higher-level deviations depicted by the $\alpha_{\text{treatment}[i]}$ and $\alpha_{\text{actor}[i] \times \text{treatment}[i]}$ parameters in the second line. In contrast to our first model based on McElreath's work, notice our three $\alpha_{\text{<group>}[i]}$ term are all modeled as *univariate* normal. This makes this model something of an extension of the cross-classified model.
+Here $\gamma$ is our overall intercept and the three $\alpha_{\text{<group>}[i]}$ terms are our multilevel deviations around that overall intercept. Notice that because $\gamma$ nas no $j$ index, we are not technically using the index variable approach we discussed earlier in this post. But we are still indexing the four levels of `treatment` by way of higher-level deviations depicted by the $\alpha_{\text{treatment}[i]}$ and $\alpha_{\text{actor}[i] \times \text{treatment}[i]}$ parameters in the second line. In contrast to our first model based on McElreath's work, notice our three $\alpha_{\text{<group>}[i]}$ term are all modeled as *univariate* normal. This makes this model an extension of the cross-classified model.
 
 #### Fit the second model.
 
