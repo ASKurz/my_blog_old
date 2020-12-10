@@ -155,9 +155,9 @@ $$
 \end{align*}
 $$
 
-In this model, we have four population-level intercepts, $\gamma_1, \dots, \gamma_4$, one for each of the four levels of `treatment`. This is one of the critical features required by Liu's question. `actor` is our higher-level grouping variable. The third line spells out the priors for those four $\gamma$'s. Though each one gets the same prior in this model, you could use different priors for each, if you wanted.
+In this model, we have four population-level intercepts, $\gamma_1, \dots, \gamma_4$, one for each of the four levels of `treatment`. This is one of the critical features required by Liu's question. `actor` is our higher-level grouping variable. The third line spells out the priors for those four $\gamma$'s. Though they all get the same prior in this model, you could use different priors for each, if you wanted.
 
-Going back to the second line, the term $\alpha_{\text{actor}[i], \text{treatment}[i]}$ is meant to convey that each of the `treatment` effects can vary by `actor`. We can, and should, do this because each of our participants experienced each of the four levels of `treatment` many times. The fourth line containing the $\operatorname{MVNormal}(\cdot)$ operator might look intimidating. The vector on the left is just a way to list the four `actor`-level deviations we just mentioned. We'll be treating these much the same way you might treat a random intercept and slope in a multilevel growth model. That is, we presume they follow a multivariate normal distribution. Since these are all deviations, the 4-dimensional mean vector in our multivariate normal distribution contains four zeros. The spread around those zeros are controlled by the variance/covariance matrix $\Sigma_\text{actor}$. In the next line, we learn that $\Sigma_\text{actor}$ can be decomposed into two terms, $\mathbf S_\alpha$ and $\mathbf R_\alpha$[^3]. It may not yet be clear by the notation, but $\mathbf S_\alpha$ is a $4 \times 4$ diagonal matrix of standard deviations,
+Going back to the second line, the term $\alpha_{\text{actor}[i], \text{treatment}[i]}$ is meant to convey that each of the `treatment` effects can vary by `actor`. We can--and should--do this because each of our participants experienced each of the four levels of `treatment` many times. The fourth line containing the $\operatorname{MVNormal}(\cdot)$ operator might look intimidating. The vector on the left is just a way to list those four `actor`-level deviations we just mentioned. We'll be treating them much the same way you might treat a random intercept and slope in a multilevel growth model. That is, we presume they follow a multivariate normal distribution. Since these are all deviations, the 4-dimensional mean vector in our multivariate normal distribution contains four zeros. The spread around those zeros are controlled by the variance/covariance matrix $\Sigma_\text{actor}$. In the next line, we learn that $\Sigma_\text{actor}$ can be decomposed into two terms, $\mathbf S_\alpha$ and $\mathbf R_\alpha$[^3]. It may not yet be clear by the notation, but $\mathbf S_\alpha$ is a $4 \times 4$ diagonal matrix of standard deviations,
 
 $$
 \mathbf S_\alpha = \begin{bmatrix} \sigma_{\alpha, [1]} & 0 & 0 & 0 \\ 0 & \sigma_{\alpha, [2]} & 0 & 0 \\ 0 & 0 & \sigma_{\alpha, [3]} & 0 \\ 0 & 0 & 0 & \sigma_{\alpha, [4]} \end{bmatrix}.
@@ -173,7 +173,7 @@ As we see in the sixth line, all the $\sigma_\alpha$ parameters have individual 
 
 #### Fit the model.
 
-Though the statistical model might look a little intimidating, we can fit it pretty easily with `brms::brm()`. We'll call this `fit1`.
+Though the statistical model might look intimidating, we can fit it pretty easily with `brms::brm()`. We'll call this `fit1`.
 
 ```{r fit1, cache = T, warning = F, message = F, results = "hide"}
 fit1 <- 
@@ -197,7 +197,7 @@ print(fit1)
 If you look at the lower level of the output, the four levels in the 'Population-Level Effects' section are the four levels of $\gamma_{\text{treatment}[i]}$ from our statistical formula. If you look above at the 'Group-Level Effects' section, the four lines beginning with "sd"
 correspond to our four $\sigma_{\alpha, [1]}, \dots, \sigma_{\alpha, [4]}$ parameters. The correlations among those are depicted in the six rows beginning with "cor," which correspond to the elements within the $\mathbf R_\alpha$ matrix.
 
-It might help if we visualized the model in a plot. Here are the results depicted in a streamlined version of McElreath's Figure 14.7 [@mcelreathStatisticalRethinkingBayesian2020, p. 452].
+It might help if we visualized the model in a plot. Here are the results depicted in a streamlined version of McElreath's Figure 14.7 [@mcelreathStatisticalRethinkingBayesian2020, p. 452; see also [here](https://bookdown.org/content/4857/adventures-in-covariance.html#advanced-varying-slopes)].
 
 ```{r fig1, fig.width = 8, fig.height = 2.5}
 # for annotation
