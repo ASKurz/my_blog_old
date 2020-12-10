@@ -284,10 +284,11 @@ fitted(fit1,
 </div>
 <div id="kruschkes-approach." class="section level3">
 <h3>Kruschke’s approach.</h3>
-<p>One way to think about our <code>pulled_left</code> data is they are grouped by two factors. The first factor is the experimental condition, <code>treatment</code>. The second factor is participant, <code>actor</code>. Now imagine you arrange the number of times <code>pulled_left == 1</code> based in a <span class="math inline">\(2 \times 2\)</span> contingency table where the four levels of <code>treatment</code> factor are in the rows and the seven levels of <code>actor</code> are in the columns. Here’s what that might look like in a plot.</p>
+<p>One way to think about our <code>pulled_left</code> data is they are grouped by two factors. The first factor is the experimental condition, <code>treatment</code>. The second factor is participant, <code>actor</code>. Now imagine you arrange the number of times <code>pulled_left == 1</code> within the cells of a <span class="math inline">\(2 \times 2\)</span> contingency table where the four levels of the <code>treatment</code> factor are in the rows and the seven levels of <code>actor</code> are in the columns. Here’s what that might look like in a tile plot.</p>
 <pre class="r"><code>d %&gt;% 
   group_by(actor, treatment) %&gt;% 
   summarise(count = sum(pulled_left)) %&gt;% 
+  mutate(treatment = factor(treatment, levels = 4:1)) %&gt;% 
   
   ggplot(aes(x = actor, y = treatment, fill = count, label = count)) +
   geom_tile() +
@@ -365,7 +366,7 @@ posterior_samples(fit2) %&gt;%
   ggplot(aes(x = value, y = name)) +
   stat_halfeye() +
   scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
-  xlab(NULL) +
+  xlab(&quot;marginal posterior (log-odds scale)&quot;) +
   theme(axis.text.y = element_text(hjust = 0),
         axis.ticks.y = element_blank(),
         panel.grid = element_blank())</code></pre>

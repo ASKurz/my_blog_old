@@ -214,12 +214,13 @@ The horizontal white lines mark off the posterior means for the $\gamma_{\text{t
 
 ### Kruschke's approach.
 
-One way to think about our `pulled_left` data is they are grouped by two factors. The first factor is the experimental condition, `treatment`. The second factor is participant, `actor`. Now imagine you arrange the number of times `pulled_left == 1` based in a  $2 \times 2$ contingency table where the four levels of `treatment` factor are in the rows and the seven levels of `actor` are in the columns. Here's what that might look like in a plot.
+One way to think about our `pulled_left` data is they are grouped by two factors. The first factor is the experimental condition, `treatment`. The second factor is participant, `actor`. Now imagine you arrange the number of times `pulled_left == 1` within the cells of a $2 \times 2$ contingency table where the four levels of the `treatment` factor are in the rows and the seven levels of `actor` are in the columns. Here's what that might look like in a tile plot.
 
 ```{r fig3, message = F, fig.width = 5, fig.height = 2}
 d %>% 
   group_by(actor, treatment) %>% 
   summarise(count = sum(pulled_left)) %>% 
+  mutate(treatment = factor(treatment, levels = 4:1)) %>% 
   
   ggplot(aes(x = actor, y = treatment, fill = count, label = count)) +
   geom_tile() +
@@ -284,7 +285,7 @@ posterior_samples(fit2) %>%
   ggplot(aes(x = value, y = name)) +
   stat_halfeye() +
   scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
-  xlab(NULL) +
+  xlab("marginal posterior (log-odds scale)") +
   theme(axis.text.y = element_text(hjust = 0),
         axis.ticks.y = element_blank(),
         panel.grid = element_blank())
