@@ -31,13 +31,13 @@ options(width = 100)
 
 ## The set-up
 
-Someone recently reached out with a question about how to analyze clustered data. The basic setup was they had an experiment with four conditions. The dependent variable was binary, where success = 1, fail = 0. Each participant completed multiple trials under each of the four conditions. The sticking point was the data analyst wanted to model those four conditions with a multilevel model using the index variable approach McElreath advocated for in the second edition of his text [@mcelreathStatisticalRethinkingBayesian2020].
+Phd candidate Huaiyu Liu recently reached out with a question about how to analyze clustered data. Liu's basic setup was an experiment with four conditions. The dependent variable was binary, where success = 1, fail = 0. Each participant completed multiple trials under each of the four conditions. The catch was Liu wanted to model those four conditions with a multilevel model using the index-variable approach McElreath advocated for in the second edition of his text [@mcelreathStatisticalRethinkingBayesian2020].
 
 The purpose of this post will be to show how to model data like this two different ways.
 
 ### I make assumptions.
 
-In this post, I'm presuming you are familiar with Bayesian multilevel models. All code is in **R** [@R-base], with healthy doses of the **tidyverse** [@R-tidyverse; @wickhamWelcomeTidyverse2019]. The statistical models will be fit with **brms** [@R-brms; @burknerBrmsPackageBayesian2017; @burknerAdvancedBayesianMultilevel2018]. We'll also make a little use of the **tidybayes** [@R-tidybayes] and **rethinking** [@R-rethinking] packages. If you need to shore up, I list some educational resources at the [end of the post][Next steps].
+In this post, I'm presuming you are familiar with Bayesian multilevel models and with logistic regression. All code is in **R** [@R-base], with healthy doses of the **tidyverse** [@R-tidyverse; @wickhamWelcomeTidyverse2019]. The statistical models will be fit with **brms** [@R-brms; @burknerBrmsPackageBayesian2017; @burknerAdvancedBayesianMultilevel2018]. We'll also make a little use of the **tidybayes** [@R-tidybayes] and **rethinking** [@R-rethinking] packages. If you need to shore up, I list some educational resources at the [end of the post][Next steps].
 
 Load the primary packages.
 
@@ -49,7 +49,7 @@ library(tidybayes)
 
 ## Data
 
-The data for our friend's question had the same basic structure as the `chimpanzees` data from the **rethinking** package. It's also the case that our friend wanted to fit a model that was very similar to model `m14.3` from Chapter 14 of McElreath's text. Here we'll load the data and wrangle a little.
+The data for Liu's question had the same basic structure as the `chimpanzees` data from the **rethinking** package. Happily, it's also the case that Liu wanted to fit a model that was very similar to model `m14.3` from Chapter 14 of McElreath's text. Here we'll load the data and wrangle a little.
 
 ```{r, warning = F, message = F}
 data(chimpanzees, package = "rethinking")
@@ -82,15 +82,66 @@ d %>%
   knitr::kable()
 ```
 
-## Models.
+## Models
 
-We are going to analyze these data two ways. The first way is the direct analogue to McElreath's `m14.3`. The second way is a multilevel Bayesian alternative to the ANOVA, based on Kruschke's [-@kruschkeDoingBayesianData2015] text.
+We are going to analyze these data two kinds of multilevel models. The first way is the direct analogue to McElreath's model `m14.3`; it'll be a multilevel model using the index-variable approach for the population-level intercepts. The second way is a multilevel Bayesian alternative to the ANOVA, based on Kruschke's [-@kruschkeDoingBayesianData2015] text.
+
+However, some readers might benefit from a review of what I even mean by the "index-variable" approach. This approach is uncommon in my field of clinical psychology, for example. So before we get down to business, we'll clear that up by contrasting it with the widely-used dummy-variable approach.
+
+### Warm-up with the simple index-variable model.
+
+Let's forget the multilevel model for a moment. One of the more popular ways to use a categorical predictor variable is with the dummy-variable approach. Say we wanted to predict our criterion variable `pulled_left` with `treatment`, which is a four-category nominal variable. If we denote the number of categories $K$, `treatment` is a $K = 4$ nominal variable. The dummy-variable approach would be to break `treatment` into $K - 1$ binary variables, which we'd simultaneously enter into the model. Say we broke `treatment` into three dummies with the following code.
+
+```{r}
+d <-
+  d %>% 
+  mutate(d2 = if_else(treatment == 2, 1, 0),
+         d3 = if_else(treatment == 3, 1, 0),
+         d4 = if_else(treatment == 4, 1, 0))
+```
+
+The dummy variables `d2`, `d3`, and `d4` would capture the four levels of `treatment` like so:
+
+```{r}
+d %>% 
+  distinct(treatment, d2, d3, d4)
+```
+
+Here `d2 == 1` only when `treatment == 2`. Similarly, `d3 == 1` only when `treatment == 3` and `d4 == 1` only when `treatment == 4`. When `treatment == 1`, all three dummies are `0`, which makes `treatment == 1` the reference category. 
+
+You can write out the statistical model using these $K - 1$ dummies as
+
+$$
+\begin{align*}
+\text{left_pull}_i & \sim \operatorname{Binomial}(n_i = 1, p_i) \\
+\operatorname{logit} (p_i) & = \beta_0 + \beta_1 \text{d2}_i + \beta_2 \text{d3}_i + \beta_3 \text{d4}_i,
+\end{align*}
+$$
+
+where $\beta_0$ is both the "intercept" and the expected value for the first level of `treatment`. $\beta_1$ is the expected change in value, relative to $\beta_0$, for the second level of `treatment`. In the same way, $\beta_2$ and $\beta_3$ are changes relative to $\beta_0$ for the third and fourth levels of `treatment`, respectively.
+
+The index-variable approach takes a different stance. Rather than dividing `treatment` into dummies, one simply allows each level of `treatment` to have its own intercept. You can write that in statistical notation as
+
+$$
+\begin{align*}
+\text{left_pull}_i & \sim \operatorname{Binomial}(n_i = 1, p_i) \\
+\operatorname{logit} (p_i) & = \gamma_{\text{treatment}[i]},
+\end{align*}
+$$
+
+where the $\text{treatment}[i]$ subscript indicates the different levels of `treatment`, which vary across cases $i$, each get their own $\gamma$ parameter. Because `treatment` has four levels, we end up with four $\gamma$'s: $\gamma_1$, $\gamma_2$, $\gamma_3$, and $\gamma_4$. When you model intercepts in this way, none of the levels of `treatment` end up as the reference category and none of the other levels of `treatment` are parameterized in terms of deviations from the reference category. Each intercept is estimated in its own terms.
+
+**Quick note on notation**: There's nothing special about using the letter $\gamma$ for our index variable. We could just as easily have used $\alpha$, $\beta$, $\xi$, or whatever. The only reason I'm using $\gamma$, here, is because that's what McElreath used for his model `m14.3`.
+
+If you'd like more practice with dummy variables, McElreath lectured on them [here](https://www.youtube.com/watch?v=e0tO64mtYMU&feature=youtu.be&t=3360).  If you'd like to hear McElreath walk out index variables a bit more, you can find that lecture [here](https://youtu.be/l_7yIUqWBmE?t=83).
 
 ### McElreath's approach.
 
+Okay, now we're up to speed on what Liu meant by wanting to fit a model with the index-variable approach, let's see what that looks like in a multilevel model.
+
 #### The statistical model.
 
-Here's how we might express McElreath's approach to these data in statistical notation:
+Here's how we might express McElreath's index-variable approach to these data in statistical notation:
 
 $$
 \begin{align*}
@@ -104,19 +155,21 @@ $$
 \end{align*}
 $$
 
-In this model, we have four population-level intercepts, $\gamma_1, \dots, \gamma_4$, one for each of the four levels of `treatment`. This is one of the features our friend originally wanted when they analyzed their own data. `actor` is our higher-level grouping variable. The term $\alpha_{\text{actor}[i], \text{treatment}[i]}$ is meant to convey that each of the `treatment` effects can vary by `actor`. The line containing the $\operatorname{MVNormal}(\cdot)$ operator indicates the seven `actor`-level deviations from the population-level estimates for $\gamma_j$ follow the multivariate normal distribution where the four means are set to zero (i.e., they are deviations) and their spread around those zeros are controlled by $\Sigma_\text{actor}$. In the next line, we learn that $\Sigma_\text{actor}$ can be decomposed into two terms, $\mathbf S_\alpha$ and $\mathbf R_\alpha$. It may not yet be clear by the notation, but $\mathbf S_\alpha$ is a $4 \times 4$ matrix,
+In this model, we have four population-level intercepts, $\gamma_1, \dots, \gamma_4$, one for each of the four levels of `treatment`. This is one of the critical features required by Liu's question. `actor` is our higher-level grouping variable. The third line spells out the priors for those four $\gamma$'s. Though each one gets the same prior in this model, you could use different priors for each, if you wanted.
+
+Going back to the second line, the term $\alpha_{\text{actor}[i], \text{treatment}[i]}$ is meant to convey that each of the `treatment` effects can vary by `actor`. We can, and should, do this because each of our participants experienced each of the four levels of `treatment` many times. The fourth line containing the $\operatorname{MVNormal}(\cdot)$ operator might look intimidating. The vector on the left is just a way to list the four `actor`-level deviations we just mentioned. We'll be treating these much the same way you might treat a random intercept and slope in a multilevel growth model. That is, we presume they follow a multivariate normal distribution. Since these are all deviations, the 4-dimensional mean vector in our multivariate normal distribution contains four zeros. The spread around those zeros are controlled by the variance/covariance matrix $\Sigma_\text{actor}$. In the next line, we learn that $\Sigma_\text{actor}$ can be decomposed into two terms, $\mathbf S_\alpha$ and $\mathbf R_\alpha$[^3]. It may not yet be clear by the notation, but $\mathbf S_\alpha$ is a $4 \times 4$ diagonal matrix of standard deviations,
 
 $$
 \mathbf S_\alpha = \begin{bmatrix} \sigma_{\alpha, [1]} & 0 & 0 & 0 \\ 0 & \sigma_{\alpha, [2]} & 0 & 0 \\ 0 & 0 & \sigma_{\alpha, [3]} & 0 \\ 0 & 0 & 0 & \sigma_{\alpha, [4]} \end{bmatrix}.
 $$
 
-In a similar way, $\mathbf R_\alpha$ is a $4 \times 4$ matrix,
+In a similar way, $\mathbf R_\alpha$ is a $4 \times 4$ correlation matrix,
 
 $$
 \mathbf R_\alpha = \begin{bmatrix} 1 & \rho_{\alpha, [1, 2]} & \rho_{\alpha, [1, 3]} & \rho_{\alpha, [1, 4]} \\ \rho_{\alpha, [2, 1]} & 1 & \rho_{\alpha, [2, 3]} & \rho_{\alpha, [2, 4]} \\ \rho_{\alpha, [3, 1]} & \rho_{\alpha, [3, 2]} & 1 & \rho_{\alpha, [3, 4]} \\ \rho_{\alpha, [4, 1]} & \rho_{\alpha, [4, 2]} & \rho_{\alpha, [4, 3]} & 1 \end{bmatrix}.
 $$
 
-All the $\sigma_\alpha$ parameters have individual $\operatorname{Exponential}(1)$ priors. The two $\mathbf R_\alpha$ matrix has the $\operatorname{LKJ}(2)$ prior. Though you could certainly use different priors, here we're sticking close to those McElreath used in his text.
+As we see in the sixth line, all the $\sigma_\alpha$ parameters have individual $\operatorname{Exponential}(1)$ priors. The final line shows the $\mathbf R_\alpha$ matrix has the $\operatorname{LKJ}(2)$ prior. Though you could certainly use different priors, here we're sticking close to those McElreath used in his text.
 
 #### Fit the model.
 
@@ -133,6 +186,8 @@ fit1 <-
       cores = 4, seed = 1)
 ```
 
+From a syntax perspective, the important parts were the two occurrences of `0 + treatment` in the model `formula` line. The first occurrence was how we told **brms** we wanted our population-level intercept to be indexed by the four levels of `treatment`. The second occurrence was where we told **brms** we wanted those to vary across our seven levels of `actor`.
+
 Check the model summary.
 
 ```{r}
@@ -140,7 +195,7 @@ print(fit1)
 ```
 
 If you look at the lower level of the output, the four levels in the 'Population-Level Effects' section are the four levels of $\gamma_{\text{treatment}[i]}$ from our statistical formula. If you look above at the 'Group-Level Effects' section, the four lines beginning with "sd"
-correspond to our four $\sigma_{\alpha, [1]}, \dots, \sigma_{\alpha, [4]}$ parameters. The correlations among those are depicted in the six rows beginning with "cor," which correspond to the elements within our $\mathbf R_\alpha$ matrix.
+correspond to our four $\sigma_{\alpha, [1]}, \dots, \sigma_{\alpha, [4]}$ parameters. The correlations among those are depicted in the six rows beginning with "cor," which correspond to the elements within the $\mathbf R_\alpha$ matrix.
 
 It might help if we visualized the model in a plot. Here are the results depicted in a streamlined version of McElreath's Figure 14.7 [@mcelreathStatisticalRethinkingBayesian2020, p. 452].
 
@@ -232,7 +287,7 @@ d %>%
   theme(axis.ticks = element_blank())
 ```
 
-With this arrangement, we can model $\text{left_pull}_i \sim \operatorname{Binomial}(n_i = 1, p_i)$, with three hierarchical grouping factors. The first will be `actor`, the second will be `treatment`, and the third will be their interaction. Kruschke gave a general depiction of this kind of statistical model in Figure 20.2 of his text [@kruschkeDoingBayesianData2015, p. 588]. However, I generally prefer expressing my models using statistical notation similar to McElreath. Though I'm not exactly sure how McElreath would express a model like this, here's my best attempt using his style of notation:
+With this arrangement, we can model $\text{left_pull}_i \sim \operatorname{Binomial}(n_i = 1, p_i)$, with three hierarchical grouping factors. The first will be `actor`, the second will be `treatment`, and the third will be their interaction. Kruschke gave a general depiction of this kind of statistical model in Figure 20.2 [^2] of his text [@kruschkeDoingBayesianData2015, p. 588]. However, I generally prefer expressing my models using statistical notation similar to McElreath. Though I'm not exactly sure how McElreath would express a model like this, here's my best attempt using his style of notation:
 
 $$
 \begin{align*}
@@ -248,7 +303,7 @@ $$
 \end{align*}
 $$
 
-Here $\gamma$ is our overall intercept and the three $\alpha_{\text{<group>}[i]}$ terms are our multilevel deviations around that overall intercept. Notice that because $\gamma$ nas no $j$ index, we are not technically using the index variable approach we discussed earlier in this post. But we are still indexing the four levels of `treatment` by way of higher-level deviations depicted by the $\alpha_{\text{treatment}[i]}$ and $\alpha_{\text{actor}[i] \times \text{treatment}[i]}$ parameters in the second line.
+Here $\gamma$ is our overall intercept and the three $\alpha_{\text{<group>}[i]}$ terms are our multilevel deviations around that overall intercept. Notice that because $\gamma$ nas no $j$ index, we are not technically using the index variable approach we discussed earlier in this post. But we are still indexing the four levels of `treatment` by way of higher-level deviations depicted by the $\alpha_{\text{treatment}[i]}$ and $\alpha_{\text{actor}[i] \times \text{treatment}[i]}$ parameters in the second line. In contrast to our first model based on McElreath's work, notice our three $\alpha_{\text{<group>}[i]}$ term are all modeled as *univariate* normal. This makes this model something of an extension of the cross-classified model.
 
 #### Fit the second model.
 
@@ -270,7 +325,7 @@ Check the summary.
 print(fit2)
 ```
 
-With a model like this, a natural first question is: *Where is the variance at?* We can answer that by plotting the posteriors for our $\sigma_\text{<group>}$ parameters.
+With a model like this, a natural first question is: *Where is the variance at?* We can answer that by comparing the three lines in the output from the 'Group-Level Effects' section. It might be easier if we plotted the posteriors for those $\sigma_\text{<group>}$ parameters, instead.
 
 ```{r fig4, fig.width = 6, fig.height = 2.5}
 library(tidybayes)
@@ -319,6 +374,8 @@ fitted(fit2,
   facet_wrap(~actor, nrow = 1, labeller = label_parsed)
 ```
 
+The two models made similar predictions.
+
 ### Why not make the horse race official?
 
 Just for kicks and giggles, we'll compare the two models with the LOO.
@@ -334,7 +391,7 @@ loo_compare(fit1, fit2) %>% print(simplify = F)
 model_weights(fit1, fit2, weights = "loo")
 ```
 
-It looks like there's a little bit of an edge for the multilevel Bayesian ANOVA model.
+It looks like there's a little bit of an edge for the Kruschke's multilevel ANOVA model.
 
 ### But what's the difference, anyway?
 
@@ -344,7 +401,7 @@ Our first model, based on McElreath's index-variable approach, explicitly emphas
 
 Our second model, based on Kruschke's multilevel ANOVA approach, took a more general perspective. By modeling `actor`, `treatment` and their interaction as higher-level grouping factors, `fit2` conceptualized both participants and experimental conditions as coming from populations of potential participants and conditions, respectively. No longer are those four `treatment` levels inherently special. They're just the four we happen to have in this iteration of the experiment. Were we to run the experiment again, after all, we might want to alter them a little. The $\sigma_\text{treatment}$ and $\sigma_{\text{actor} \times \text{treatment}}$ parameters can help give us a sense of how much variation we'd expect among other similar experimental conditions.
 
-Since I'm not a chimpanzee researcher, I'm in no position to say which perspective is better for these data. At a predictive level, the models perform similarly. But if I were a researcher wanting to analyze these data or others with a similar structure, I'd want to think clearly about what kinds of points I'd want to make to my target audience. Would I want to make focused points about the four levels of `treatment`, or would it make sense to generalize from those four levels to other similar conditions? Also, with its four $\gamma_j$'s and $\mathbf R_\alpha$ matrix, the `fit1` model is a bit more complex than the ANOVA-like `fit2`. If you look at the $p_\text{LOO}$ column from the `loo_compare()` output in the last section, you'll see `fit1` had about 7 more 'effective parameters' than `fit2`, which helps quantify that complexity. Even those extra parameters didn't help much with predictive accuracy, it's possible they'd offer something from a rhetorical standpoint.
+Since I'm not a chimpanzee researcher, I'm in no position to say which perspective is better for these data. At a predictive level, the models perform similarly. But if I were a researcher wanting to analyze these data or others with a similar structure, I'd want to think clearly about what kinds of points I'd want to make to my target audience. Would I want to make focused points about the four levels of `treatment`, or would it make sense to generalize from those four levels to other similar conditions? Each model has its rhetorical strengths and weaknesses.
 
 ## Next steps
 
@@ -359,4 +416,8 @@ sessionInfo()
 ## References
 
 [^1]: Given the data are coded 0/1, one could also use the Bernoulli likelihood [@Bürkner2020Parameterization, [*Binary and count data models*](https://CRAN.R-project.org/package=brms/vignettes/brms_families.html#binary-and-count-data-models)]. I'm just partial to the binomial.
+
+[^2]: The careful reader might notice that the models Kruschke focused on in Chapter 20 were all based on the Gaussian likelihood. So in the most technical sense, the model in Figure 20.2 is not a perfect match to our `fit2`. I'm hoping my readers might look past those details to see the more general point. For more practice, [Section 24.2](https://bookdown.org/content/3686/count-predicted-variable.html#example-hair-eye-go-again) and [Section 24.3](https://bookdown.org/content/3686/count-predicted-variable.html#example-interaction-contrasts-shrinkage-and-omnibus-test) of my translation of Kruschke's text [@kurzDoingBayesianData2020] show variants of this model type using the Poisson likelihood. In Section [24.4](https://bookdown.org/content/3686/count-predicted-variable.html#log-linear-models-for-contingency-tables-bonus-alternative-parameterization) you can even find a variant using the aggregated binomial likelihood.
+
+[^3]: This is the typical parameterization for multilevel models fit with **brms**. Though he used different notation, Bürkner spelled this all out in his [-@burknerBrmsPackageBayesian2017] overview paper, [*brms: An R package for Bayesian multilevel models using Stan*](https://CRAN.R-project.org/package=brms/vignettes/brms_overview.pdf).
 
