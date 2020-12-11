@@ -387,7 +387,7 @@ fit2 <- add_criterion(fit2, criterion = "loo")
 # LOO differences
 loo_compare(fit1, fit2) %>% print(simplify = F)
 
-# Loo weights
+# LOO weights
 model_weights(fit1, fit2, weights = "loo")
 ```
 

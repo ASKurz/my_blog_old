@@ -449,7 +449,7 @@ loo_compare(fit1, fit2) %&gt;% print(simplify = F)</code></pre>
 <pre><code>##      elpd_diff se_diff elpd_loo se_elpd_loo p_loo  se_p_loo looic  se_looic
 ## fit2    0.0       0.0  -266.8      9.5        12.2    0.6    533.7   19.1  
 ## fit1   -4.5       3.0  -271.3      9.7        19.3    1.2    542.6   19.4</code></pre>
-<pre class="r"><code># Loo weights
+<pre class="r"><code># LOO weights
 model_weights(fit1, fit2, weights = &quot;loo&quot;)</code></pre>
 <pre><code>##       fit1       fit2 
 ## 0.01111874 0.98888126</code></pre>
