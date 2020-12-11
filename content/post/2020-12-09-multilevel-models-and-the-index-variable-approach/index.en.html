@@ -257,7 +257,7 @@ glimpse(d)</code></pre>
 ## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
 <p>If you look at the lower level of the output, the four levels in the ‘Population-Level Effects’ section are the four levels of <span class="math inline">\(\gamma_{\text{treatment}[i]}\)</span> from our statistical formula. If you look above at the ‘Group-Level Effects’ section, the four lines beginning with “sd”
 correspond to our four <span class="math inline">\(\sigma_{\alpha, [1]}, \dots, \sigma_{\alpha, [4]}\)</span> parameters. The correlations among those are depicted in the six rows beginning with “cor,” which correspond to the elements within the <span class="math inline">\(\mathbf R_\alpha\)</span> matrix.</p>
-<p>It might help if we visualized the model in a plot. Here are the results depicted in a streamlined version of McElreath’s Figure 14.7 [<span class="citation">McElreath (<a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a><a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">b</a>)</span>, p. 452; see also <a href="https://bookdown.org/content/4857/adventures-in-covariance.html#advanced-varying-slopes">here</a>].</p>
+<p>It might help if we visualized the model in a plot. Here are the results depicted in a streamlined version of McElreath’s Figure 14.7 <span class="citation">(McElreath, <a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a><a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">b</a>, p. 452)</span>.</p>
 <pre class="r"><code># for annotation
 text &lt;-
   distinct(d, labels) %&gt;% 
