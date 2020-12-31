@@ -53,7 +53,7 @@ Before we jump into 2-timepoint data, we'll first explore how one might analyze 
 
 ### We need data.
 
-We will be simulate the data based on a conventional multilevel growth model of the kind you can learn about in @singerAppliedLongitudinalData2003, @hoffmanLongitudinalAnalysisModeling2015, or Kurz [-@kurzStatisticalRethinkingSecondEd2020, Chapter 14]. We'll have one criterion variable $y$ which will vary across participants $i$ and over time $t$. For simplicity, the systemic change over time will be linear. We might express it in statistical notation[^1] as
+We will simulate the data based on a conventional multilevel growth model of the kind you can learn about in @singerAppliedLongitudinalData2003, @hoffmanLongitudinalAnalysisModeling2015, or Kurz [-@kurzStatisticalRethinkingSecondEd2020, Chapter 14]. We'll have one criterion variable $y$ which will vary across participants $i$ and over time $t$. For simplicity, the systemic change over time will be linear. We might express it in statistical notation[^1] as
 
 $$
 \begin{align*}
