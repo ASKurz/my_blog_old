@@ -36,7 +36,7 @@ In the contemporary longitudinal data analysis literature, 2-timepoint data (a.k
 
 ### I make assumptions.
 
-In this post, I'm presuming you are familiar with longitudinal data analysis with conventional and multilevel regression. Though I don't emphasize it much, it will also help if you're familiar with Bayesian statistics. All code is in **R** [@R-base], with healthy doses of the **tidyverse** [@R-tidyverse; @wickhamWelcomeTidyverse2019]. The statistical models will be fit with **brms** [@R-brms; @burknerBrmsPackageBayesian2017; @burknerAdvancedBayesianMultilevel2018]. We'll also make a little use of the **tidybayes** [@R-tidybayes] and **patchwork** [@R-patchwork] packages. If you need to shore up, I list some educational resources at the [end of the post][Next steps].
+In this post, I'm presuming you are familiar with longitudinal data analysis with conventional and multilevel regression. Though I don't emphasize it much, it will also help if you're familiar with Bayesian statistics. All code is in **R** [@R-base], with healthy doses of the **tidyverse** [@R-tidyverse; @wickhamWelcomeTidyverse2019]. The statistical models will be fit with **brms** [@R-brms; @burknerBrmsPackageBayesian2017; @burknerAdvancedBayesianMultilevel2018] and we'll also make some use of the **tidybayes** [@R-tidybayes] and **patchwork** [@R-patchwork] packages. If you need to shore up, I list some educational resources at the [end of the post][Next steps].
 
 Load the primary packages.
 
@@ -49,11 +49,11 @@ library(patchwork)
 
 ## Warm-up
 
-Before we jump into 2-timepoint data, we'll first explore how one might analyze a fuller data set of 6 timepoints. We will then reduce the data set to two different 2-timepoint versions, for use in the remainder of the post.
+Before we jump into 2-timepoint data, we'll first explore how one might analyze a fuller data set of 6 timepoints. We will then reduce the data set to two different 2-timepoint versions for use in the remainder of the post.
 
 ### We need data.
 
-We will be simulating a conventional multilevel growth model of the kind you can learn about in @singerAppliedLongitudinalData2003, @hoffmanLongitudinalAnalysisModeling2015, or Kurz [-@kurzStatisticalRethinkingSecondEd2020, Chapter 14]. We'll have one criterion variable $y$ which varies across participants $i$ and over time $t$. For simplicity, the systemic change over time will be linear. We might express it in statistical notation[^1] as
+We will be simulate the data based on a conventional multilevel growth model of the kind you can learn about in @singerAppliedLongitudinalData2003, @hoffmanLongitudinalAnalysisModeling2015, or Kurz [-@kurzStatisticalRethinkingSecondEd2020, Chapter 14]. We'll have one criterion variable $y$ which will vary across participants $i$ and over time $t$. For simplicity, the systemic change over time will be linear. We might express it in statistical notation[^1] as
 
 $$
 \begin{align*}
@@ -381,7 +381,7 @@ small_data_wide %>%
             sd = sd(post))
 ```
 
-If you only care about computing the population estimates for $\mu_\text{post}$ and $\sigma_\text{post}$, this model does a great job. Without any other variables in the model, this model does a poor job telling us about growth processes.
+If you only care about computing the population estimates for $\mu_\text{post}$ and $\sigma_\text{post}$, this model does a great job. With no other variables in the model, this approach does a poor job telling us about growth processes.
 
 #### $\mathcal M_2 \colon$ The simple autoregressive model.
 
@@ -394,7 +394,7 @@ $$
 \end{align*}
 $$
 
-where the intercept $\beta_0$ is the expected value of `post` when `pre` is at zero. As with many other regression contexts, centering the predictor `pre` at the mean or other meaningful value can help make $\beta_0$ more interpretable. Of greater interest is the $\beta_1$ coefficient is the expected deviation from $\beta_0$ for a one-unit increase in `pre`. But since `pre` and `post` are really the same variable `y` measured at two timepoints, it might be helpful if we express this model in another way. In perhaps more technical form, the simple model with `pre` predicting `post` is really an autoregressive model following the form
+where the intercept $\beta_0$ is the expected value of `post` when `pre` is at zero. As with many other regression contexts, centering the predictor `pre` at the mean or some other meaningful value can help make $\beta_0$ more interpretable. Of greater interest is the $\beta_1$ coefficient, which is the expected deviation from $\beta_0$ for a one-unit increase in `pre`. But since `pre` and `post` are really the same variable `y` measured at two timepoints, it might be helpful if we express this model in another way. In perhaps more technical form, the simple model with `pre` predicting `post` is really an autoregressive model following the form
 
 $$
 \begin{align*}
@@ -403,7 +403,7 @@ y_{ti} & \sim \operatorname{Normal}(\mu_i, \sigma) \\
 \end{align*}
 $$
 
-where the criterion $y$ varies across cases $i$ and timepoints $t$. Here we only have two timepoints, $\text{post} = t$ and $\text{pre} = t - 1$. The strength of association between $y_t$ and $y_{t - 1}$ captured by the autoregressive parameter $\phi$, which is often expressed in a correlation metric.
+where the criterion $y$ varies across persons $i$ and timepoints $t$. Here we only have two timepoints, $\text{post} = t$ and $\text{pre} = t - 1$. The strength of association between $y_t$ and $y_{t - 1}$ captured by the autoregressive parameter $\phi$, which is often expressed in a correlation metric.
 
 Here's how to fit the model with `brm()`.
 
@@ -518,7 +518,7 @@ m4 <-
       cores = 4, chains = 4, iter = 3500, warmup = 1000)
 ```
 
-Note out use of the `set_rescor(rescor = TRUE)` syntax in the model `formula`. This explicitly told `brm()` to add a residual correlation. Here's the summary.
+Note out use of the `set_rescor(rescor = TRUE)` syntax in the model `formula`. This explicitly told `brm()` to include the residual correlation. Here's the summary.
 
 ```{r}
 print(m4)
@@ -643,7 +643,7 @@ Note how the coefficient for `pre` is about `r round(fixef(m6)[2, 1], 2)`. This 
 rho
 ```
 
-It tells us something very similar. Participants with higher values at `pre` tended to have lower `change` values. Much like with the simple autoregressive model, a deficit of this model is there is no explicit parameter for the expected value of `pre`, which we can amend by fitting a bivariate model.
+It tells us something very similar; participants with higher values at `pre` tended to have lower `change` values. Much like with the simple autoregressive model, a deficit of this model is there is no explicit parameter for the expected value of `pre`, which we can amend by fitting a bivariate model.
 
 #### $\mathcal M_7 \colon$ The bivariate conditional change-score model.
 
@@ -714,7 +714,7 @@ $$
 \end{align*}
 $$
 
-where means of both `pre` and `change` are modeled in intercept-only models and the association between the two is captured by the correlation $\rho$. Yet because we have no predictors in for either variable, the "residual" correlation is really just a correlation. Here's how to fit the model with **brms**.
+where means of both `pre` and `change` are modeled in intercept-only models and the association between the two is captured by the correlation $\rho$. And again, because we have no predictors in for either variable, the "residual" correlation is really just a correlation. Here's how to fit the model with **brms**.
 
 ```{r m8, cache = T, results = "hide", message = F}
 m8 <-
@@ -839,7 +839,7 @@ posterior_samples(m10) %>%
   scale_y_continuous(NULL, breaks = NULL)
 ```
 
-The ICC is a proportion, which limits it to the range of zero to one. Here is suggests that 0--20% of the variation in our data is due to differences *between* participants; the remaining variation occurs within them. Given that our data were collected across time, it might make sense to fit a model that explicitly accounts for time.
+The ICC is a proportion, which limits it to the range of zero to one. Here it suggests that 0--20% of the variation in our data is due to differences *between* participants; the remaining variation occurs within them. Given that our data were collected across time, it might make sense to fit a model that explicitly accounts for time.
 
 #### $\mathcal M_{11} \colon$ The cross-classified model.
 
@@ -1007,7 +1007,7 @@ The $\beta$ parameters are very similar to those from the simple linear model, a
 fixef(m12) %>% round(digits = 2)
 ```
 
-But now look at the size of $\sigma_0$, which suggests substantial variability across staring points. To get a sense of what this means, we'll plot all 100 participant-level trajectories with a little help from `fitted()`.
+But now look at the size of $\sigma_0$, which suggests substantial differences in staring points. To get a sense of what this means, we'll plot all 100 participant-level trajectories with a little help from `fitted()`.
 
 ```{r, fig.width = 3, fig.height = 3}
 nd <- distinct(small_data_long, id, time)
@@ -1202,7 +1202,7 @@ u_\text{time} & \sim \operatorname{Normal}(0, \sigma_\text{time}),
 \end{align*}
 $$
 
-where we are now modeling both parameters in the likelihood, $\mu$ AND $\sigma$. The second line shows a typical-looking model for $\mu_{ti}$. All the excitement lies in the third line, which contains the linear model for $\log (\sigma_{ti})$. The reason we are modeling $\log (\sigma_{ti})$ rather than directly modeling $\sigma$ is to avoid solutions that predict negative values for $\sigma$. For this model, it's unlikely we'd run into that problem. But since the **brms** default is to use the log link anytime we model $\sigma$ within the distributional modeling syntax, we'll just start getting used to using the log link right from the start. If you are unfamiliar with link functions, they're widely used within the generalized linear modeling framework. Logistic regression with the logit link and Poisson regression with the log link are two widely-used examples. For more on link functions and the generalized linear model, check out the texts by @agrestiFoundationsLinearGeneralized2015; Gelman, Hill, and Vehtari [-@gelmanRegressionOtherStories2020]; and McElreath [-@mcelreathStatisticalRethinkingBayesian2015; -@mcelreathStatisticalRethinkingBayesian2020].
+where we are now modeling both parameters in the likelihood, $\mu$ AND $\sigma$. The second line shows a typical-looking model for $\mu_{ti}$. All the excitement lies in the third line, which contains the linear model for $\log (\sigma_{ti})$. The reason we are modeling $\log (\sigma_{ti})$ rather than directly modeling $\sigma$ is to avoid solutions that predict negative values for $\sigma$. For this model, it's unlikely we'd run into that problem. But since the **brms** default is to use the log link anytime we model $\sigma$ within the distributional modeling syntax, we'll just get used to the log link right from the start. If you are unfamiliar with link functions, they're widely used within the generalized linear modeling framework. Logistic regression with the logit link and Poisson regression with the log link are two widely-used examples. For more on link functions and the generalized linear model, check out the texts by @agrestiFoundationsLinearGeneralized2015; Gelman, Hill, and Vehtari [-@gelmanRegressionOtherStories2020]; and McElreath [-@mcelreathStatisticalRethinkingBayesian2015; -@mcelreathStatisticalRethinkingBayesian2020].
 
 Anyway, the linear model for $\mu_{ti}$ is exactly the same as with the original cross-classified model, `m11`; it includes a grand mean ($\beta_0$) and two kinds of deviations around that grand mean ($u_{\text{id},i}$ and $u_{\text{time},t}$). The model for $\log (\sigma_{ti})$ contains an intercept, which varies across the two levels of time, $\eta_{\text{time},t}$. Here's how to fit the model with `brms::brm()`.
 
@@ -1320,7 +1320,7 @@ m19 <-
       control = list(adapt_delta = .9))
 ```
 
-You may have notices the `|x|` parts in the `formula` lines for `y` and `sigma`. What that did was tell **brms** we wanted those parameters to be correlated. That is, that's how we estimated the $\rho$ parameter. There was nothing special about including `x` between the vertical lines. We could have used any other character. The important thing is that we used the same character in both. Anyway, here's the model summary.
+You may have noticed the `|x|` parts in the `formula` lines for `y` and `sigma`. What that did was tell **brms** we wanted those parameters to be correlated. That is, that's how we estimated the $\rho$ parameter. There was nothing special about including `x` between the vertical lines. We could have used any other character. The important thing is that we used the same character in both. Anyway, here's the model summary.
 
 ```{r}
 print(m19)
@@ -1368,7 +1368,7 @@ bind_rows(
 
 Each of the ovals is a 1% ellipse of the bivariate posterior for $u_{0i}$ and $\log(u_{2i})$. Notice how using ellipses helps reveal the differences in the between- and within-person patterns.
 
-This approach where residual variance parameters vary across participants has its origins in the work of [Donald Hedeker](https://health.uchicago.edu/faculty/donald-hedeker-phd) and colleagues  [@hedekerApplicationMixedeffectsLocation2008; @hedekerModelingWithinsubjectVariance2012]. More recently [Philippe Rast](https://twitter.com/rastlab) and colleagues (particularly graduate student, [Donald Williams](wdonald_1985)) have adapted this approach for use within the Stan/**brms** ecosystem [@williamsBayesianNonlinearMixedeffects2019a; @williamsSurfaceUnearthingWithinperson2019; @williamsBayesianMultivariateMixedeffects2019a; @williamsPuttingIndividualReliability2019].
+This approach where residual variance parameters vary across participants has its origins in the work of [Donald Hedeker](https://health.uchicago.edu/faculty/donald-hedeker-phd) and colleagues [@hedekerApplicationMixedeffectsLocation2008; @hedekerModelingWithinsubjectVariance2012]. More recently, [Philippe Rast](https://twitter.com/rastlab) and colleagues (particularly graduate student, [Donald Williams](wdonald_1985)) have adapted this approach for use within the Stan/**brms** ecosystem [@williamsBayesianNonlinearMixedeffects2019a; @williamsSurfaceUnearthingWithinperson2019; @williamsBayesianMultivariateMixedeffects2019a; @williamsPuttingIndividualReliability2019].
 
 #### $\mathcal M_{20} \colon$ The liner model with a random slope for $\mu$ and uncorrelated random intercept for $\sigma$.
 
