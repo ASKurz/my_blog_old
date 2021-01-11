@@ -306,6 +306,11 @@ enableGitInfo = false
   name   = "Conflicts of interest"
   url    = "/conflicts_of_interest/"
   weight = 5
+  
+[[menu.main]]
+  name   = "Support"
+  url    = "/support/"
+  weight = 6 
 
 # Link to a PDF of your resume/CV from the menu.
 # To enable, copy your resume/CV to `static/files/cv.pdf` and uncomment the lines below.
