@@ -24,11 +24,11 @@ link-citations: yes
 options(width = 100)
 ```
 
-[edited on December 7, 2020] 
+[edited on January 18, 2021] 
 
 ## [tl;dr](https://www.urbandictionary.com/define.php?term=tl%3Bdr)
 
-> Sometimes a mathematical result is strikingly contrary to generally held belief even though an obviously valid proof is given. [Charles Stein](https://en.wikipedia.org/wiki/Charles_M._Stein) of Stanford University discovered such a paradox in statistics in 1995. His result undermined a century and a half of work on estimation theory. [@efronSteinParadoxStatistics1977, p. 119]
+> Sometimes a mathematical result is strikingly contrary to generally held belief even though an obviously valid proof is given. [Charles Stein](https://en.wikipedia.org/wiki/Charles_M._Stein) of Stanford University discovered such a paradox in statistics in 1955. His result undermined a century and a half of work on estimation theory. [@efronSteinParadoxStatistics1977, p. 119]
 
 The James-Stein estimator leads to better predictions than simple means. Though I don't recommend you actually use the James-Stein estimator in applied research, understanding why it works might help clarify why it's time social scientists consider [defaulting to multilevel models](http://elevanth.org/blog/2017/08/24/multilevel-regression-as-default/) for their work-a-day projects.
 
