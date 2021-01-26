@@ -24,7 +24,7 @@ link-citations: yes
 
 ## Background
 
-This post is the first installment of a two-part series. The impetus is a project at work. A colleague had longitudinal data for participants in two experimental groups, which they examined with a multilevel growth model of the kind we'll explore in the next post. My colleague then summarized the difference in growth for the two conditions with a standardized mean difference they called $d$. Their effect size looked large, to me, and I was perplexed when I saw the formula they used to compute their version of $d$. Since it had been a while since I had to compute an effect size like this, I dove back into the literature, where I realized Feingold had worked this issue out in his [-@feingoldEffectSizeForGMA2009] paper in [*Psychological Methods*](https://www.apa.org/pubs/journals/met).
+This post is the first installment of a two-part series. The impetus is a project at work. A colleague had longitudinal data for participants in two experimental groups, which they examined with a multilevel growth model of the kind we'll explore in the next post. My colleague then summarized the difference in growth for the two conditions with a standardized mean difference they called $d$. Their effect size looked large, to me, and I was perplexed when I saw the formula they used to compute their version of $d$. It had been a while since I had to compute an effect size like this, so I dove back into the literature, where I realized Feingold had worked this issue out in his [-@feingoldEffectSizeForGMA2009] paper in [*Psychological Methods*](https://www.apa.org/pubs/journals/met).
 
 The purpose of this series is to show how to compute a Cohen's-$d$ type effect size when you have longitudinal data on $3+$ time points for two experimental groups. In this first post, we'll warm up with the basics. In the second post, we'll get down to business. The data and overall framework come from @feingoldEffectSizeForGMA2009.
 
@@ -36,7 +36,7 @@ This series is an applied tutorial moreso than an introduction. I'm presuming yo
 
 * Though it won't be important for this first post, you'll want to be familiar with multilevel regression for the next--it's a major part of why I'm making this series! For texts that focus on the longitudinal models relevant for the topic, I recommend @raudenbushHLM2002; @singerAppliedLongitudinalData2003--the one I personally learned on--; or @hoffmanLongitudinalAnalysisModeling2015.
 
-* To fully befit from the next post, it'll help if you have a passing familiarity with Bayesian regression. For thorough introductions, I recommend either edition of McElreath's text [-@mcelreathStatisticalRethinkingBayesian2015; -@mcelreathStatisticalRethinkingBayesian2020]; Kruschke's [-@kruschkeDoingBayesianData2015] text; or Gelman, Hill, and Vehtari's [-@gelmanRegressionOtherStories2020] text. If you go with McElreath, he has a fine series of freely-available lectures [here](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists).
+* To fully befit from the next post, it'll help if you have a passing familiarity with Bayesian regression (though frequentists will still be able to get the main points). For thorough introductions, I recommend either edition of McElreath's text [-@mcelreathStatisticalRethinkingBayesian2015; -@mcelreathStatisticalRethinkingBayesian2020]; Kruschke's [-@kruschkeDoingBayesianData2015] text; or Gelman, Hill, and Vehtari's [-@gelmanRegressionOtherStories2020] text. If you go with McElreath, he has a fine series of freely-available lectures [here](https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists).
  
 * All code is in **R** [@R-base], with healthy doses of the **tidyverse** [@R-tidyverse; @wickhamWelcomeTidyverse2019]. Probably the best place to learn about the **tidyverse**-style of coding, as well as an introduction to **R**, is Grolemund and Wickham's [-@grolemundDataScience2017] freely-available online text, [*R for data science*](https://r4ds.had.co.nz).
 
@@ -132,7 +132,7 @@ p2 <-
 p1 + p2 + plot_layout(widths = c(5, 4))
 ```
 
-The series of miniature plots on the left shows the trajectory of each participant's raw data, over time. The larger plot on the right shows the average value for each of the experimental conditions, over time. Although there is some variation across individuals within experimental conditions, the plot on the right shows the experimental conditions had the same average values at baseline (`t1`), both conditions tended to increase over time, but the `treatment` condition showed larger changes over time, relative to the `control` condition.
+The series of miniature plots on the left shows the trajectory of each participant's raw data, over time. The larger plot on the right shows the average value for each of the experimental conditions, over time. Although there is some variation across individuals within experimental conditions, clear trends emerge. The plot on the right shows the experimental conditions had the same average values at baseline (`t1`), both conditions tended to increase over time, but the `treatment` condition showed larger changes over time, relative to the `control` condition.
 
 ## What do we care about?
 
@@ -161,7 +161,7 @@ d %>%
             sd   = sd(value))
 ```
 
-Feingold displayed most of these statistics in his Table 1 (p. 46). Now we're ready to start defining the effect sizes. We'll start with the unstandardized kind.
+Feingold displayed most of these statistics in his Table 1 (p. 46). Make special note of how consistent the $SD$ values are. This will become important in the second post. Anyway, now we're ready to start defining the effect sizes. We'll start with the unstandardized kind.
 
 ### Unstandardized mean differences.
 
@@ -185,7 +185,7 @@ Although the average values in both groups changed over time, the participants i
 
 The approach above works great if the outcome variable is inherently meaningful and if we have no interest in comparing these results with studies on different outcome variables. In reality, clinical researchers often use sum scores from self-report questionnaires as their primary outcome variables and these scores take on seemingly arbitrary values. Say you work in depression research. There are numerous questionnaires designed to measure depression [e.g., @friedThe52SymptomsOfMajorDepression2017] and their sum scores are all scaled differently. The problem is even worse if you'd like to compare two different kinds of outcomes, such as depression and anxiety. This is where standardized effect sizes come in.
 
-Since we are focusing on the data from the first and last time points from Feingold's hypothetical clinical trial, we can use conventional summary-statistic oriented strategies to compute the *standardized* mean differences. In the literature, you'll often find standardized mean differences referred to as a Cohen's $d$, named after the late [Jacob Cohen](https://en.wikipedia.org/wiki/Jacob_Cohen_(statistician)). I suspect what isn't always appreciated is that there are many ways to compute $d$ and that "Cohen's $d$" can both refer to the general family of standardized mean differences or to a specific kind of standardized mean difference. In addition to Cohen's original [-@cohenStatisticalPowerAnalysis1988a] work, I think Geoff Cumming walked this out nicely in Chapter 11 of his [-@cummingUnderstandingTheNewStatistics2012] text. Here we'll consider two versions of $d$ from Feingold's paper:
+Since we are focusing on the data from the first and last time points, we can use conventional summary-statistic oriented strategies to compute the *standardized* mean differences. In the literature, you'll often find standardized mean differences referred to as a Cohen's $d$, named after the late [Jacob Cohen](https://en.wikipedia.org/wiki/Jacob_Cohen_(statistician)). I suspect what isn't always appreciated is that there are many ways to compute $d$ and that "Cohen's $d$" can both refer to the general family of standardized mean differences or to a specific kind of standardized mean difference. In addition to Cohen's original [-@cohenStatisticalPowerAnalysis1988a] work, I think Geoff Cumming walked this out nicely in Chapter 11 of his [-@cummingUnderstandingTheNewStatistics2012] text. Here we'll consider two versions of $d$ from Feingold's paper:
 
 > Two effect sizes can be calculated from an IGPP design, one using the standard deviation of the change scores in the denominator and the other using the standard deviation of the raw scores [@morrisEstimatingEffectSizes2008; @morrisCombiningEffectSizeEstimates2002]:
 >
@@ -235,7 +235,7 @@ In most areas of psychology, $d$'s of this size would seem large. Whether resear
 
 ### Extensions.
 
-This is about as far as we're going to go with the IGPP version of Feingold's synthetic data. But if you do end up with data of this kind or similar, there are other things to consider. Real brief, here are two.
+This is about as far as we're going to go with the IGPP version of Feingold's synthetic data. But if you do end up with data of this kind or similar, there are other things to consider. Real brief, here are two:
 
 #### It's good to express uncertainty.
 
@@ -252,7 +252,7 @@ In this first post, we learned:
 * Effect sizes for experimental trials analyzed with multilevel growth models aren't straightforward.
 * Much of the effect size literature is based on simple cross-sectional or two-time-point designs with one or two groups.
 * Effect sizes can be standardized or unstandardized.
-* "Cohen's $d$" can refer to either a general class of standardized effect sizes, or to a specific standardized effect size.
+* "Cohen's $d$" can refer to either a general class of standardized mean differences, or to a specific standardized mean differences.
 * As discussed in @feingoldEffectSizeForGMA2009, the two effect sizes recommended for IGPP designs are $d_\text{IGPP-change}$ or $d_\text{IGPP-raw}$, both of which can be computed with simple summary statistics.
 
 Stay tuned for the second post in this series, where we'll extend these skills to two-group experimental data with more than two time points. The multilevel growth model will make its grand appearance and it'll just be great!
