@@ -63,6 +63,10 @@ My peer-reviewed publications are:
 * Bowen, S. & **Kurz, A. S.** (2012). Between-session practice and therapeutic alliance as predictors of mindfulness after mindfulness-based relapse prevention. *Journal of Clinical Psychology, 68*, 236–245. https://doi.org/10.1002/jclp.20855
   + OSF: https://osf.io/2df7u/
   + [PDF](https://solomonkurz.netlify.app/files/Bowen & Kurz (2012) Between-session practice and therapeutic alliance as predictors of mindfulness after mindfulness-based relapse prevention.pdf)
-  
+
+## 2011
+
+* Bowen, S. & **Kurz, A. S.** (2011). Smoking, nicotine dependence and motives to quit in Asian-American versus Caucasian college students. *Nicotine & Tobacco Research, 14*, 1235–1240. https://doi.org/10.1093/ntr/ntr281
+  + [PDF](https://solomonkurz.netlify.app/files/Bowen & Kurz (2011) Smoking, nicotine dependence and motives to quit in Asian-American versus Caucasian college students.pdf)
 
 
