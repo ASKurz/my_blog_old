@@ -52,6 +52,12 @@ My peer-reviewed publications are:
    + OSF: https://osf.io/6dnna/
    + [PDF](https://solomonkurz.netlify.app/files/Kurz, Flynn & Bordieri (2016) How Bayesian estimation might improve CBS measure development.pdf)
 
+## 2014
+
+* **Kurz, A. S.**, Bethay, J. S., & Ladner-Graham, J. M. (2014). Mediating the relation between workplace stressors and distress in ID support staff: Comparison between the roles of psychological inflexibility and coping styles. *Research in Developmental Disabilities, 35*, 2359–2370. https://doi.org/10.1016/j.ridd.2014.06.003
+  + OSF: https://osf.io/5r6qb/
+  + [PDF](https://solomonkurz.netlify.app/files/Kurz, Bethay & Ladner-Graham (2014) Mediating the relation between workplace stressors and distress in ID support staff.pdf)
+
 
 
 
