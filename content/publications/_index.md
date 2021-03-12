@@ -22,9 +22,12 @@ My peer-reviewed publications are:
   + [PDF](https://solomonkurz.netlify.app/files/McGuire et al (2020) Social engagement early in the U.S. COVID-19 crisis.pdf)
 * Karekla, M., Georgiou, N., Panayiotou, G., Sandoz, E. K., **Kurz, A. S.**, & M. Constantinou. (2020). Cognitive restructuring vs. defusion: Impact on craving, healthy and unhealthy food intake. *Eating Behaviors, 37*, 101385. https://doi.org/10.1016/j.eatbeh.2020.101385
   + [PDF](https://solomonkurz.netlify.app/files/Karekla et al (2020) Cognitive restructuring vs. defusion.pdf)
-* **Kurz, A. S.** (2019). Want to see more behavior? Consider institutional-level positive reinforcement. Journal of Contextual Behavioral Science, 14, 29–31. https://doi.org/10.1016/j.jcbs.2019.08.006 [OSF: https://osf.io/3taer/]
+* **Kurz, A. S.** (2019). Want to see more behavior? Consider institutional-level positive reinforcement. *Journal of Contextual Behavioral Science, 14*, 29–31. https://doi.org/10.1016/j.jcbs.2019.08.006 [OSF: https://osf.io/3taer/]
   + [PDF](https://solomonkurz.netlify.app/files/Kurz (2019) Want to see more behavior.pdf)
-
+* **Kurz, A. S.**, Johnson, Y. L., Kellum, K. K., & Wilson, K. G. (2019). How can process-based researchers bridge the gap between individuals and groups? Discover the dynamic p-technique. *Journal of Contextual Behavioral Science, 13*, 60–65. https://doi.org/10.1016/j.jcbs.2019.07.001 
+  + OSF: https://osf.io/cbyj3/
+  + [PDF](https://solomonkurz.netlify.app/files/Kurz et al (2019) How can process-based researchers bridge the gap between individuals and groups.pdf)
+  
 
 
 
