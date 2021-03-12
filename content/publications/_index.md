@@ -33,18 +33,25 @@ My peer-reviewed publications are:
 * **Kurz, A. S.**, Johnson, Y. L., Kellum, K. K., & Wilson, K. G. (2019). How can process-based researchers bridge the gap between individuals and groups? Discover the dynamic p-technique. *Journal of Contextual Behavioral Science, 13*, 60–65. https://doi.org/10.1016/j.jcbs.2019.07.001 
   + OSF: https://osf.io/cbyj3/
   + [PDF](https://solomonkurz.netlify.app/files/Kurz et al (2019) How can process-based researchers bridge the gap between individuals and groups.pdf)
-* Flynn, M. K., **Kurz, A. S.**, & Berkout, O. V. (2019). Psychological inflexibility among Hispanic college students: Introducing the 6-item Acceptance and Action Questionnaire for Weight-related Difficulties. Journal of Latinx Psychology, 7, 123–136. https://doi.org/10.1037/lat0000110
+* Flynn, M. K., **Kurz, A. S.**, & Berkout, O. V. (2019). Psychological inflexibility among Hispanic college students: Introducing the 6-item Acceptance and Action Questionnaire for Weight-related Difficulties. *Journal of Latinx Psychology, 7*, 123–136. https://doi.org/10.1037/lat0000110
   + OSF: https://osf.io/5m78r/
   + [PDF](https://solomonkurz.netlify.app/files/Flynn, Kurz & Berkout (2019) Psychological inflexibility among Hispanic college students_ Introducing the 6-item Acceptance and Action Questionnaire for Weight-Related Difficulties.pdf)
   
 ## 2018
 
-* Jacobson, E. H. K., Wilson, K. G., **Kurz, A. S.** (2018). Examining self-compassion in romantic relationships. Journal of Contextual Behavioral Science, 8, 69–73. https://doi.org/10.1016/j.jcbs.2018.04.003
+* Jacobson, E. H. K., Wilson, K. G., **Kurz, A. S.** (2018). Examining self-compassion in romantic relationships. *Journal of Contextual Behavioral Science, 8*, 69–73. https://doi.org/10.1016/j.jcbs.2018.04.003
   + [PDF](https://solomonkurz.netlify.app/files/Jacobson, Wilson & Kurz (2018) Examining self-compassion in romantic relationships.pdf)
-* Drescher, C. F., Johnson, L. R., **Kurz, A. S.**, Scales, P. C., & Kiliho, R. P. (2018). A development assets approach in East Africa: Can Swahili measures capture adolescent competencies and ecological experiences? Child & Youth Care Forum, 47, 23–43. https://doi.org/10.1007/s10566-017-9415-0
+* Drescher, C. F., Johnson, L. R., **Kurz, A. S.**, Scales, P. C., & Kiliho, R. P. (2018). A development assets approach in East Africa: Can Swahili measures capture adolescent competencies and ecological experiences? *Child & Youth Care Forum, 47*, 23–43. https://doi.org/10.1007/s10566-017-9415-0
   + [PDF](https://solomonkurz.netlify.app/files/Drescher et al (2018) A development assets approach in East Africa.pdf)
 
-  
+## 2016
+
+* **Kurz, A. S.**, Drescher, C. F., Chin, E. G., & Johnson, L. R. (2016). Measuring social desirability across language and gender: A comparison of Marlowe-Crowne Social Desirability Scale factor structures in English and Mandarin Chinese in Malaysia. *PsyCh Journal, 5*, 92–100. https://doi.org/10.1002/pchj.124
+  + [PDF](https://solomonkurz.netlify.app/files/Kurz et al (2016) Measuring social desirability across language and sex.pdf)
+* **Kurz, A. S.**, Flynn, M. K., & Bordieri, M. J. (2016). How Bayesian estimation might improve CBS measure development: A case study with body-image flexibility in Hispanic students. *Journal of Contextual Behavioral Science, 5*, 146–153. https://doi.org/10.1016/j.jcbs.2016.07.005 
+   + OSF: https://osf.io/6dnna/
+   + [PDF](https://solomonkurz.netlify.app/files/Kurz, Flynn & Bordieri (2016) How Bayesian estimation might improve CBS measure development.pdf)
+
 
 
 
