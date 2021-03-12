@@ -36,7 +36,7 @@ My peer-reviewed publications are:
 * Flynn, M. K., **Kurz, A. S.**, & Berkout, O. V. (2019). Psychological inflexibility among Hispanic college students: Introducing the 6-item Acceptance and Action Questionnaire for Weight-related Difficulties. *Journal of Latinx Psychology, 7*, 123–136. https://doi.org/10.1037/lat0000110
   + OSF: https://osf.io/5m78r/
   + [PDF](https://solomonkurz.netlify.app/files/Flynn, Kurz & Berkout (2019) Psychological inflexibility among Hispanic college students_ Introducing the 6-item Acceptance and Action Questionnaire for Weight-Related Difficulties.pdf)
-  
+
 ## 2018
 
 * Jacobson, E. H. K., Wilson, K. G., **Kurz, A. S.** (2018). Examining self-compassion in romantic relationships. *Journal of Contextual Behavioral Science, 8*, 69–73. https://doi.org/10.1016/j.jcbs.2018.04.003
