@@ -58,6 +58,11 @@ My peer-reviewed publications are:
   + OSF: https://osf.io/5r6qb/
   + [PDF](https://solomonkurz.netlify.app/files/Kurz, Bethay & Ladner-Graham (2014) Mediating the relation between workplace stressors and distress in ID support staff.pdf)
 
+## 2012
 
+* Bowen, S. & **Kurz, A. S.** (2012). Between-session practice and therapeutic alliance as predictors of mindfulness after mindfulness-based relapse prevention. *Journal of Clinical Psychology, 68*, 236–245. https://doi.org/10.1002/jclp.20855
+  + OSF: https://osf.io/2df7u/
+  + [PDF](https://solomonkurz.netlify.app/files/Bowen & Kurz (2012) Between-session practice and therapeutic alliance as predictors of mindfulness after mindfulness-based relapse prevention.pdf)
+  
 
 
