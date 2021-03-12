@@ -39,7 +39,11 @@ My peer-reviewed publications are:
   
 ## 2018
 
-* 
+* Jacobson, E. H. K., Wilson, K. G., **Kurz, A. S.** (2018). Examining self-compassion in romantic relationships. Journal of Contextual Behavioral Science, 8, 69–73. https://doi.org/10.1016/j.jcbs.2018.04.003
+  + [PDF](https://solomonkurz.netlify.app/files/Jacobson, Wilson & Kurz (2018) Examining self-compassion in romantic relationships.pdf)
+* Drescher, C. F., Johnson, L. R., **Kurz, A. S.**, Scales, P. C., & Kiliho, R. P. (2018). A development assets approach in East Africa: Can Swahili measures capture adolescent competencies and ecological experiences? Child & Youth Care Forum, 47, 23–43. https://doi.org/10.1007/s10566-017-9415-0
+  + [PDF](https://solomonkurz.netlify.app/files/Drescher et al (2018) A development assets approach in East Africa.pdf)
+
   
 
 
