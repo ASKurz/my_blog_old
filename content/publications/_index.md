@@ -22,7 +22,7 @@ My peer-reviewed publications are:
 * McGuire, A. P., Hayden, C., Frankfurt, S. B., **Kurz, A. S.**, Anderson, A. R., Howard, B. A. N. & Szabo, Y. Z. (2020). Social engagement early in the U.S. COVID-19 crisis: Exploring social support and prosocial behavior between those with and without depression or anxiety in an online sample. *Journal of Social and Clinical Psychology, 39(10)*, 923–953. https://guilfordjournals.com/doi/10.1521/jscp.2020.39.10.923
   + OSF: https://osf.io/fdywh/
   + [PDF](https://solomonkurz.netlify.app/files/McGuire et al (2020) Social engagement early in the U.S. COVID-19 crisis.pdf)
-* Karekla, M., Georgiou, N., Panayiotou, G., Sandoz, E. K., **Kurz, A. S.**, & M. Constantinou. (2020). Cognitive restructuring vs. defusion: Impact on craving, healthy and unhealthy food intake. *Eating Behaviors, 37*, 101385. https://doi.org/10.1016/j.eatbeh.2020.101385
+* Karekla, M., Georgiou, N., Panayiotou, G., Sandoz, E. K., **Kurz, A. S.**, & Constantinou, M. (2020). Cognitive restructuring vs. defusion: Impact on craving, healthy and unhealthy food intake. *Eating Behaviors, 37*, 101385. https://doi.org/10.1016/j.eatbeh.2020.101385
   + [PDF](https://solomonkurz.netlify.app/files/Karekla et al (2020) Cognitive restructuring vs. defusion.pdf)
 
 ## 2019
