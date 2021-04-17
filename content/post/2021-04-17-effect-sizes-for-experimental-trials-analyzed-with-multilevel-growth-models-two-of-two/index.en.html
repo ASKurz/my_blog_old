@@ -101,7 +101,7 @@ head(d)</code></pre>
             size = 1/4) +
   scale_color_viridis_d(end = .75, direction = -1, breaks = NULL) +
   facet_wrap(~ condition)</code></pre>
-<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-4-1.png" width="624" /></p>
+<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/fig1-1.png" width="624" /></p>
 <p>Though participants tend to increase in both groups, those in the treatment condition appear to have increased at a more rapid pace. We want a standardized effect size that can capture those differences. We’ll begin to explain what that will be, next.</p>
 </div>
 </div>
@@ -225,7 +225,7 @@ m_change_t - m_change_c</code></pre>
   geom_pointrange(fatten = 1) +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab(expression(&quot;unstandardized difference in change scores&quot;~(beta[1][1])))</code></pre>
-<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-12-1.png" width="384" /></p>
+<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/fig2-1.png" width="384" /></p>
 <p>The population average could be anywhere from 2.25 to 3.75, but the best guess is it’s about 3. However, since the metric on this outcome variable is arbitrary (these data were simulated, remember), it’s hard to interpret how “large” this is. A standardized effect size can help.</p>
 </div>
 <div id="we-need-to-define-the-standardized-mean-difference-for-the-multilevel-growth-model." class="section level3">
@@ -289,7 +289,7 @@ sqrt(((n_t - 1) * sd_raw_pre_c^2 + (n_c - 1) * sd_raw_pre_t^2) / (n_t + n_c - 2)
   stat_halfeye(.width = .95) +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab(expression(italic(d)[GMA-raw]~(&quot;standardized difference in change scores&quot;)))</code></pre>
-<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-18-1.png" width="384" /></p>
+<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/fig3-1.png" width="384" /></p>
 <p>The population average could be anywhere from 2 to 3.25, but the best guess is it’s about 2.5. Here are the numeric values for the posterior median and percentile-based 95% interval.</p>
 <pre class="r"><code>posterior_samples(fit1) %&gt;% 
   mutate(d = `b_time0:tx` * 3 / sd_raw_pre_p) %&gt;% 
@@ -404,7 +404,7 @@ m_raw_pre_p</code></pre>
   labs(x = expression(italic(d)[GMA-raw]~(&quot;standardized difference in change scores&quot;)),
        y = NULL) +
   theme(axis.text.y = element_text(hjust = 0))</code></pre>
-<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-26-1.png" width="480" /></p>
+<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/fig4-1.png" width="480" /></p>
 <p>Yep, they’re pretty much the same.</p>
 </div>
 </div>

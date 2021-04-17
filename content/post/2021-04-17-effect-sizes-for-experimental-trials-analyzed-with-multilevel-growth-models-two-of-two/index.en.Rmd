@@ -90,7 +90,7 @@ head(d)
 
 To reacquaint ourselves with the data, we might make a plot. Last time we plotted a subset of the individual trajectories next to the averages, by treatment group. Here we'll superimpose all the individual-level trajectories atop the group averages.
 
-```{r, message = F, fig.width = 6.5, fig.height = 3.75}
+```{r fig1, fig.width = 6.5, fig.height = 3.75}
 d %>% 
   pivot_longer(t1:t4) %>% 
   mutate(time      = str_extract(name, "\\d") %>% as.double(),
@@ -221,7 +221,7 @@ m_change_t - m_change_c
 
 One of the reasons we went through the trouble of fitting a multilevel model is so we could accompany that difference in change scores with high-quality 95% intervals. Here they are in a coefficient plot.
 
-```{r, fig.width = 4, fig.height = 1}
+```{r fig2, fig.width = 4, fig.height = 1}
 data.frame(fixef(fit1)[, -2] * 3) %>% 
   rownames_to_column("coefficient") %>% 
   filter(coefficient == "time0:tx") %>% 
@@ -306,7 +306,7 @@ fixef(fit1)["time0:tx", 1] * 3 / sd_raw_pre_c
 
 Within the Bayesian framework, we can get a full posterior distribution for that effect by working directly with all the posterior draws.
 
-```{r, fig.width = 4, fig.height = 2.25}
+```{r fig3, fig.width = 4, fig.height = 2.25}
 posterior_samples(fit1) %>% 
   mutate(d = `b_time0:tx` * 3 / sd_raw_pre_p) %>% 
   
@@ -407,7 +407,7 @@ fixef(fit2)["time0:tx", -2] * 3
 
 There is it, within simulation variance of the effect size from the last section. Let's compare them with a coefficient plot.
 
-```{r, fig.width = 5, fig.height = 1}
+```{r fig4, fig.width = 5, fig.height = 1}
 rbind(fixef(fit1)["time0:tx", -2] * 3 / sd_raw_pre_p,
       fixef(fit2)["time0:tx", -2] * 3) %>% 
   data.frame() %>% 
