@@ -31,6 +31,8 @@ options(width = 100)
 
 ## Orientation
 
+plot 
+
 ```{r, warning = F, message = F}
 library(tidyverse)
 
