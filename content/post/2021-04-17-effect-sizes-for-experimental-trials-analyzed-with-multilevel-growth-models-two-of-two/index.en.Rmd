@@ -257,7 +257,7 @@ d_long %>%
   summarise(sd = sd(y))
 ```
 
-For this particular data set, the value Feingold used is the same for either of the experimental conditions at baseline.
+For this particular data set, the value Feingold used is the same as the standard deviation for either of the experimental conditions at baseline.
 
 ```{r}
 sd_raw_pre_t <- filter(d, tx ==  "0.5") %>% summarise(s = sd(t1)) %>% pull()  # treatment baseline SD
@@ -280,7 +280,7 @@ sd_raw_pre_p
 
 Since Feingold's synthetic data are special case where $SD_\text{raw(pre-T)} = SD_\text{raw(pre-C)} = SD_\text{pooled}$, these distinctions might all seem dull and pedantic. Yet if your real-world data look anything like mine, this won't be the case and you'll need to understand how distinguish between and choose from among these options.
 
-Another thing to consider is that whereas Feingold's synthetic data have the desirable quality where the sample sizes are the same across the experimental conditions ($n_\text{T} = n_\text{C} = 10$), this won't always be the case. If you end up with unbalanced experimental data, you might consider the sample-size weighted pooled standard deviation, $SD_\text{pooled}^*$, which I believe has it's origins in Hedges' work [-@hedgesDistributionTheoryforGlass1981, p. 110]. It follows the formula
+Another thing to consider is that whereas Feingold's synthetic data have the desirable quality where the sample sizes are the same across the experimental conditions ($n_\text{T} = n_\text{C} = 10$), this won't always be the case. If you end up with unbalanced experimental data, you might consider the sample-size weighted pooled standard deviation, $SD_\text{pooled}^*$, which I believe has its origins in Hedges' work [-@hedgesDistributionTheoryforGlass1981, p. 110]. It follows the formula
 
 $$SD_\text{pooled}^* = \sqrt{\frac{(n_\text{T} - 1)SD_\text{raw(pre-T)}^2 + (n_\text{C} - 1)SD_\text{raw(pre-C)}^2}{n_\text{T} + n_\text{C} - 2}}.$$
 
@@ -297,7 +297,7 @@ sqrt(((n_t - 1) * sd_raw_pre_c^2 + (n_c - 1) * sd_raw_pre_t^2) / (n_t + n_c - 2)
 
 Again, in the special case of these synthetic data, $SD_\text{pooled}^*$ happens to be the same value as $SD_\text{pooled}^*$, which is also the same value as $SD_\text{raw(pre-T)}$ and $SD_\text{raw(pre-C)}$. This will not always the case with your real-world data. Choose your $SD$ with care and make sure to report which ever formula you use. Don't be coy with your effect-size calculations.
 
-You may be wondering, though, whether you can use the standard deviations for one of the treatment conditions rather than a variant of the pooled standard deviation. *Yes*, you can. I think Cumming [-@cummingUnderstandingTheNewStatistics2012, Chapter 11] did a nice job walking through this issue. For example, if we thought of our control condition as a true benchmark for what we'd expect at baseline, we could just use $SD_\text{raw(pre-C)}$ as our denominator. This is sometimes referred to as a Glass' $d$ or Glass' $\Delta$. Whatever you choose and whatever you call it, just make sure to clearly define your standardizing formula for your audience.
+You may be wondering, though, whether you can use the standard deviations for one of the treatment conditions rather than a variant of the pooled standard deviation. *Yes*, you can. I think Cumming [-@cummingUnderstandingTheNewStatistics2012, Chapter 11] did a nice job walking through this issue. For example, if we thought of our control condition as a true benchmark for what we'd expect at baseline, we could just use $SD_\text{raw(pre-C)}$ as our standardizer. This is sometimes referred to as a Glass' $d$ or Glass' $\Delta$. Whatever you choose and whatever you call it, just make sure to clearly define your standardizing formula for your audience.
 
 Therefore, if we use $SD_\text{raw(pre-C)}$ (`sd_raw_pre_c`) as our working value, we can compute $d_\text{GMA-raw}$ as follows.
 
