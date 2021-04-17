@@ -1,6 +1,6 @@
 ---
 title: 'Effect sizes for experimental trials analyzed with multilevel growth models: Two of two'
-author: R package build
+author: Solomon Kurz
 date: '2021-04-17'
 slug: []
 categories: []
