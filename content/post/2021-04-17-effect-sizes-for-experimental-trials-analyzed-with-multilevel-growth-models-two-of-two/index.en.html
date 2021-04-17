@@ -33,7 +33,7 @@ link-citations: yes
 <p>This post is the second and final installment of a two-part series. Our goal is to show how to compute a Cohen’s-<span class="math inline">\(d\)</span> type effect size when you have longitudinal data on <span class="math inline">\(3+\)</span> time points for two experimental groups. In the <a href="https://solomonkurz.netlify.app/post/2021-01-26-effect-sizes-for-experimental-trials-analyzed-with-multilevel-growth-models-one-of-two/">first post</a>, we explored how one might compute an effect size for two-group data with only <span class="math inline">\(2\)</span> time points. In this post, we show how to generalize this framework to data recorded over <span class="math inline">\(3+\)</span> time points. The data and overall framework come from <span class="citation"><a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">Feingold</a> (<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>)</span>.</p>
 <div id="i-still-make-assumptions." class="section level3">
 <h3>I still make assumptions.</h3>
-<p>As with the <a href="https://solomonkurz.netlify.app/post/2021-01-26-effect-sizes-for-experimental-trials-analyzed-with-multilevel-growth-models-one-of-two/#i-make-assumptions.">first post</a>, I make a handful of assumptions about your background knowledge. Though I won’t spell them out again, here, I should stress that familiarity with multilevel models will particularly important for this post. To brush up, I recommend <span class="citation"><a href="#ref-raudenbushHLM2002" role="doc-biblioref">Raudenbush &amp; Bryk</a> (<a href="#ref-raudenbushHLM2002" role="doc-biblioref">2002</a>)</span>; <span class="citation"><a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">Singer &amp; Willett</a> (<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003</a>)</span>; or <span class="citation"><a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">Hoffman</a> (<a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">2015</a>)</span>.</p>
+<p>As with the <a href="https://solomonkurz.netlify.app/post/2021-01-26-effect-sizes-for-experimental-trials-analyzed-with-multilevel-growth-models-one-of-two/#i-make-assumptions.">first post</a>, I make a handful of assumptions about your background knowledge. Though I won’t spell them out again, here, I should stress that familiarity with multilevel models will particularly important for this post. To brush up, I recommend <span class="citation"><a href="#ref-raudenbushHLM2002" role="doc-biblioref">Raudenbush &amp; Bryk</a> (<a href="#ref-raudenbushHLM2002" role="doc-biblioref">2002</a>)</span>, <span class="citation"><a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">Singer &amp; Willett</a> (<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003</a>)</span>, or <span class="citation"><a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">Hoffman</a> (<a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">2015</a>)</span>.</p>
 <p>As before, all code is in <strong>R</strong> <span class="citation">(<a href="#ref-R-base" role="doc-biblioref">R Core Team, 2020</a>)</span>. Here we load our primary <strong>R</strong> packages–<a href="https://github.com/paul-buerkner/brms"><strong>brms</strong></a> <span class="citation">(<a href="#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">Bürkner, 2017</a>, <a href="#ref-burknerAdvancedBayesianMultilevel2018" role="doc-biblioref">2018</a>, <a href="#ref-R-brms" role="doc-biblioref">2020</a>)</span>, <a href="https://mjskay.github.io/tidybayes/"><strong>tidybayes</strong></a> <span class="citation">(<a href="#ref-R-tidybayes" role="doc-biblioref">Kay, 2020</a>)</span>, and the <a href="http://style.tidyverse.org"><strong>tidyverse</strong></a> <span class="citation">(<a href="#ref-R-tidyverse" role="doc-biblioref">Wickham, 2019</a>; <a href="#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>)</span>–and adjust the global plotting theme defaults.</p>
 <pre class="r"><code>library(brms)
 library(tidybayes)
@@ -89,12 +89,7 @@ head(d)</code></pre>
 ## 5   105  -0.5     5     6     7     8       3 control  
 ## 6   106  -0.5     5     7     7     7       2 control</code></pre>
 <p>To reacquaint ourselves with the data, we might make a plot. Last time we plotted a subset of the individual trajectories next to the averages, by treatment group. Here we’ll superimpose all the individual-level trajectories atop the group averages.</p>
-<pre class="r"><code># set the global plotting theme
-theme_set(theme_linedraw() +
-            theme(text = element_text(family = &quot;Times&quot;),
-                  panel.grid = element_blank()))
-
-d %&gt;% 
+<pre class="r"><code>d %&gt;% 
   pivot_longer(t1:t4) %&gt;% 
   mutate(time      = str_extract(name, &quot;\\d&quot;) %&gt;% as.double(),
          condition = ifelse(tx &lt; 0, &quot;tx = -0.5 (control)&quot;, &quot;tx = 0.5 (treatment)&quot;)) %&gt;% 
@@ -107,15 +102,15 @@ d %&gt;%
             size = 1/4) +
   scale_color_viridis_d(end = .75, direction = -1, breaks = NULL) +
   facet_wrap(~ condition)</code></pre>
-<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-3-1.png" width="624" /></p>
-<p>Though participants tend to increase in both groups, those in the treatment condition appear to have increased at a more rapid pace. We want an standardized effect sizes that can capture those differences. We’ll begin to explain what that will be, next.</p>
+<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-4-1.png" width="624" /></p>
+<p>Though participants tend to increase in both groups, those in the treatment condition appear to have increased at a more rapid pace. We want a standardized effect size that can capture those differences. We’ll begin to explain what that will be, next.</p>
 </div>
 </div>
 <div id="model" class="section level2">
 <h2>Model</h2>
 <div id="we-need-a-framework." class="section level3">
 <h3>We need a framework.</h3>
-<p>Traditional analytic strategies, such as ordinary least squares (OLS) regression and the analysis of variance (ANOVA) framework, can work okay with data collected on one or two time points. In his <span class="citation">(<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>, <a href="#ref-feingoldARegressionFramework2013" role="doc-biblioref">2013</a>)</span> work, which is the inspiration for this blog series, Feingold recommended what he called growth-modeling analysis (GMA) for data collected on <span class="math inline">\(3+\)</span>. If you’re not familiar with the term, this is a longitudinal version of what others have called hierarchical linear models, mixed-effects models, random-effects models, or what I prefer to call <em>multilevel models</em>. For longitudinal data, I’m fond of the term <em>multilevel growth model</em>. If you’re interested, Raudenbush and Bryk touched on the historic origins of several of these terms in their <span class="citation">(<a href="#ref-raudenbushHLM2002" role="doc-biblioref">2002</a>)</span> text (Chapter 1).</p>
+<p>Traditional analytic strategies, such as ordinary least squares (OLS) regression and the analysis of variance (ANOVA) framework, can work okay with data collected on one or two time points. In his <span class="citation">(<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>, <a href="#ref-feingoldARegressionFramework2013" role="doc-biblioref">2013</a>)</span> work, which is the inspiration for this blog series, Feingold recommended what he called growth-modeling analysis (GMA) for data collected on <span class="math inline">\(3+\)</span>. If you’re not familiar with the term GMA, this is a longitudinal version of what others have called hierarchical linear models, mixed-effects models, random-effects models, or what I prefer to call <em>multilevel models</em>. For longitudinal data, I’m fond of the term <em>multilevel growth model</em>. If you’re interested, Raudenbush and Bryk touched on the historic origins of several of these terms in the first chapter of their <span class="citation">(<a href="#ref-raudenbushHLM2002" role="doc-biblioref">2002</a>)</span> text.</p>
 <p>Though multilevel growth models have become commonplace in many applied areas, it’s not immediately obvious how to compute standardized effect sizes when one uses them. In his Discussion section, Feingold <span class="citation">(<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009, p. 49</a>)</span> pointed out this topic is missing from many text books and software user’s guides. For example, though I took five statistics courses in graduate school, one of which even focused on the longitudinal growth model, none of my courses covered how to compute an effect size in a longitudinal growth model and none of my text books covered the topic, either. It’s hard to expect researchers to use strategies we don’t bother to teach, which is the reason for this blog series.</p>
 <p>Anyway, to help fill this knowledge gap, we might slip into pedagogical mode. If we say our outcome variable <span class="math inline">\(y\)</span> varies across <span class="math inline">\(i\)</span> participants and <span class="math inline">\(t\)</span> time points, we might use Feingold’s Raudenbusch-&amp;-Bryk-type notation to express our upcoming statistical model as</p>
 <p><span class="math display">\[
@@ -178,14 +173,10 @@ head(d_long)</code></pre>
 ## 
 ## Group-Level Effects: 
 ## ~id (Number of levels: 20) 
-##                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS
-## sd(Intercept)            1.09      0.22     0.74     1.60 1.00     1372
-## sd(time0)                0.10      0.07     0.01     0.27 1.00     1063
-## cor(Intercept,time0)    -0.08      0.51    -0.93     0.91 1.00     4260
-##                      Tail_ESS
-## sd(Intercept)            2034
-## sd(time0)                1908
-## cor(Intercept,time0)     2290
+##                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)            1.09      0.22     0.74     1.60 1.00     1372     2034
+## sd(time0)                0.10      0.07     0.01     0.27 1.00     1063     1908
+## cor(Intercept,time0)    -0.08      0.51    -0.93     0.91 1.00     4260     2290
 ## 
 ## Population-Level Effects: 
 ##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
@@ -235,7 +226,7 @@ m_change_t - m_change_c</code></pre>
   geom_pointrange(fatten = 1) +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab(expression(&quot;unstandardized difference in change scores&quot;~(beta[1][1])))</code></pre>
-<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-11-1.png" width="384" /></p>
+<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-12-1.png" width="384" /></p>
 <p>The population average could be anywhere from 2.25 to 3.75, but the best guess is it’s about 3. However, since the metric on this outcome variable is arbitrary (these data were simulated, remember), it’s hard to interpret how “large” this is. A standardized effect size can help.</p>
 </div>
 <div id="we-need-to-define-the-standardized-mean-difference-for-the-multilevel-growth-model." class="section level3">
@@ -299,7 +290,7 @@ sqrt(((n_t - 1) * sd_raw_pre_c^2 + (n_c - 1) * sd_raw_pre_t^2) / (n_t + n_c - 2)
   stat_halfeye(.width = .95) +
   scale_y_continuous(NULL, breaks = NULL) +
   xlab(expression(italic(d)[GMA-raw]~(&quot;standardized difference in change scores&quot;)))</code></pre>
-<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-17-1.png" width="384" /></p>
+<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-18-1.png" width="384" /></p>
 <p>The population average could be anywhere from 2 to 3.25, but the best guess is it’s about 2.5. Here are the numeric values for the posterior median and percentile-based 95% interval.</p>
 <pre class="r"><code>posterior_samples(fit1) %&gt;% 
   mutate(d = `b_time0:tx` * 3 / sd_raw_pre_p) %&gt;% 
@@ -375,14 +366,10 @@ m_raw_pre_p</code></pre>
 ## 
 ## Group-Level Effects: 
 ## ~id (Number of levels: 20) 
-##                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS
-## sd(Intercept)            0.95      0.20     0.63     1.42 1.00     1293
-## sd(time0)                0.08      0.06     0.00     0.23 1.00      937
-## cor(Intercept,time0)    -0.07      0.51    -0.90     0.91 1.00     4454
-##                      Tail_ESS
-## sd(Intercept)            1768
-## sd(time0)                1827
-## cor(Intercept,time0)     2198
+##                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)            0.95      0.20     0.63     1.42 1.00     1293     1768
+## sd(time0)                0.08      0.06     0.00     0.23 1.00      937     1827
+## cor(Intercept,time0)    -0.07      0.51    -0.90     0.91 1.00     4454     2198
 ## 
 ## Population-Level Effects: 
 ##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
@@ -418,7 +405,7 @@ m_raw_pre_p</code></pre>
   labs(x = expression(italic(d)[GMA-raw]~(&quot;standardized difference in change scores&quot;)),
        y = NULL) +
   theme(axis.text.y = element_text(hjust = 0))</code></pre>
-<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-25-1.png" width="480" /></p>
+<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-26-1.png" width="480" /></p>
 <p>Yep, they’re pretty much the same.</p>
 </div>
 </div>
@@ -449,54 +436,43 @@ d_\text{GMA-raw} = \beta_{11}(\text{time}) / SD_\text{raw}.
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] forcats_0.5.1   stringr_1.4.0   dplyr_1.0.5     purrr_0.3.4    
-##  [5] readr_1.4.0     tidyr_1.1.3     tibble_3.1.0    ggplot2_3.3.3  
-##  [9] tidyverse_1.3.0 tidybayes_2.3.1 brms_2.15.0     Rcpp_1.0.6     
+##  [1] forcats_0.5.1   stringr_1.4.0   dplyr_1.0.5     purrr_0.3.4     readr_1.4.0     tidyr_1.1.3    
+##  [7] tibble_3.1.0    ggplot2_3.3.3   tidyverse_1.3.0 tidybayes_2.3.1 brms_2.15.0     Rcpp_1.0.6     
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6          
-##   [4] igraph_1.2.6         splines_4.0.4        svUnit_1.0.3        
-##   [7] crosstalk_1.1.0.1    TH.data_1.0-10       rstantools_2.1.1    
-##  [10] inline_0.3.17        digest_0.6.27        htmltools_0.5.1.1   
-##  [13] rsconnect_0.8.16     fansi_0.4.2          magrittr_2.0.1      
-##  [16] modelr_0.1.8         RcppParallel_5.0.2   matrixStats_0.57.0  
-##  [19] xts_0.12.1           sandwich_3.0-0       prettyunits_1.1.1   
-##  [22] colorspace_2.0-0     rvest_0.3.6          ggdist_2.4.0.9000   
-##  [25] haven_2.3.1          xfun_0.22            callr_3.5.1         
-##  [28] crayon_1.4.1         jsonlite_1.7.2       lme4_1.1-25         
-##  [31] survival_3.2-10      zoo_1.8-8            glue_1.4.2          
-##  [34] gtable_0.3.0         emmeans_1.5.2-1      V8_3.4.0            
-##  [37] distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.2        
-##  [40] abind_1.4-5          scales_1.1.1         mvtnorm_1.1-1       
-##  [43] DBI_1.1.0            miniUI_0.1.1.1       viridisLite_0.3.0   
-##  [46] xtable_1.8-4         stats4_4.0.4         StanHeaders_2.21.0-7
-##  [49] DT_0.16              htmlwidgets_1.5.2    httr_1.4.2          
-##  [52] threejs_0.3.3        arrayhelpers_1.1-0   ellipsis_0.3.1      
-##  [55] pkgconfig_2.0.3      loo_2.4.1            farver_2.0.3        
-##  [58] dbplyr_2.0.0         utf8_1.1.4           labeling_0.4.2      
-##  [61] tidyselect_1.1.0     rlang_0.4.10         reshape2_1.4.4      
-##  [64] later_1.1.0.1        munsell_0.5.0        cellranger_1.1.0    
-##  [67] tools_4.0.4          cli_2.3.1            generics_0.1.0      
-##  [70] broom_0.7.5          ggridges_0.5.2       evaluate_0.14       
-##  [73] fastmap_1.0.1        yaml_2.2.1           fs_1.5.0            
-##  [76] processx_3.4.5       knitr_1.31           nlme_3.1-152        
-##  [79] mime_0.10            projpred_2.0.2       xml2_1.3.2          
-##  [82] rstudioapi_0.13      compiler_4.0.4       bayesplot_1.8.0     
-##  [85] shinythemes_1.1.2    curl_4.3             gamm4_0.2-6         
-##  [88] reprex_0.3.0         statmod_1.4.35       stringi_1.5.3       
-##  [91] highr_0.8            ps_1.6.0             blogdown_1.2        
-##  [94] Brobdingnag_1.2-6    lattice_0.20-41      Matrix_1.3-2        
-##  [97] nloptr_1.2.2.2       markdown_1.1         shinyjs_2.0.0       
-## [100] vctrs_0.3.6          pillar_1.5.1         lifecycle_1.0.0     
-## [103] bridgesampling_1.0-0 estimability_1.3     httpuv_1.5.4        
-## [106] R6_2.5.0             bookdown_0.21        promises_1.1.1      
-## [109] gridExtra_2.3        codetools_0.2-18     boot_1.3-26         
-## [112] colourpicker_1.1.0   MASS_7.3-53          gtools_3.8.2        
-## [115] assertthat_0.2.1     withr_2.4.1          shinystan_2.5.0     
-## [118] multcomp_1.4-16      mgcv_1.8-33          parallel_4.0.4      
-## [121] hms_0.5.3            grid_4.0.4           coda_0.19-4         
-## [124] minqa_1.2.4          rmarkdown_2.7        shiny_1.5.0         
-## [127] lubridate_1.7.9.2    base64enc_0.1-3      dygraphs_1.1.1.6</code></pre>
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6           igraph_1.2.6        
+##   [5] splines_4.0.4        svUnit_1.0.3         crosstalk_1.1.0.1    TH.data_1.0-10      
+##   [9] rstantools_2.1.1     inline_0.3.17        digest_0.6.27        htmltools_0.5.1.1   
+##  [13] rsconnect_0.8.16     fansi_0.4.2          magrittr_2.0.1       modelr_0.1.8        
+##  [17] RcppParallel_5.0.2   matrixStats_0.57.0   xts_0.12.1           sandwich_3.0-0      
+##  [21] prettyunits_1.1.1    colorspace_2.0-0     rvest_0.3.6          ggdist_2.4.0.9000   
+##  [25] haven_2.3.1          xfun_0.22            callr_3.5.1          crayon_1.4.1        
+##  [29] jsonlite_1.7.2       lme4_1.1-25          survival_3.2-10      zoo_1.8-8           
+##  [33] glue_1.4.2           gtable_0.3.0         emmeans_1.5.2-1      V8_3.4.0            
+##  [37] distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.2         abind_1.4-5         
+##  [41] scales_1.1.1         mvtnorm_1.1-1        DBI_1.1.0            miniUI_0.1.1.1      
+##  [45] viridisLite_0.3.0    xtable_1.8-4         stats4_4.0.4         StanHeaders_2.21.0-7
+##  [49] DT_0.16              htmlwidgets_1.5.2    httr_1.4.2           threejs_0.3.3       
+##  [53] arrayhelpers_1.1-0   ellipsis_0.3.1       pkgconfig_2.0.3      loo_2.4.1           
+##  [57] farver_2.0.3         dbplyr_2.0.0         utf8_1.1.4           labeling_0.4.2      
+##  [61] tidyselect_1.1.0     rlang_0.4.10         reshape2_1.4.4       later_1.1.0.1       
+##  [65] munsell_0.5.0        cellranger_1.1.0     tools_4.0.4          cli_2.3.1           
+##  [69] generics_0.1.0       broom_0.7.5          ggridges_0.5.2       evaluate_0.14       
+##  [73] fastmap_1.0.1        yaml_2.2.1           fs_1.5.0             processx_3.4.5      
+##  [77] knitr_1.31           nlme_3.1-152         mime_0.10            projpred_2.0.2      
+##  [81] xml2_1.3.2           rstudioapi_0.13      compiler_4.0.4       bayesplot_1.8.0     
+##  [85] shinythemes_1.1.2    curl_4.3             gamm4_0.2-6          reprex_0.3.0        
+##  [89] statmod_1.4.35       stringi_1.5.3        highr_0.8            ps_1.6.0            
+##  [93] blogdown_1.2         Brobdingnag_1.2-6    lattice_0.20-41      Matrix_1.3-2        
+##  [97] nloptr_1.2.2.2       markdown_1.1         shinyjs_2.0.0        vctrs_0.3.6         
+## [101] pillar_1.5.1         lifecycle_1.0.0      bridgesampling_1.0-0 estimability_1.3    
+## [105] httpuv_1.5.4         R6_2.5.0             bookdown_0.21        promises_1.1.1      
+## [109] gridExtra_2.3        codetools_0.2-18     boot_1.3-26          colourpicker_1.1.0  
+## [113] MASS_7.3-53          gtools_3.8.2         assertthat_0.2.1     withr_2.4.1         
+## [117] shinystan_2.5.0      multcomp_1.4-16      mgcv_1.8-33          parallel_4.0.4      
+## [121] hms_0.5.3            grid_4.0.4           coda_0.19-4          minqa_1.2.4         
+## [125] rmarkdown_2.7        shiny_1.5.0          lubridate_1.7.9.2    base64enc_0.1-3     
+## [129] dygraphs_1.1.1.6</code></pre>
 </div>
 <div id="references" class="section level2 unnumbered">
 <h2>References</h2>

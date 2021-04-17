@@ -25,13 +25,17 @@ csl: apa.csl
 link-citations: yes
 ---
 
+```{r, echo = F, cache = F}
+options(width = 100)
+```
+
 ## Orientation
 
 This post is the second and final installment of a two-part series. Our goal is to show how to compute a Cohen's-$d$ type effect size when you have longitudinal data on $3+$ time points for two experimental groups. In the [first post](https://solomonkurz.netlify.app/post/2021-01-26-effect-sizes-for-experimental-trials-analyzed-with-multilevel-growth-models-one-of-two/), we explored how one might compute an effect size for two-group data with only $2$ time points. In this post, we show how to generalize this framework to data recorded over $3+$ time points. The data and overall framework come from @feingoldEffectSizeForGMA2009.
 
 ### I still make assumptions.
 
-As with the [first post](https://solomonkurz.netlify.app/post/2021-01-26-effect-sizes-for-experimental-trials-analyzed-with-multilevel-growth-models-one-of-two/#i-make-assumptions.), I make a handful of assumptions about your background knowledge. Though I won't spell them out again, here, I should stress that familiarity with multilevel models will particularly important for this post. To brush up, I recommend @raudenbushHLM2002; @singerAppliedLongitudinalData2003; or @hoffmanLongitudinalAnalysisModeling2015.
+As with the [first post](https://solomonkurz.netlify.app/post/2021-01-26-effect-sizes-for-experimental-trials-analyzed-with-multilevel-growth-models-one-of-two/#i-make-assumptions.), I make a handful of assumptions about your background knowledge. Though I won't spell them out again, here, I should stress that familiarity with multilevel models will particularly important for this post. To brush up, I recommend @raudenbushHLM2002, @singerAppliedLongitudinalData2003, or @hoffmanLongitudinalAnalysisModeling2015.
 
 As before, all code is in **R** [@R-base]. Here we load our primary **R** packages--[**brms**](https://github.com/paul-buerkner/brms) [@R-brms; @burknerBrmsPackageBayesian2017; @burknerAdvancedBayesianMultilevel2018], [**tidybayes**](https://mjskay.github.io/tidybayes/) [@R-tidybayes], and the [**tidyverse**](http://style.tidyverse.org) [@R-tidyverse; @wickhamWelcomeTidyverse2019]--and adjust the global plotting theme defaults.
 
@@ -88,11 +92,6 @@ head(d)
 To reacquaint ourselves with the data, we might make a plot. Last time we plotted a subset of the individual trajectories next to the averages, by treatment group. Here we'll superimpose all the individual-level trajectories atop the group averages.
 
 ```{r, message = F, fig.width = 6.5, fig.height = 3.75}
-# set the global plotting theme
-theme_set(theme_linedraw() +
-            theme(text = element_text(family = "Times"),
-                  panel.grid = element_blank()))
-
 d %>% 
   pivot_longer(t1:t4) %>% 
   mutate(time      = str_extract(name, "\\d") %>% as.double(),
@@ -109,13 +108,13 @@ d %>%
   
 ```
 
-Though participants tend to increase in both groups, those in the treatment condition appear to have increased at a more rapid pace. We want an standardized effect sizes that can capture those differences. We'll begin to explain what that will be, next.
+Though participants tend to increase in both groups, those in the treatment condition appear to have increased at a more rapid pace. We want a standardized effect size that can capture those differences. We'll begin to explain what that will be, next.
 
 ## Model
 
 ### We need a framework.
 
-Traditional analytic strategies, such as ordinary least squares (OLS) regression and the analysis of variance (ANOVA) framework, can work okay with data collected on one or two time points. In his [-@feingoldEffectSizeForGMA2009; -@feingoldARegressionFramework2013] work, which is the inspiration for this blog series, Feingold recommended what he called growth-modeling analysis (GMA) for data collected on $3+$. If you're not familiar with the term, this is a longitudinal version of what others have called hierarchical linear models, mixed-effects models, random-effects models, or what I prefer to call *multilevel models*. For longitudinal data, I'm fond of the term *multilevel growth model*. If you're interested, Raudenbush and Bryk touched on the historic origins of several of these terms in their [-@raudenbushHLM2002] text (Chapter 1).
+Traditional analytic strategies, such as ordinary least squares (OLS) regression and the analysis of variance (ANOVA) framework, can work okay with data collected on one or two time points. In his [-@feingoldEffectSizeForGMA2009; -@feingoldARegressionFramework2013] work, which is the inspiration for this blog series, Feingold recommended what he called growth-modeling analysis (GMA) for data collected on $3+$. If you're not familiar with the term GMA, this is a longitudinal version of what others have called hierarchical linear models, mixed-effects models, random-effects models, or what I prefer to call *multilevel models*. For longitudinal data, I'm fond of the term *multilevel growth model*. If you're interested, Raudenbush and Bryk touched on the historic origins of several of these terms in the first chapter of their [-@raudenbushHLM2002] text.
 
 Though multilevel growth models have become commonplace in many applied areas, it's not immediately obvious how to compute standardized effect sizes when one uses them. In his Discussion section, Feingold [-@feingoldEffectSizeForGMA2009, p. 49] pointed out this topic is missing from many text books and software user's guides. For example, though I took five statistics courses in graduate school, one of which even focused on the longitudinal growth model, none of my courses covered how to compute an effect size in a longitudinal growth model and none of my text books covered the topic, either. It's hard to expect researchers to use strategies we don't bother to teach, which is the reason for this blog series.
 
