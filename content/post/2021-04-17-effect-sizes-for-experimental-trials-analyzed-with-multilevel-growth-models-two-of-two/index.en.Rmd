@@ -31,7 +31,7 @@ options(width = 100)
 
 ## Orientation
 
-plot 
+plot this
 
 ```{r, warning = F, message = F}
 library(tidyverse)
@@ -41,4 +41,7 @@ mtcars %>%
   geom_point()
 ```
 
+```{r}
+blogdown::install_hugo()
+```
 
