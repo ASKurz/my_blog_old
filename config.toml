@@ -367,7 +367,4 @@ enableGitInfo = false
 #    weight = 1
 
 [context.production.environment]
-  HUGO_VERSION = "0.49"
-  
-[markup.goldmark.renderer]
-  unsafe = true
+  HUGO_VERSION = "0.82.0"
