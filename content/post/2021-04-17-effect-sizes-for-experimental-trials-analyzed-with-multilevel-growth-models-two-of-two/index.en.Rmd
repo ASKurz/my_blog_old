@@ -41,7 +41,16 @@ mtcars %>%
   geom_point()
 ```
 
+Here are the `Orange` data.
+
 ```{r}
-blogdown::install_hugo()
+Orange %>% 
+  ggplot(aes(x = age, y = circumference, colour = Tree)) +
+  geom_point() +
+  geom_line() +
+  guides(colour = FALSE) +
+  xlim(0, NA) +
+  theme_bw()
 ```
 
+I hope this renders.

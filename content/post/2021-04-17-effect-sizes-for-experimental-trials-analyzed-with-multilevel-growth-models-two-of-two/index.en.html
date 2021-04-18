@@ -36,7 +36,14 @@ mtcars %&gt;%
   ggplot(aes(x = qsec, y = drat)) +
   geom_point()</code></pre>
 <p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
-<pre class="r"><code>blogdown::install_hugo()</code></pre>
-<pre><code>## The latest Hugo version is v0.82.0</code></pre>
-<pre><code>## Hugo 0.82.0 has already been installed. To reinstall, use the argument force = TRUE.</code></pre>
+<p>Here are the <code>Orange</code> data.</p>
+<pre class="r"><code>Orange %&gt;% 
+  ggplot(aes(x = age, y = circumference, colour = Tree)) +
+  geom_point() +
+  geom_line() +
+  guides(colour = FALSE) +
+  xlim(0, NA) +
+  theme_bw()</code></pre>
+<p><img src="{{< blogdown/postref >}}index.en_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>I hope this renders.</p>
 </div>

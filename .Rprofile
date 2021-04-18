@@ -21,3 +21,11 @@ options(
 
 # fix Hugo version
 options(blogdown.hugo.version = "0.82.0")
+
+# settings added by me following https://bookdown.org/yihui/blogdown/global-options.html
+options(
+  blogdown.author = "Solomon Kurz",
+  blogdown.ext = ".Rmd"
+  )
+
+# new line
