@@ -1,0 +1,12 @@
+fixef(fit1) %>%
+  data.frame() %>% 
+  mutate(fit = "fit1") %>% 
+  bind_rows(
+    fixef(fit2) %>%
+      data.frame() %>% 
+      mutate(fit = "fit2"),
+    fixef(fit3) %>%
+      data.frame() %>% 
+      mutate(fit = "fit3")
+  )
+

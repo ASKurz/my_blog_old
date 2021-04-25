@@ -1,0 +1,9 @@
+{
+    "path" : "~/Dropbox/my_blog/content/bookdown",
+    "sortOrder" : [
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}

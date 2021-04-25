@@ -1,0 +1,37 @@
+blogdown::serve_site()
+
+bind_rows(
+  baseball %>% 
+    select(y, z, theta, player) %>% 
+    gather(key, value, -player) %>% 
+    mutate(time = ifelse(key == "theta", "theta", "estimate")),
+  baseball %>% 
+    select(player, theta) %>% 
+    rename(value = theta) %>% 
+    mutate(key  = "theta", 
+           time = "theta")
+) %>% 
+  mutate(facet = rep(c("estimate = y", "estimate = z"), each = n() / 4) %>% rep(., times = 2))
+
+@article{moreyBayesFactorApproaches2011,
+  title = {Bayes factor approaches for testing interval null hypotheses},
+  author = {Morey, Richard D. and Rouder, Jeffrey N.},
+  year = {2011},
+  volume = {16},
+  pages = {406--419},
+  doi = {10.1037/a0024377},
+  journal = {Psychological Methods},
+  number = {4},
+  url={https://d1wqtxts1xzle7.cloudfront.net/45416179/Bayes_Factor_Approaches_for_Testing_Inte20160506-23207-1t89l96.pdf?1462571611=&response-content-disposition=inline%3B+filename%3DBayes_factor_approaches_for_testing_inte.pdf&Expires=1597530412&Signature=QAJQOISIvwxUlHd2uTfzgOMzf2TRcuWTcfwgki7JL4AIoYDziVCAfmDFOgUDi-h1mMEViTKFhOLTJF0-9u2IEyF2lR7-yhM67CYdKhqs8EEJOnhT9iK9MaaM2FBwZM8QoVtOXkOUaOXRHIt7C76UV5dbErTUx0r5Y1yym4a~-hDClb0696a6EB~dj0arYeDdylP7a3tfczmSxbIvrH8pOE4kQeHwsZXoANSh-eKXKYIYf6VD1yed~CSVPRkqlhMq6udOjg4INPZ33QBv3QQqYCk2esRC2DxxNmDF~rRVrIp0ebr6VMZkuMflVaj2~I2BFz7WS32Lb2hGFHT3jHskDA__&Key-Pair-Id=APKAJLOHF5GGSLRBV4ZA}
+}
+
+@misc{niaaaNationalEpidemiologicSurvey2006,
+  title={National epidemiologic survey on alcohol and related conditions},
+  author={National Institute on Alcohol Abuse and Alcoholism},
+  year={2006},
+  publisher={National Institutes of Health Washington, DC},
+  url={https://pubs.niaaa.nih.gov/publications/AA70/AA70.htm}
+}
+
+
+  

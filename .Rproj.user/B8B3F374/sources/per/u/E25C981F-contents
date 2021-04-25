@@ -1,0 +1,21 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+
+dat <-
+  tibble(x = rep(0:1, times = 50),
+         y = rnorm(100, 0, 1))
+```
+
+
+```{r}
+dat
+
+save(dat, file = "static/files/dat.csv")
+write_csv(dat, path = "static/files/dat.csv")
+```
+
