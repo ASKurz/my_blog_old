@@ -31,7 +31,7 @@ link-citations: yes
 ---
 
 ```{r, echo = F, cache = F}
-knitr::opts_chunk$set(fig.retina = 2.5)
+# knitr::opts_chunk$set(fig.retina = 2.5)
 options(width = 120)
 ```
 
