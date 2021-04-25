@@ -1,0 +1,538 @@
+---
+title: 'Effect sizes for experimental trials analyzed with multilevel growth models:
+  Two of two'
+author: A. Solomon Kurz
+date: '2021-04-22'
+slug: ''
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - effect size
+  - longitudinal
+  - multilevel
+  - R
+  - tidyverse
+  - tutorial
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-22T12:05:39-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+bibliography: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/my_blog.bib
+biblio-style: apalike
+csl: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/apa.csl  
+link-citations: yes
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<div id="orientation" class="section level2">
+<h2>Orientation</h2>
+<p>This post is the second and final installment of a two-part series. Our goal is to show how to compute a Cohen’s-<span class="math inline">\(d\)</span> type effect size when you have longitudinal data on <span class="math inline">\(3+\)</span> time points for two experimental groups. In the <a href="https://solomonkurz.netlify.app/post/2021-01-26-effect-sizes-for-experimental-trials-analyzed-with-multilevel-growth-models-one-of-two/">first post</a>, we explored how one might compute an effect size for two-group data with only <span class="math inline">\(2\)</span> time points. In this post, we show how to generalize this framework to data recorded over <span class="math inline">\(3+\)</span> time points. The data and overall framework come from <span class="citation"><a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">Feingold</a> (<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>)</span>.</p>
+<div id="i-still-make-assumptions." class="section level3">
+<h3>I still make assumptions.</h3>
+<p>As with the <a href="https://solomonkurz.netlify.app/post/2021-01-26-effect-sizes-for-experimental-trials-analyzed-with-multilevel-growth-models-one-of-two/#i-make-assumptions.">first post</a>, I make a handful of assumptions about your background knowledge. Though I won’t spell them out again, here, I should stress that familiarity with multilevel models will particularly important for this post. To brush up, I recommend <span class="citation"><a href="#ref-raudenbushHLM2002" role="doc-biblioref">Raudenbush &amp; Bryk</a> (<a href="#ref-raudenbushHLM2002" role="doc-biblioref">2002</a>)</span>, <span class="citation"><a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">Singer &amp; Willett</a> (<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003</a>)</span>, or <span class="citation"><a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">Hoffman</a> (<a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">2015</a>)</span>.</p>
+<p>As before, all code is in <strong>R</strong> <span class="citation">(<a href="#ref-R-base" role="doc-biblioref">R Core Team, 2020</a>)</span>. Here we load our primary <strong>R</strong> packages–<a href="https://github.com/paul-buerkner/brms"><strong>brms</strong></a> <span class="citation">(<a href="#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">Bürkner, 2017</a>, <a href="#ref-burknerAdvancedBayesianMultilevel2018" role="doc-biblioref">2018</a>, <a href="#ref-R-brms" role="doc-biblioref">2020</a>)</span>, <a href="https://mjskay.github.io/tidybayes/"><strong>tidybayes</strong></a> <span class="citation">(<a href="#ref-R-tidybayes" role="doc-biblioref">Kay, 2020</a>)</span>, and the <a href="http://style.tidyverse.org"><strong>tidyverse</strong></a> <span class="citation">(<a href="#ref-R-tidyverse" role="doc-biblioref">Wickham, 2019</a>; <a href="#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>)</span>–and adjust the global plotting theme defaults.</p>
+<pre class="r"><code>library(brms)
+library(tidybayes)
+library(tidyverse)
+
+# adjust the global plotting theme
+theme_set(
+  theme_linedraw() +
+    theme(text = element_text(family = &quot;Times&quot;),
+          panel.grid = element_blank(),
+          strip.text = element_text(margin = margin(b = 3, t = 3)))
+)</code></pre>
+</div>
+<div id="we-need-data." class="section level3">
+<h3>We need data.</h3>
+<p>Once again, we use the <a href="https://tibble.tidyverse.org/reference/tribble.html">tribble</a> approach to enter the synthetic data Feingold displayed in his Table 1 (p. 46).</p>
+<pre class="r"><code>d &lt;-
+  tribble(
+    ~id, ~tx, ~t1, ~t2, ~t3, ~t4,
+    101, -0.5, 3, 5, 5,  7,
+    102, -0.5, 4, 4, 6,  6,
+    103, -0.5, 4, 5, 7,  8,
+    104, -0.5, 5, 6, 6,  8,
+    105, -0.5, 5, 6, 7,  8,
+    106, -0.5, 5, 7, 7,  7,
+    107, -0.5, 5, 6, 8,  8,
+    108, -0.5, 6, 6, 7,  9,
+    109, -0.5, 6, 8, 9,  10,
+    110, -0.5, 7, 7, 8,  9,
+    111,  0.5, 3, 5, 7,  9,
+    112,  0.5, 4, 7, 9,  11,
+    113,  0.5, 4, 6, 8,  11,
+    114,  0.5, 5, 7, 9,  10,
+    115,  0.5, 5, 6, 9,  11,
+    116,  0.5, 5, 7, 10, 10,
+    117,  0.5, 5, 8, 8,  11,
+    118,  0.5, 6, 7, 9,  12,
+    119,  0.5, 6, 9, 11, 13,
+    120,  0.5, 7, 8, 10, 12
+  ) %&gt;% 
+  mutate(`t4-t1`   = t4 - t1,
+         condition = ifelse(tx == -0.5, &quot;control&quot;, &quot;treatment&quot;))
+
+# inspect the first six rows
+head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 8
+##      id    tx    t1    t2    t3    t4 `t4-t1` condition
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;    
+## 1   101  -0.5     3     5     5     7       4 control  
+## 2   102  -0.5     4     4     6     6       2 control  
+## 3   103  -0.5     4     5     7     8       4 control  
+## 4   104  -0.5     5     6     6     8       3 control  
+## 5   105  -0.5     5     6     7     8       3 control  
+## 6   106  -0.5     5     7     7     7       2 control</code></pre>
+<p>To reacquaint ourselves with the data, we might make a plot. Last time we plotted a subset of the individual trajectories next to the averages, by treatment group. Here we’ll superimpose all the individual-level trajectories atop the group averages.</p>
+<pre class="r"><code>d %&gt;% 
+  pivot_longer(t1:t4) %&gt;% 
+  mutate(time      = str_extract(name, &quot;\\d&quot;) %&gt;% as.double(),
+         condition = ifelse(tx &lt; 0, &quot;tx = -0.5 (control)&quot;, &quot;tx = 0.5 (treatment)&quot;)) %&gt;% 
+  
+  ggplot(aes(x = time, y = value)) +
+  stat_smooth(aes(color = condition),
+              method = &quot;lm&quot;, formula = &#39;y ~ x&#39;,
+              se = F, size = 4) +
+  geom_line(aes(group = id),
+            size = 1/4) +
+  scale_color_viridis_d(end = .75, direction = -1, breaks = NULL) +
+  facet_wrap(~ condition)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/fig1-1.png" width="624" /></p>
+<p>Though participants tend to increase in both groups, those in the treatment condition appear to have increased at a more rapid pace. We want a standardized effect size that can capture those differences. We’ll begin to explain what that will be, next.</p>
+</div>
+</div>
+<div id="model" class="section level2">
+<h2>Model</h2>
+<div id="we-need-a-framework." class="section level3">
+<h3>We need a framework.</h3>
+<p>Traditional analytic strategies, such as ordinary least squares (OLS) regression and the analysis of variance (ANOVA) framework, can work okay with data collected on one or two time points. In his <span class="citation">(<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>, <a href="#ref-feingoldARegressionFramework2013" role="doc-biblioref">2013</a>)</span> work, which is the inspiration for this blog series, Feingold recommended what he called growth-modeling analysis (GMA) for data collected on <span class="math inline">\(3+\)</span>. If you’re not familiar with the term GMA, this is a longitudinal version of what others have called hierarchical linear models, mixed-effects models, random-effects models, or what I prefer to call <em>multilevel models</em>. For longitudinal data, I’m fond of the term <em>multilevel growth model</em>, but you can use whatever term you like. If you’re interested, Raudenbush and Bryk touched on the historic origins of several of these terms in the first chapter of their <span class="citation">(<a href="#ref-raudenbushHLM2002" role="doc-biblioref">2002</a>)</span> text.</p>
+<p>Though multilevel growth models have become commonplace in many applied areas, it’s not immediately obvious how to compute standardized effect sizes when one uses them. In his Discussion section, Feingold <span class="citation">(<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009, p. 49</a>)</span> pointed out this topic is missing from many text books and software user’s guides. For example, though I took five statistics courses in graduate school, one of which even focused on the longitudinal growth model, none of my courses covered how to compute an effect size in a longitudinal growth model and none of my text books covered the topic, either. It’s hard to expect researchers to use strategies we don’t bother to teach, which is the reason for this blog series.</p>
+<p>Anyway, to help fill this knowledge gap, we might slip into pedagogical mode. If we say our outcome variable <span class="math inline">\(y\)</span> varies across <span class="math inline">\(i\)</span> participants and <span class="math inline">\(t\)</span> time points, we might use Feingold’s Raudenbusch-&amp;-Bryk-type notation to express our upcoming statistical model as</p>
+<p><span class="math display">\[
+  \begin{align*}
+y_{ti} &amp; = \beta_{00} + \beta_{01} (\text{treatment})_i + \beta_{10} (\text{time})_{ti} + \color{darkred}{\beta_{11}} (\text{treatment})_i (\text{time})_{ti} \\
+&amp; \;\;\; + [r_{0i} + r_{1i} (\text{time})_{ti} + e_{ti}],
+\end{align*}
+\]</span></p>
+<p>where variance in <span class="math inline">\(y_{ti}\)</span> is decomposed into the last three terms, <span class="math inline">\(r_{0i}\)</span>, <span class="math inline">\(r_{1i}\)</span>, and <span class="math inline">\(e_{ti}\)</span>. Here we follow the usual assumption that within-participant variance is normally distributed, <span class="math inline">\(e_{ti} \sim \operatorname N(0, \sigma_\epsilon^2)\)</span>, and the <span class="math inline">\(r_{\text{x}i}\)</span> values follow a bivariate normal distribution,</p>
+<p><span class="math display">\[
+  \begin{bmatrix} r_{0i} \\ r_{1i} \end{bmatrix} \sim \operatorname N \left (\begin{bmatrix} 0 \\ 0 \end{bmatrix}, \begin{bmatrix} \tau_{00} &amp; \tau_{01} \\ \tau_{01} &amp; \tau_{11} \end{bmatrix} \right),
+\]</span></p>
+<p>where the <span class="math inline">\(\tau\)</span> terms on the diagonal are the variances and the off-diagonal <span class="math inline">\(\tau_{01}\)</span> is their covariance. We’ll be fitting this model with Bayesian software, which means all parameters will be given prior distributions. But since our goal is to emphasize the effect size and the multilevel framework, I’m just going to use the <strong>brms</strong> default settings for the priors and will avoid expressing them in formal statistical notation<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>.</p>
+<p>In this model, the four <span class="math inline">\(\beta\)</span> parameters are often called the “fixed effects,” or the population parameters. Our focal parameter will be <span class="math inline">\(\color{darkred}{\beta_{11}}\)</span>, which is why we marked off in red. This parameter is the interaction between time and treatment condition. Put another way, <span class="math inline">\(\color{darkred}{\beta_{11}}\)</span> is the difference in the average rate of change, by treatment. Once we fit our multilevel growth model, we will explore how one might transform the <span class="math inline">\(\color{darkred}{\beta_{11}}\)</span> parameter into our desired effect size.</p>
+</div>
+<div id="fit-the-model." class="section level3">
+<h3>Fit the model.</h3>
+<p>As you’ll learn in any good multilevel text book, multilevel models typically require the data to be in the long format. Here we’ll transform our data into that format and call the results <code>d_long</code>.</p>
+<pre class="r"><code># wrangle
+d_long &lt;-
+  d %&gt;% 
+  pivot_longer(t1:t4, values_to = &quot;y&quot;) %&gt;% 
+  mutate(time = str_extract(name, &quot;\\d&quot;) %&gt;% as.double()) %&gt;% 
+  mutate(time_f = (time * 2) - 5,
+         time_c = time - mean(time),
+         time0  = time - 1,
+         time01 = (time - 1) / 3)
+
+# what have we done?
+head(d_long)</code></pre>
+<pre><code>## # A tibble: 6 x 11
+##      id    tx `t4-t1` condition name      y  time time_f time_c time0 time01
+##   &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;     &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+## 1   101  -0.5       4 control   t1        3     1     -3   -1.5     0  0    
+## 2   101  -0.5       4 control   t2        5     2     -1   -0.5     1  0.333
+## 3   101  -0.5       4 control   t3        5     3      1    0.5     2  0.667
+## 4   101  -0.5       4 control   t4        7     4      3    1.5     3  1    
+## 5   102  -0.5       2 control   t1        4     1     -3   -1.5     0  0    
+## 6   102  -0.5       2 control   t2        4     2     -1   -0.5     1  0.333</code></pre>
+<p>In the <span class="citation">(<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>)</span> paper, Feingold mentioned he coded time as a factor which</p>
+<blockquote>
+<p>was mean centered by using linear weights (-3, -1, 1, and 3 for T1 through T4, respectively) for a four-level design obtained from a table of orthogonal polynomials (Snedecor &amp; Cochran, 1967) for the within-subjects (Level 1 in HLM terminology) facet of the analysis. (p. 47)</p>
+</blockquote>
+<p>You can find this version of the time variable in the <code>time_f</code> column. However, I have no interest in modeling with time coded according to a scheme of orthogonal polynomials. But I do think it makes sense to center time or scale it so the lowest value is zero. You can find those versions of time in the <code>time_c</code> and <code>time0</code> columns. The model, below, uses <code>time0</code>. Although this will change the scale of our model parameters relative to those in Feingold’s paper, it will have little influence on how we compute the effect size of interest.</p>
+<p>Here’s how we might fit the multilevel growth model for the two treatment conditions with <strong>brms</strong>.</p>
+<pre class="r"><code>fit1 &lt;-
+  brm(data = d_long,
+      family = gaussian,
+      y ~ 1 + time0 + tx + time0:tx + (1 + time0 | id),
+      cores = 4,
+      seed = 1)</code></pre>
+<p>Review the parameter summary.</p>
+<pre class="r"><code>print(fit1)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ 1 + time0 + tx + time0:tx + (1 + time0 | id) 
+##    Data: d_long (Number of observations: 80) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 20) 
+##                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)            1.09      0.22     0.74     1.60 1.00     1372     2034
+## sd(time0)                0.10      0.07     0.01     0.27 1.00     1063     1908
+## cor(Intercept,time0)    -0.08      0.51    -0.93     0.91 1.00     4260     2290
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     5.00      0.27     4.47     5.55 1.00     1262     1502
+## time0         1.50      0.06     1.38     1.62 1.00     5705     2527
+## tx           -0.01      0.53    -1.02     1.05 1.01     1167     1781
+## time0:tx      1.00      0.12     0.75     1.25 1.00     3793     2208
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.57      0.06     0.47     0.70 1.00     3132     2986
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Everything looks fine. If you check them, the trace plots of the chains look good, too<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>. If you execute the code below, you’ll see our primary results cohere nicely with the maximum likelihood results from the frequentist <strong>lme4</strong> package.</p>
+<pre class="r"><code>lme4::lmer(data = d_long,
+           y ~ 1 + time0 + tx + time0:tx + (1 + time0 | id)) %&gt;% 
+  summary()</code></pre>
+<p>Regardless on whether you focus on the output from <strong>brms</strong> or <strong>lme4</strong>, our coefficients will differ a bit from those Feingold reported because of our different scaling of the time variable. But from a high-level perspective, it’s the same model.</p>
+</div>
+<div id="unstandardized-effect-size." class="section level3">
+<h3>Unstandardized effect size.</h3>
+<p>Our interest lies in the <code>time0:tx</code> interaction, which is the unstandardized effect size for the “difference between the means of the slopes of the treatment and the control group” (p. 47). You might also describe this as a difference in differences. Here’s a focused summary of that coefficient, what Feingold called <span class="math inline">\(\beta_{11}\)</span>.</p>
+<pre class="r"><code>fixef(fit1)[&quot;time0:tx&quot;, ]</code></pre>
+<pre><code>##  Estimate Est.Error      Q2.5     Q97.5 
+## 1.0000705 0.1246595 0.7534974 1.2493457</code></pre>
+<p>Since there are three units of time between baseline (<code>time0 == 0</code>) and the final assessment point (<code>time0 == 3</code>), we can get the difference in pre/post differences by multiplying that <span class="math inline">\(\beta_{11}\)</span> coefficient by <code>3</code>.</p>
+<pre class="r"><code>fixef(fit1)[&quot;time0:tx&quot;, -2] * 3</code></pre>
+<pre><code>## Estimate     Q2.5    Q97.5 
+## 3.000212 2.260492 3.748037</code></pre>
+<p>Thinking back to the original wide-formatted <code>d</code> data, this value is the multilevel growth model version of the difference in change scores (<code>t4-t1</code>) in the treatment conditions, <span class="math inline">\(M_\text{change-T} - M_\text{change-C}\)</span>. Here compute that value by hand.</p>
+<pre class="r"><code># group-level change score means
+m_change_t &lt;- filter(d, tx ==  &quot;0.5&quot;) %&gt;% summarise(m = mean(`t4-t1`)) %&gt;% pull()  # 6
+m_change_c &lt;- filter(d, tx == &quot;-0.5&quot;) %&gt;% summarise(m = mean(`t4-t1`)) %&gt;% pull()  # 3
+
+# difference in change score means
+m_change_t - m_change_c</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>One of the reasons we went through the trouble of fitting a multilevel model is so we could accompany that difference in change scores with high-quality 95% intervals. Here they are in a coefficient plot.</p>
+<pre class="r"><code>data.frame(fixef(fit1)[, -2] * 3) %&gt;% 
+  rownames_to_column(&quot;coefficient&quot;) %&gt;% 
+  filter(coefficient == &quot;time0:tx&quot;) %&gt;% 
+  
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = 0)) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  geom_pointrange(fatten = 1) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(&quot;unstandardized difference in change scores&quot;~(beta[1][1])))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/fig2-1.png" width="384" /></p>
+<p>The population average could be anywhere from 2.25 to 3.75, but the best guess is it’s about 3. However, since the metric on this outcome variable is arbitrary (these data were simulated, remember), it’s hard to interpret how “large” this is. A standardized effect size can help.</p>
+</div>
+<div id="we-need-to-define-the-standardized-mean-difference-for-the-multilevel-growth-model." class="section level3">
+<h3>We need to define the standardized mean difference for the multilevel growth model.</h3>
+<p>Based on <span class="citation"><a href="#ref-raudenbushEffectsOfStudyDuration2001" role="doc-biblioref">Raudenbush &amp; Liu</a> (<a href="#ref-raudenbushEffectsOfStudyDuration2001" role="doc-biblioref">2001</a>)</span>, Feingold presented two effect-size formulas for our multilevel growth model. The first, which he called <span class="math inline">\(d_\text{GMA-change}\)</span>, is on a completely different scale from any of the effect sizes mentioned in the first post (e.g., <span class="math inline">\(d_\text{IGPP-change}\)</span> and <span class="math inline">\(d_\text{IGPP-raw}\)</span>). Importantly, it turns out Raudenbush and Liu recommended their <span class="math inline">\(d_\text{GMA-change}\)</span> formula should be used for power calculations, but not necessarily to convey the magnitude of an effect. Thus we will not consider it further<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>. Feingold reported the formula for their other effect size was</p>
+<p><span class="math display">\[
+d_\text{GMA-raw} = \beta_{11}(\text{time}) / SD_\text{raw}.
+\]</span></p>
+<p>The <span class="math inline">\(\beta_{11}\)</span> in Feingold’s equation is the multilevel interaction term between time and experimental condition–what we just visualized in a coefficient plot. The <span class="math inline">\((\text{time})\)</span> part in the equation is a stand-in for the quantity of time units from the beginning of the study to the end point. Since our multilevel model used the <code>time</code> variable, which was <code>1</code> at baseline and <code>4</code> at the final time point, we would enter a 3 into the equation (i.e., <span class="math inline">\(4 - 1 = 3\)</span>). The part of Feingold’s equation that’s left somewhat vague is what he meant by the denominator, <span class="math inline">\(SD_\text{raw}\)</span>. On page 47, he used the value of 1.15 in his example. Without any reference to experimental condition in the subscript, one might assume that value is the standard deviation for the criterion across all time points or, perhaps, just at baseline. It turns out that’s not the case.</p>
+<pre class="r"><code># standard deviation for the criterion across all time points
+d_long %&gt;% 
+  summarise(sd = sd(y))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##      sd
+##   &lt;dbl&gt;
+## 1  2.22</code></pre>
+<pre class="r"><code># standard deviation for the criterion at baseline
+d_long %&gt;% 
+  filter(time == 1) %&gt;% 
+  summarise(sd = sd(y))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##      sd
+##   &lt;dbl&gt;
+## 1  1.12</code></pre>
+<p>For this particular data set, the value Feingold used is the same as the standard deviation for either of the experimental conditions at baseline.</p>
+<pre class="r"><code>sd_raw_pre_t &lt;- filter(d, tx ==  &quot;0.5&quot;) %&gt;% summarise(s = sd(t1)) %&gt;% pull()  # treatment baseline SD
+sd_raw_pre_c &lt;- filter(d, tx == &quot;-0.5&quot;) %&gt;% summarise(s = sd(t1)) %&gt;% pull()  # control baseline SD
+
+sd_raw_pre_c</code></pre>
+<pre><code>## [1] 1.154701</code></pre>
+<pre class="r"><code>sd_raw_pre_t</code></pre>
+<pre><code>## [1] 1.154701</code></pre>
+<p>But since he didn’t use a subscript, I suspect Feingold meant to convey a pooled standard deviation, following the equation</p>
+<p><span class="math display">\[SD_\text{pooled} = \sqrt{\frac{SD_\text{raw(pre-T)}^2 + SD_\text{raw(pre-C)}^2}{2}},\]</span></p>
+<p>which is a sample version of Cohen’s original equation 2.3.2 <span class="citation">(<a href="#ref-cohenStatisticalPowerAnalysis1988a" role="doc-biblioref">1988, p. 44</a>)</span>. Here’s how to compute the pooled standard deviation by hand, which we’ll save as <code>sd_raw_pre_p</code>.</p>
+<pre class="r"><code>sd_raw_pre_p &lt;- sqrt((sd_raw_pre_c^2 + sd_raw_pre_t^2) / 2)
+sd_raw_pre_p</code></pre>
+<pre><code>## [1] 1.154701</code></pre>
+<p>Since Feingold’s synthetic data are special case where <span class="math inline">\(SD_\text{raw(pre-T)} = SD_\text{raw(pre-C)} = SD_\text{pooled}\)</span>, these distinctions might all seem dull and pedantic. Yet if your real-world data look anything like mine, this won’t be the case and you’ll need to understand how distinguish between and choose from among these options.</p>
+<p>Another thing to consider is that whereas Feingold’s synthetic data have the desirable quality where the sample sizes are the same across the experimental conditions (<span class="math inline">\(n_\text{T} = n_\text{C} = 10\)</span>), this won’t always be the case. If you end up with unbalanced experimental data, you might consider the sample-size weighted pooled standard deviation, <span class="math inline">\(SD_\text{pooled}^*\)</span>, which I believe has its origins in Hedges’ work <span class="citation">(<a href="#ref-hedgesDistributionTheoryforGlass1981" role="doc-biblioref">1981, p. 110</a>)</span>. It follows the formula</p>
+<p><span class="math display">\[SD_\text{pooled}^* = \sqrt{\frac{(n_\text{T} - 1)SD_\text{raw(pre-T)}^2 + (n_\text{C} - 1)SD_\text{raw(pre-C)}^2}{n_\text{T} + n_\text{C} - 2}}.\]</span></p>
+<p>Here it is for Feingold’s data.</p>
+<pre class="r"><code># define the sample sizes
+n_t &lt;- 10
+n_c &lt;- 10
+
+# compute the sample size robust pooled SD
+sqrt(((n_t - 1) * sd_raw_pre_c^2 + (n_c - 1) * sd_raw_pre_t^2) / (n_t + n_c - 2))</code></pre>
+<pre><code>## [1] 1.154701</code></pre>
+<p>Again, in the special case of these synthetic data, <span class="math inline">\(SD_\text{pooled}^*\)</span> happens to be the same value as <span class="math inline">\(SD_\text{pooled}^*\)</span>, which is also the same value as <span class="math inline">\(SD_\text{raw(pre-T)}\)</span> and <span class="math inline">\(SD_\text{raw(pre-C)}\)</span>. This will not always the case with your real-world data. Choose your <span class="math inline">\(SD\)</span> with care and make sure to report which ever formula you use. Don’t be coy with your effect-size calculations.</p>
+<p>You may be wondering, though, whether you can use the standard deviations for one of the treatment conditions rather than a variant of the pooled standard deviation. <em>Yes</em>, you can. I think Cumming <span class="citation">(<a href="#ref-cummingUnderstandingTheNewStatistics2012" role="doc-biblioref">2012</a>, Chapter 11)</span> did a nice job walking through this issue. For example, if we thought of our control condition as a true benchmark for what we’d expect at baseline, we could just use <span class="math inline">\(SD_\text{raw(pre-C)}\)</span> as our standardizer. This is sometimes referred to as a Glass’ <span class="math inline">\(d\)</span> or Glass’ <span class="math inline">\(\Delta\)</span>. Whatever you choose and whatever you call it, just make sure to clearly define your standardizing formula for your audience.</p>
+<p>Therefore, if we use <span class="math inline">\(SD_\text{raw(pre-C)}\)</span> (<code>sd_raw_pre_c</code>) as our working value, we can compute <span class="math inline">\(d_\text{GMA-raw}\)</span> as follows.</p>
+<pre class="r"><code>fixef(fit1)[&quot;time0:tx&quot;, 1] * 3 / sd_raw_pre_c</code></pre>
+<pre><code>## [1] 2.598259</code></pre>
+<p>Within the Bayesian framework, we can get a full posterior distribution for that effect by working directly with all the posterior draws.</p>
+<pre class="r"><code>posterior_samples(fit1) %&gt;% 
+  mutate(d = `b_time0:tx` * 3 / sd_raw_pre_p) %&gt;% 
+  
+  ggplot(aes(x = d, y = 0)) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  stat_halfeye(.width = .95) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(expression(italic(d)[GMA-raw]~(&quot;standardized difference in change scores&quot;)))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/fig3-1.png" width="384" /></p>
+<p>The population average could be anywhere from 2 to 3.25, but the best guess is it’s about 2.5. Here are the numeric values for the posterior median and percentile-based 95% interval.</p>
+<pre class="r"><code>posterior_samples(fit1) %&gt;% 
+  mutate(d = `b_time0:tx` * 3 / sd_raw_pre_p) %&gt;% 
+  median_qi(d) %&gt;% 
+  mutate_if(is.double, round, digits = 2)</code></pre>
+<pre><code>##     d .lower .upper .width .point .interval
+## 1 2.6   1.96   3.25   0.95 median        qi</code></pre>
+<p>Another way to compute this is to work with the model formula and the posterior samples from the fixed effects.</p>
+<pre class="r"><code>posterior_samples(fit1) %&gt;% 
+  # simplify the output
+  select(starts_with(&quot;b_&quot;)) %&gt;% 
+  # compute the treatment-level means for pre and post
+  mutate(m_pre_t  = b_Intercept + b_time0 * 0 + b_tx *  0.5 + `b_time0:tx`* 0 *  0.5,
+         m_pre_c  = b_Intercept + b_time0 * 0 + b_tx * -0.5 + `b_time0:tx`* 0 * -0.5,
+         m_post_t = b_Intercept + b_time0 * 3 + b_tx *  0.5 + `b_time0:tx`* 3 *  0.5,
+         m_post_c = b_Intercept + b_time0 * 3 + b_tx * -0.5 + `b_time0:tx`* 3 * -0.5) %&gt;% 
+  # compute the treatment-level change scores
+  mutate(m_change_t = m_post_t - m_pre_t,
+         m_change_c = m_post_c - m_pre_c) %&gt;% 
+  # compute the difference of differences
+  mutate(beta_11 = m_change_t - m_change_c) %&gt;% 
+  # compute the multilevel effect size
+  mutate(d_GAM_raw = beta_11 / sd_raw_pre_c) %&gt;% 
+  # wrangle and summarize
+  pivot_longer(m_pre_t:d_GAM_raw) %&gt;% 
+  group_by(name) %&gt;% 
+  mean_qi(value) %&gt;% 
+  mutate_if(is.double, round, digits = 2)</code></pre>
+<pre><code>## # A tibble: 8 x 7
+##   name       value .lower .upper .width .point .interval
+##   &lt;chr&gt;      &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    
+## 1 beta_11     3      2.26   3.75   0.95 mean   qi       
+## 2 d_GAM_raw   2.6    1.96   3.25   0.95 mean   qi       
+## 3 m_change_c  3      2.48   3.53   0.95 mean   qi       
+## 4 m_change_t  6      5.49   6.53   0.95 mean   qi       
+## 5 m_post_c    8.01   7.26   8.8    0.95 mean   qi       
+## 6 m_post_t   11     10.2   11.8    0.95 mean   qi       
+## 7 m_pre_c     5.01   4.26   5.77   0.95 mean   qi       
+## 8 m_pre_t     5      4.27   5.75   0.95 mean   qi</code></pre>
+<p>I don’t know that I’d use this approach for an applied purpose, but it’s a good exercise to perform to make sure you understand your model.</p>
+</div>
+<div id="you-may-want-options." class="section level3">
+<h3>You may want options.</h3>
+<p>Turns out there’s an other way to compute the standardized mean difference for experimental longitudinal data. You can just fit the model to the standardized data. As with our approach, above, the trick is to make sure you standardized the data with a defensible standardizer. I recommend you default to the pooled standard deviation at baseline. First, we compute the weighted mean at baseline.</p>
+<pre class="r"><code># group-level baseline means
+m_raw_pre_t &lt;- filter(d, tx ==  &quot;0.5&quot;) %&gt;% summarise(m = mean(`t1`)) %&gt;% pull()
+m_raw_pre_c &lt;- filter(d, tx ==  &quot;-0.5&quot;) %&gt;% summarise(m = mean(`t1`)) %&gt;% pull()
+
+# weighted (pooled) baseline mean
+m_raw_pre_p &lt;- (m_raw_pre_t * n_t + m_raw_pre_c * n_c) / (n_t + n_c)
+
+m_raw_pre_p</code></pre>
+<pre><code>## [1] 5</code></pre>
+<p>Now use the weighted baseline mean and the pooled baseline standard deviation to standardize the data, saving the results as <code>z</code>.</p>
+<pre class="r"><code>d_long &lt;-
+  d_long %&gt;% 
+  mutate(z = (y - m_raw_pre_p) / sd_raw_pre_p)</code></pre>
+<p>Now just fit a multilevel growth model with our new standardized variable <code>z</code> as the criterion.</p>
+<pre class="r"><code>fit2 &lt;-
+  brm(data = d_long,
+      family = gaussian,
+      z ~ 1 + time0 + tx + time0:tx + (1 + time0 | id),
+      cores = 4,
+      seed = 1)</code></pre>
+<p>Check the parameter summary.</p>
+<pre class="r"><code>print(fit2)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: z ~ 1 + time0 + tx + time0:tx + (1 + time0 | id) 
+##    Data: d_long (Number of observations: 80) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 20) 
+##                      Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)            0.95      0.20     0.63     1.42 1.00     1293     1768
+## sd(time0)                0.08      0.06     0.00     0.23 1.00      937     1827
+## cor(Intercept,time0)    -0.07      0.51    -0.90     0.91 1.00     4454     2198
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -0.01      0.24    -0.48     0.45 1.00     1000     1533
+## time0         1.30      0.05     1.19     1.41 1.00     5287     2785
+## tx           -0.01      0.46    -0.93     0.93 1.00     1069     1714
+## time0:tx      0.87      0.11     0.66     1.08 1.00     4651     2963
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.49      0.05     0.41     0.59 1.00     2769     2610
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>As before, our focal parameter is <span class="math inline">\(\beta_{11}\)</span>.</p>
+<pre class="r"><code>fixef(fit2)[&quot;time0:tx&quot;, -2]</code></pre>
+<pre><code>##  Estimate      Q2.5     Q97.5 
+## 0.8688574 0.6575292 1.0765760</code></pre>
+<p>But since our data are coded such that baseline is <code>time0 == 0</code> and the final time point is <code>time0 == 3</code>, we’ll need to multiply that coefficient by 3 to get the effect size in the pre/post metric.</p>
+<pre class="r"><code>fixef(fit2)[&quot;time0:tx&quot;, -2] * 3</code></pre>
+<pre><code>## Estimate     Q2.5    Q97.5 
+## 2.606572 1.972588 3.229728</code></pre>
+<p>There is it, within simulation variance of the effect size from the last section. Let’s compare them with a coefficient plot.</p>
+<pre class="r"><code>rbind(fixef(fit1)[&quot;time0:tx&quot;, -2] * 3 / sd_raw_pre_p,
+      fixef(fit2)[&quot;time0:tx&quot;, -2] * 3) %&gt;% 
+  data.frame() %&gt;% 
+  mutate(data = c(&quot;unstandardized data&quot;, &quot;standardized data&quot;)) %&gt;% 
+  
+  ggplot(aes(x = Estimate, xmin = Q2.5, xmax = Q97.5, y = data)) +
+  geom_vline(xintercept = 0, linetype = 2) +
+  geom_pointrange(fatten = 1) +
+  labs(x = expression(italic(d)[GMA-raw]~(&quot;standardized difference in change scores&quot;)),
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/fig4-1.png" width="480" /></p>
+<p>Yep, they’re pretty much the same.</p>
+</div>
+</div>
+<div id="sum-up" class="section level2">
+<h2>Sum up</h2>
+<p>Yes, one can compute a standardized mean difference effect size for experimental data analyzed with a multilevel growth model. The focal parameter is the treatment-time interaction, what we called <span class="math inline">\(\beta_{11}\)</span>. The trick is to divide that parameter by the pooled standard deviation at baseline. This will put the effect size, what Feingold called <span class="math inline">\(d_\text{GMA-raw}\)</span>, into a conventional Cohen’s <span class="math inline">\(d\)</span> type metric. But be mindful that this method may require you to multiply the effect by a number that corrects for how you have scaled the time variable. In the example we worked through, we multiplied by 3.</p>
+<p>As an alternative workflow, you can also fit the model on data that were standardized using the pooled standard deviation at baseline. This will automatically put the <span class="math inline">\(\beta_{11}\)</span> in the effect-size metric. But as with the other method, you still might have to correct for how you scaled the time variable.</p>
+<p>Though we’re not covering it, here, <span class="citation"><a href="#ref-feingoldARegressionFramework2013" role="doc-biblioref">Feingold</a> (<a href="#ref-feingoldARegressionFramework2013" role="doc-biblioref">2013</a>)</span> extended this framework to other contexts. For example, he discussed how to apply it to data with nonlinear trends and to models with other covariates. But the foundation is right here:</p>
+<p><span class="math display">\[
+d_\text{GMA-raw} = \beta_{11}(\text{time}) / SD_\text{raw}.
+\]</span></p>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] forcats_0.5.1   stringr_1.4.0   dplyr_1.0.5     purrr_0.3.4     readr_1.4.0     tidyr_1.1.3     tibble_3.1.0   
+##  [8] ggplot2_3.3.3   tidyverse_1.3.0 tidybayes_2.3.1 brms_2.15.0     Rcpp_1.0.6     
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6           igraph_1.2.6         splines_4.0.4       
+##   [6] svUnit_1.0.3         crosstalk_1.1.0.1    TH.data_1.0-10       rstantools_2.1.1     inline_0.3.17       
+##  [11] digest_0.6.27        htmltools_0.5.1.1    rsconnect_0.8.16     fansi_0.4.2          magrittr_2.0.1      
+##  [16] modelr_0.1.8         RcppParallel_5.0.2   matrixStats_0.57.0   xts_0.12.1           sandwich_3.0-0      
+##  [21] prettyunits_1.1.1    colorspace_2.0-0     rvest_0.3.6          ggdist_2.4.0.9000    haven_2.3.1         
+##  [26] xfun_0.22            callr_3.5.1          crayon_1.4.1         jsonlite_1.7.2       lme4_1.1-25         
+##  [31] survival_3.2-10      zoo_1.8-8            glue_1.4.2           gtable_0.3.0         emmeans_1.5.2-1     
+##  [36] V8_3.4.0             distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.2         abind_1.4-5         
+##  [41] scales_1.1.1         mvtnorm_1.1-1        DBI_1.1.0            miniUI_0.1.1.1       viridisLite_0.3.0   
+##  [46] xtable_1.8-4         stats4_4.0.4         StanHeaders_2.21.0-7 DT_0.16              htmlwidgets_1.5.2   
+##  [51] httr_1.4.2           threejs_0.3.3        arrayhelpers_1.1-0   ellipsis_0.3.1       pkgconfig_2.0.3     
+##  [56] loo_2.4.1            farver_2.0.3         dbplyr_2.0.0         utf8_1.1.4           labeling_0.4.2      
+##  [61] tidyselect_1.1.0     rlang_0.4.10         reshape2_1.4.4       later_1.1.0.1        munsell_0.5.0       
+##  [66] cellranger_1.1.0     tools_4.0.4          cli_2.3.1            generics_0.1.0       broom_0.7.5         
+##  [71] ggridges_0.5.2       evaluate_0.14        fastmap_1.0.1        yaml_2.2.1           fs_1.5.0            
+##  [76] processx_3.4.5       knitr_1.31           nlme_3.1-152         mime_0.10            projpred_2.0.2      
+##  [81] xml2_1.3.2           rstudioapi_0.13      compiler_4.0.4       bayesplot_1.8.0      shinythemes_1.1.2   
+##  [86] curl_4.3             gamm4_0.2-6          reprex_0.3.0         statmod_1.4.35       stringi_1.5.3       
+##  [91] highr_0.8            ps_1.6.0             blogdown_1.3         Brobdingnag_1.2-6    lattice_0.20-41     
+##  [96] Matrix_1.3-2         nloptr_1.2.2.2       markdown_1.1         shinyjs_2.0.0        vctrs_0.3.6         
+## [101] pillar_1.5.1         lifecycle_1.0.0      bridgesampling_1.0-0 estimability_1.3     httpuv_1.5.4        
+## [106] R6_2.5.0             bookdown_0.21        promises_1.1.1       gridExtra_2.3        codetools_0.2-18    
+## [111] boot_1.3-26          colourpicker_1.1.0   MASS_7.3-53          gtools_3.8.2         assertthat_0.2.1    
+## [116] withr_2.4.1          shinystan_2.5.0      multcomp_1.4-16      mgcv_1.8-33          parallel_4.0.4      
+## [121] hms_0.5.3            grid_4.0.4           coda_0.19-4          minqa_1.2.4          rmarkdown_2.7       
+## [126] shiny_1.5.0          lubridate_1.7.9.2    base64enc_0.1-3      dygraphs_1.1.1.6</code></pre>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
+<div id="ref-burknerBrmsPackageBayesian2017" class="csl-entry">
+Bürkner, P.-C. (2017). <span class="nocase">brms</span>: <span>An R</span> package for <span>Bayesian</span> multilevel models using <span>Stan</span>. <em>Journal of Statistical Software</em>, <em>80</em>(1), 1–28. <a href="https://doi.org/10.18637/jss.v080.i01">https://doi.org/10.18637/jss.v080.i01</a>
+</div>
+<div id="ref-burknerAdvancedBayesianMultilevel2018" class="csl-entry">
+Bürkner, P.-C. (2018). Advanced <span>Bayesian</span> multilevel modeling with the <span>R</span> package brms. <em>The R Journal</em>, <em>10</em>(1), 395–411. <a href="https://doi.org/10.32614/RJ-2018-017">https://doi.org/10.32614/RJ-2018-017</a>
+</div>
+<div id="ref-R-brms" class="csl-entry">
+Bürkner, P.-C. (2020). <em><span class="nocase">brms</span>: <span>Bayesian</span> regression models using ’<span>Stan</span>’</em>. <a href="https://CRAN.R-project.org/package=brms">https://CRAN.R-project.org/package=brms</a>
+</div>
+<div id="ref-brms2021RM" class="csl-entry">
+Bürkner, P.-C. (2021). <em><span class="nocase">brms</span> reference manual, <span>Version</span> 2.15.0</em>. <a href="https://CRAN.R-project.org/package=brms/brms.pdf">https://CRAN.R-project.org/package=brms/brms.pdf</a>
+</div>
+<div id="ref-cohenStatisticalPowerAnalysis1988a" class="csl-entry">
+Cohen, J. (1988). <em>Statistical power analysis for the behavioral sciences</em>. <span>L. Erlbaum Associates</span>. <a href="https://www.worldcat.org/title/statistical-power-analysis-for-the-behavioral-sciences/oclc/17877467">https://www.worldcat.org/title/statistical-power-analysis-for-the-behavioral-sciences/oclc/17877467</a>
+</div>
+<div id="ref-cummingUnderstandingTheNewStatistics2012" class="csl-entry">
+Cumming, G. (2012). <em>Understanding the new statistics: <span>Effect</span> sizes, confidence intervals, and meta-analysis</em>. <span>Routledge</span>. <a href="https://www.routledge.com/Understanding-The-New-Statistics-Effect-Sizes-Confidence-Intervals-and/Cumming/p/book/9780415879682">https://www.routledge.com/Understanding-The-New-Statistics-Effect-Sizes-Confidence-Intervals-and/Cumming/p/book/9780415879682</a>
+</div>
+<div id="ref-feingoldEffectSizeForGMA2009" class="csl-entry">
+Feingold, A. (2009). Effect sizes for growth-modeling analysis for controlled clinical trials in the same metric as for classical analysis. <em>Psychological Methods</em>, <em>14</em>(1), 43. <a href="https://doi.org/10.1037/a0014699">https://doi.org/10.1037/a0014699</a>
+</div>
+<div id="ref-feingoldARegressionFramework2013" class="csl-entry">
+Feingold, A. (2013). A regression framework for effect size assessments in longitudinal modeling of group differences. <em>Review of General Psychology</em>, <em>17</em>(1), 111–121. <a href="https://doi.org/10.1037/a0030048">https://doi.org/10.1037/a0030048</a>
+</div>
+<div id="ref-hedgesDistributionTheoryforGlass1981" class="csl-entry">
+Hedges, L. V. (1981). Distribution theory for <span>Glass</span>’s estimator of effect size and related estimators. <em>Journal of Educational Statistics</em>, <em>6</em>(2), 107–128. <a href="https://doi.org/10.3102/10769986006002107">https://doi.org/10.3102/10769986006002107</a>
+</div>
+<div id="ref-hoffmanLongitudinalAnalysisModeling2015" class="csl-entry">
+Hoffman, L. (2015). <em>Longitudinal analysis: <span>Modeling</span> within-person fluctuation and change</em> (1 edition). <span>Routledge</span>. <a href="https://www.routledge.com/Longitudinal-Analysis-Modeling-Within-Person-Fluctuation-and-Change/Hoffman/p/book/9780415876025">https://www.routledge.com/Longitudinal-Analysis-Modeling-Within-Person-Fluctuation-and-Change/Hoffman/p/book/9780415876025</a>
+</div>
+<div id="ref-R-tidybayes" class="csl-entry">
+Kay, M. (2020). <em><span class="nocase">tidybayes</span>: <span>Tidy</span> data and ’geoms’ for <span>Bayesian</span> models</em>. <a href="https://mjskay.github.io/tidybayes/">https://mjskay.github.io/tidybayes/</a>
+</div>
+<div id="ref-R-base" class="csl-entry">
+R Core Team. (2020). <em>R: <span>A</span> language and environment for statistical computing</em>. <span>R Foundation for Statistical Computing</span>. <a href="https://www.R-project.org/">https://www.R-project.org/</a>
+</div>
+<div id="ref-raudenbushHLM2002" class="csl-entry">
+Raudenbush, S. W., &amp; Bryk, A. S. (2002). <em>Hierarchical linear models: <span>Applications</span> and data analysis methods</em> (Second Edition). <span>SAGE Publications, Inc</span>. <a href="https://us.sagepub.com/en-us/nam/hierarchical-linear-models/book9230">https://us.sagepub.com/en-us/nam/hierarchical-linear-models/book9230</a>
+</div>
+<div id="ref-raudenbushEffectsOfStudyDuration2001" class="csl-entry">
+Raudenbush, S. W., &amp; Liu, X.-F. (2001). Effects of study duration, frequency of observation, and sample size on power in studies of group differences in polynomial change. <em>Psychological Methods</em>, <em>6</em>(4), 387. <a href="https://doi.org/10.1037/1082-989X.6.4.387">https://doi.org/10.1037/1082-989X.6.4.387</a>
+</div>
+<div id="ref-singerAppliedLongitudinalData2003" class="csl-entry">
+Singer, J. D., &amp; Willett, J. B. (2003). <em>Applied longitudinal data analysis: <span>Modeling</span> change and event occurrence</em>. <span>Oxford University Press, USA</span>. <a href="https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968">https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968</a>
+</div>
+<div id="ref-R-tidyverse" class="csl-entry">
+Wickham, H. (2019). <em><span class="nocase">tidyverse</span>: <span>Easily</span> install and load the ’tidyverse’</em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>
+</div>
+<div id="ref-wickhamWelcomeTidyverse2019" class="csl-entry">
+Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. <em>Journal of Open Source Software</em>, <em>4</em>(43), 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>If you’re curious about our priors, fit the models on your computer and then execute <code>fit1$prior</code>. To learn more about <strong>brms</strong> default priors, spend some time with the <a href="https://CRAN.R-project.org/package=brms/brms.pdf"><strong>brms</strong> reference manual</a> <span class="citation">(<a href="#ref-brms2021RM" role="doc-biblioref">Bürkner, 2021</a>)</span>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>If you’re not into the whole Bayesian framework I’m using, you can just ignore the part about trace plots and chains. If you’re into it, execute <code>plot(fit1)</code>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>Really. If you are interested in communicating your research results to others, do not mess with the <span class="math inline">\(d_\text{GMA-change}\)</span>. It’s on a totally different metric from the conventional Cohen’s <span class="math inline">\(d\)</span> and you’ll just end up confusing people.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
