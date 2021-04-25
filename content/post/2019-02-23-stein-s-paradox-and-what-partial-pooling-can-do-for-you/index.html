@@ -1,0 +1,615 @@
+---
+title: Stein's Paradox and What Partial Pooling Can Do For You
+author: A. Solomon Kurz
+date: '2019-02-23'
+slug: ''
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - multilevel
+  - R
+  - tutorial
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-21T16:47:04-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+bibliography: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/my_blog.bib
+biblio-style: apalike
+csl: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/apa.csl  
+link-citations: yes 
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>[edited on January 18, 2021]</p>
+<div id="tldr" class="section level2">
+<h2><a href="https://www.urbandictionary.com/define.php?term=tl%3Bdr">tl;dr</a></h2>
+<blockquote>
+<p>Sometimes a mathematical result is strikingly contrary to generally held belief even though an obviously valid proof is given. <a href="https://en.wikipedia.org/wiki/Charles_M._Stein">Charles Stein</a> of Stanford University discovered such a paradox in statistics in 1955. His result undermined a century and a half of work on estimation theory. <span class="citation">(<a href="#ref-efronSteinParadoxStatistics1977" role="doc-biblioref">Efron &amp; Morris, 1977, p. 119</a>)</span>
+The James-Stein estimator leads to better predictions than simple means. Though I don’t recommend you actually use the James-Stein estimator in applied research, understanding why it works might help clarify why it’s time social scientists consider <a href="http://elevanth.org/blog/2017/08/24/multilevel-regression-as-default/">defaulting to multilevel models</a> for their work-a-day projects.</p>
+</blockquote>
+</div>
+<div id="the-james-stein-can-help-us-understand-multilevel-models." class="section level2">
+<h2>The James-Stein can help us understand multilevel models.</h2>
+<p>I recently noticed someone—I wish I could recall who—tweet about Efron and Morris’s classic paper, <a href="http://statweb.stanford.edu/~ckirby/brad/other/Article1977.pdf"><em>Stein’s paradox in statistics</em></a>. At the time, I was vaguely aware of the paper but hadn’t taken the chance to read it. The tweet’s author mentioned how good a read it was. Now I’ve finally given it a look, I concur. I’m not a sports fan, but I really appreciated their primary example using batting averages from baseball players in 1970. It clarified why partial pooling leads to better estimates than taking simple averages.</p>
+<p>In this post, I’ll walk out Efron and Morris’s baseball example and then link it to contemporary Bayesian multilevel models.</p>
+<div id="i-assume-things." class="section level3">
+<h3>I assume things.</h3>
+<p>For this project, I’m presuming you are familiar with logistic regression, vaguely familiar with the basic differences between frequentist and Bayesian approaches to fitting regression models, and have heard of multilevel models. All code in is <a href="https://www.r-project.org/about.html"><strong>R</strong></a> <span class="citation">(<a href="#ref-R-base" role="doc-biblioref">R Core Team, 2020</a>)</span>, with a heavy use of the <a href="https://www.tidyverse.org"><strong>tidyverse</strong></a> <span class="citation">(<a href="#ref-R-tidyverse" role="doc-biblioref">Wickham, 2019</a>; <a href="#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>)</span>, and the <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong> package</a> for Bayesian regression <span class="citation">(<a href="#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">Bürkner, 2017</a>, <a href="#ref-burknerAdvancedBayesianMultilevel2018" role="doc-biblioref">2018</a>, <a href="#ref-R-brms" role="doc-biblioref">2020</a>)</span>.</p>
+</div>
+<div id="behold-the-baseball-data." class="section level3">
+<h3>Behold the <code>baseball</code> data.</h3>
+<blockquote>
+<p>Stein’s paradox concerns the use of observed averages to estimate unobservable quantities. Averaging is the second most basic process in statistics, the first being the simple act of counting. A baseball player who gets seven hits in 20 official times at bat is said to have a batting average of .350. In computing this statistic we are forming an estimate of the payer’s true batting ability in terms of his observed average rate of success. Asked how well the player will do in his next 100 times at bat, we would probably predict 35 more hits. In traditional statistical theory it can be proved that no other estimation rule is uniformly better than the observed average.</p>
+<p>The paradoxical element in Stein’s result is that it sometimes contradicts this elementary law of statistical theory. If we have three or more baseball players, and if we are interested in predicting future batting averages for each of them, then there is a procedure that is better than simply extrapolating from the three separate averages…</p>
+<p>As our primary data we shall consider the batting averages of 18 major-league players as they were recorded after their first 45 times at bat in the 1970 season. <span class="citation">(<a href="#ref-efronSteinParadoxStatistics1977" role="doc-biblioref">Efron &amp; Morris, 1977, p. 119</a>)</span>
+Let’s enter the <code>baseball</code> data.</p>
+</blockquote>
+<pre class="r"><code>library(tidyverse)
+baseball &lt;- 
+  tibble(player = c(&quot;Clemente&quot;, &quot;F Robinson&quot;, &quot;F Howard&quot;, &quot;Johnstone&quot;, &quot;Berry&quot;, &quot;Spencer&quot;, &quot;Kessinger&quot;, &quot;L Alvarado&quot;, &quot;Santo&quot;, &quot;Swoboda&quot;, &quot;Unser&quot;, &quot;Williams&quot;, &quot;Scott&quot;, &quot;Petrocelli&quot;, &quot;E Rodriguez&quot;, &quot;Campaneris&quot;, &quot;Munson&quot;, &quot;Alvis&quot;),
+         hits = c(18:15, 14, 14:12, 11, 11, rep(10, times = 5), 9:7),
+         times_at_bat = 45,
+         true_ba = c(.346, .298, .276, .222, .273, .27, .263, .21, .269, .23, .264, .256, .303, .264, .226, .286, .316, .2))</code></pre>
+<p>Here’s what those data look like.</p>
+<pre class="r"><code>glimpse(baseball)</code></pre>
+<pre><code>## Rows: 18
+## Columns: 4
+## $ player       &lt;chr&gt; &quot;Clemente&quot;, &quot;F Robinson&quot;, &quot;F Howard&quot;, &quot;Johnstone&quot;, &quot;Berry&quot;, &quot;Spencer&quot;, &quot;Kessi…
+## $ hits         &lt;dbl&gt; 18, 17, 16, 15, 14, 14, 13, 12, 11, 11, 10, 10, 10, 10, 10, 9, 8, 7
+## $ times_at_bat &lt;dbl&gt; 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45, 45
+## $ true_ba      &lt;dbl&gt; 0.346, 0.298, 0.276, 0.222, 0.273, 0.270, 0.263, 0.210, 0.269, 0.230, 0.264, …</code></pre>
+<p>We have data from 18 players. The main columns are of the number of <code>hits</code> for their first 45 <code>times_at_bat</code>. I got the <code>player</code>, <code>hits</code>, and <code>times_at_bat</code> values directly from the paper. However, Efron and Morris didn’t include the batting averages for the end of the season in the paper. Happily, I was able to find those values in the <a href="http://statweb.stanford.edu/~ckirby/brad/LSI/chapter1.pdf">online</a> posting of the first chapter of one of Effron’s books <span class="citation">(<a href="#ref-efronEmpiricalBayesJamesStein2010" role="doc-biblioref">2010</a>)</span> . They’re included in the <code>true_ba</code> column.</p>
+<blockquote>
+<p>These were all the players who happened to have batted exactly 45 times the day the data were tabulated. A batting average is defined, of course, simply as the number of hits divided by the number of times at bat; it is always a number between 0 and 1. <span class="citation">(<a href="#ref-efronSteinParadoxStatistics1977" role="doc-biblioref">Efron &amp; Morris, 1977, p. 119</a>)</span>
+I like use a lot of plots to better understand what I’m doing. Before we start plotting, I should point out the color theme in this project comes from <a href="https://teamcolorcodes.com/seattle-mariners-color-codes/">here</a>. [Haters gonna hate.]</p>
+</blockquote>
+<pre class="r"><code>navy_blue &lt;- &quot;#0C2C56&quot;
+nw_green  &lt;- &quot;#005C5C&quot;  
+silver    &lt;- &quot;#C4CED4&quot;
+theme_set(theme_grey() +
+            theme(panel.grid = element_blank(),
+                  panel.background = element_rect(fill = silver),
+                  strip.background = element_rect(fill = silver)))</code></pre>
+<p>We might use a histogram to get a sense of the <code>hits</code>.</p>
+<pre class="r"><code>baseball %&gt;% 
+  ggplot(aes(x = hits)) +
+  geom_histogram(color = nw_green,
+                 fill  = navy_blue,
+                 size  = 1/10, binwidth = 1) +
+  scale_x_continuous(&quot;hits during the first 45 trials&quot;,
+                     breaks = 7:18)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="384" /></p>
+<p>Here is the distribution of the end-of-the-season batting averages, <code>true_ba</code>.</p>
+<pre class="r"><code>library(tidybayes)
+baseball %&gt;% 
+  ggplot(aes(x = true_ba, y = 0)) +
+  stat_halfeye(point_interval = median_qi, .width = .5,
+               color = navy_blue, fill = alpha(nw_green, 2/3)) +
+  geom_rug(color = navy_blue, size = 1/3, alpha = 1/2) +
+  ggtitle(NULL, 
+          subtitle = &quot;The dot and horizontal line are the median and\ninterquartile range, respectively.&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="384" /></p>
+</div>
+<div id="james-stein-will-help-us-achieve-our-goal." class="section level3">
+<h3>James-Stein will help us achieve our goal.</h3>
+<p>For each of the 18 players in the data, our goal is to the best job possible to use the data for their first 45 times at bat (i.e., <code>hits</code> and <code>times_at_bat</code>) to predict their batting averages at the end of the season (i.e., <code>true_ba</code>). Before Charles Stein, the conventional reasoning was their initial batting averages (i.e., <code>hits / times_at_bat</code>) are the best way to do this. It turns out that would be naïve. To see why, let</p>
+<ul>
+<li><code>y</code> (i.e., <span class="math inline">\(y\)</span>) = the batting average for the first 45 times at bat,</li>
+<li><code>y_bar</code> (i.e., <span class="math inline">\(\overline y\)</span>) = the grand mean for the first 45 times at bat,</li>
+<li><code>c</code> (i.e., <span class="math inline">\(c\)</span>) = shrinking factor,</li>
+<li><code>z</code> (i.e., <span class="math inline">\(z\)</span>) = James-Stein estimate, and</li>
+<li><code>true_ba</code> (i.e., <code>theta</code>, <span class="math inline">\(\theta\)</span>) = the batting average at the end of the season.</li>
+</ul>
+<blockquote>
+<p>The first step in applying Stein’s method is to determine the average of the averages. Obviously this grand average, which we give the symbol <span class="math inline">\(\overline y\)</span>, must also lie between 0 and 1. The essential process in Stein’s method is the “shrinking” of all the individual averages toward this grand average. If a player’s hitting record is better than the grand average, then it must be reduced; if he is not hitting as well as the grand average, then his hitting record must be increased. The resulting shrunken value for each player we designate <span class="math inline">\(z\)</span>. <span class="citation">(<a href="#ref-efronSteinParadoxStatistics1977" role="doc-biblioref">Efron &amp; Morris, 1977, p. 119</a>)</span>
+As such, the James-Stein estimator is</p>
+</blockquote>
+<p><span class="math display">\[z = \overline y + c(y - \overline y),\]</span></p>
+<p>where, in the paper, <span class="math inline">\(c = .212\)</span>. Let’s get some of those values into the <code>baseball</code> data.</p>
+<pre class="r"><code>(
+  baseball &lt;-
+  baseball %&gt;% 
+  mutate(y = hits / times_at_bat) %&gt;% 
+  mutate(y_bar = mean(y),
+         c     = .212) %&gt;% 
+  mutate(z     = y_bar + c * (y - y_bar),
+         theta = true_ba)
+  )</code></pre>
+<pre><code>## # A tibble: 18 x 9
+##    player       hits times_at_bat true_ba     y y_bar     c     z theta
+##    &lt;chr&gt;       &lt;dbl&gt;        &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 Clemente       18           45   0.346 0.4   0.265 0.212 0.294 0.346
+##  2 F Robinson     17           45   0.298 0.378 0.265 0.212 0.289 0.298
+##  3 F Howard       16           45   0.276 0.356 0.265 0.212 0.285 0.276
+##  4 Johnstone      15           45   0.222 0.333 0.265 0.212 0.280 0.222
+##  5 Berry          14           45   0.273 0.311 0.265 0.212 0.275 0.273
+##  6 Spencer        14           45   0.27  0.311 0.265 0.212 0.275 0.27 
+##  7 Kessinger      13           45   0.263 0.289 0.265 0.212 0.270 0.263
+##  8 L Alvarado     12           45   0.21  0.267 0.265 0.212 0.266 0.21 
+##  9 Santo          11           45   0.269 0.244 0.265 0.212 0.261 0.269
+## 10 Swoboda        11           45   0.23  0.244 0.265 0.212 0.261 0.23 
+## 11 Unser          10           45   0.264 0.222 0.265 0.212 0.256 0.264
+## 12 Williams       10           45   0.256 0.222 0.265 0.212 0.256 0.256
+## 13 Scott          10           45   0.303 0.222 0.265 0.212 0.256 0.303
+## 14 Petrocelli     10           45   0.264 0.222 0.265 0.212 0.256 0.264
+## 15 E Rodriguez    10           45   0.226 0.222 0.265 0.212 0.256 0.226
+## 16 Campaneris      9           45   0.286 0.2   0.265 0.212 0.252 0.286
+## 17 Munson          8           45   0.316 0.178 0.265 0.212 0.247 0.316
+## 18 Alvis           7           45   0.2   0.156 0.265 0.212 0.242 0.2</code></pre>
+<blockquote>
+<p>Which set of values, <span class="math inline">\(y\)</span> or <span class="math inline">\(z\)</span>, is the better indicator of batting ability for the 18 players in our example? In order to answer that question in a precise way one would have to know the “true batting ability” of each player. This true average we shall designate <span class="math inline">\(\theta\)</span> (the Greek letter theta). Actually it is an unknowable quantity, an abstraction representing the probability that a player will get a hit on any given time at bat. Although <span class="math inline">\(\theta\)</span> is unobservable, we have a good approximation to it: the subsequent performance of the batters. It is sufficient to consider just the remainder of the 1970 season, which includes about nine times as much data as the preliminary averages were based on. <span class="citation">(<a href="#ref-efronSteinParadoxStatistics1977" role="doc-biblioref">Efron &amp; Morris, 1977, p. 119</a>)</span>
+Now we have both <span class="math inline">\(y\)</span> and <span class="math inline">\(z\)</span> in the data, let’s compare their distributions.</p>
+</blockquote>
+<pre class="r"><code>baseball %&gt;% 
+  pivot_longer(cols = c(y, z)) %&gt;% 
+  mutate(label = ifelse(name == &quot;z&quot;, 
+                        &quot;the James-Stein estimate&quot;, 
+                        &quot;early-season batting average&quot;)) %&gt;% 
+  
+  ggplot(aes(x = value, y = label)) +
+  geom_vline(xintercept = 0.2654321, linetype = 2,
+             color = &quot;white&quot;) +
+  stat_halfeye(point_interval = median_qi, .width = .5,
+               color = navy_blue, fill = alpha(nw_green, 2/3),
+               height = 4) +
+  labs(x = &quot;batting average&quot;, y = NULL) +
+  coord_cartesian(ylim = c(1.25, 5.25))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="480" /></p>
+<p>As implied in the formula, the James-Stein estimates are substantially shrunken towards the grand mean, <code>y_bar</code>. To get a sense of which estimate is better, we can subtract the estimate from <code>theta</code>, the end of the season batting average.</p>
+<pre class="r"><code>baseball &lt;-
+  baseball %&gt;% 
+  mutate(y_error = theta - y,
+         z_error = theta - z)</code></pre>
+<p>Since <code>y_error</code> and <code>y_error</code> are error distributions, we prefer values to be as close to zero as possible. Let’s take a look.</p>
+<pre class="r"><code>baseball %&gt;% 
+  pivot_longer(y_error:z_error) %&gt;% 
+  
+  ggplot(aes(x = value, y = name)) +
+  geom_vline(xintercept = 0, linetype = 2,
+             color = &quot;white&quot;) +
+  stat_halfeye(point_interval = median_qi, .width = .5,
+               color = navy_blue, fill = alpha(nw_green, 2/3),
+               height = 2.5) +
+  labs(x = NULL, y = NULL) +
+  coord_cartesian(ylim = c(1.25, 4))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="384" /></p>
+<p>The James-Stein errors (i.e., <code>z_error</code>) are more concentrated toward zero. In the paper, we read: “One method of evaluating the two estimates is by simply counting their successes and failures. For 16 of the 18 players the James-Stein estimator <span class="math inline">\(z\)</span> is closer than the observed average <span class="math inline">\(y\)</span> to the ‘true,’ or seasonal, average <span class="math inline">\(\theta\)</span>” (pp. 119–121). We can compute that with a little <code>ifelse()</code>.</p>
+<pre class="r"><code>baseball %&gt;% 
+  transmute(closer_to_theta = ifelse(abs(y_error) - abs(z_error) == 0, &quot;equal&quot;,
+                                     ifelse(abs(y_error) - abs(z_error) &gt; 0, &quot;z&quot;, &quot;y&quot;))) %&gt;% 
+  count(closer_to_theta)</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   closer_to_theta     n
+##   &lt;chr&gt;           &lt;int&gt;
+## 1 y                   2
+## 2 z                  16</code></pre>
+<blockquote>
+<p>A more quantitative way of comparing the two techniques is through the total squared error of estimation… The observed averages <span class="math inline">\(y\)</span> have a total squared error of .077, whereas the squared error of the James-Stein estimators is only .022. By this comparison, then, Stein’s method is 3.5 times as accurate. <span class="citation">(<a href="#ref-efronSteinParadoxStatistics1977" role="doc-biblioref">Efron &amp; Morris, 1977, p. 121</a>)</span></p>
+</blockquote>
+<pre class="r"><code>baseball %&gt;% 
+  pivot_longer(y_error:z_error) %&gt;% 
+  group_by(name) %&gt;% 
+  summarise(total_squared_error = sum(value * value))</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   name    total_squared_error
+##   &lt;chr&gt;                 &lt;dbl&gt;
+## 1 y_error              0.0755
+## 2 z_error              0.0214</code></pre>
+<p>We can get the 3.5 value with simple division.</p>
+<pre class="r"><code>0.07548795 / 0.02137602</code></pre>
+<pre><code>## [1] 3.531431</code></pre>
+<p>So it does indeed turn out that shrinking each player’s initial estimate toward the grand mean of those initial estimates does a better job of predicting their end-of-the-season batting averages than using their individual batting averages. To get a sense of what this looks like, let’s make our own version of the figure on page 121.</p>
+<pre class="r"><code>bind_rows(
+  baseball %&gt;% 
+    select(y, z, theta, player) %&gt;% 
+    gather(key, value, -player) %&gt;% 
+    mutate(time = ifelse(key == &quot;theta&quot;, &quot;theta&quot;, &quot;estimate&quot;)),
+  baseball %&gt;% 
+    select(player, theta) %&gt;% 
+    rename(value = theta) %&gt;% 
+    mutate(key  = &quot;theta&quot;, 
+           time = &quot;theta&quot;)
+) %&gt;% 
+  mutate(facet = rep(c(&quot;estimate = y&quot;, &quot;estimate = z&quot;), each = n() / 4) %&gt;% rep(., times = 2)) %&gt;% 
+  
+  ggplot(aes(x = time, y = value, group = player)) +
+  geom_hline(yintercept = 0.2654321, linetype = 2,
+             color = &quot;white&quot;) +
+  geom_line(alpha = 1/2,
+            color = nw_green) +
+  geom_point(alpha = 1/2,
+             color = navy_blue) +
+  labs(x = NULL,
+       y = &quot;batting average&quot;) +
+  theme(axis.ticks.x = element_blank()) +
+  facet_wrap(~facet)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="576" /></p>
+<p>The James-Stein estimator works because of its shrinkage, and the shrinkage factor is called <span class="math inline">\(c\)</span>. Though in the first parts of the paper, Efron and Morris just told us <span class="math inline">\(c = .212\)</span>, they gave the actual formula for <span class="math inline">\(c\)</span> a little later on. If you let <span class="math inline">\(k\)</span> be the number of means (i.e., the number of clusters), then</p>
+<p><span class="math display">\[c = 1 - \frac{(k - 3)\sigma^2}{\sum (y - \overline y)^2}.\]</span></p>
+<p>The difficulty of that formula is we don’t know the value for <span class="math inline">\(\sigma^2\)</span>. It’s not the sample variance of <span class="math inline">\(y\)</span> (i.e., <code>var(y)</code>). An <a href="https://stats.stackexchange.com/questions/5727/james-stein-estimator-how-did-efron-and-morris-calculate-sigma2-in-shrinkag">answer to this stackexchange question</a> helped clarify Efron and Morris were using the formula for the standard error of the estimate,</p>
+<p><span class="math display">\[\sqrt{\hat p(1 - \hat p) / n},\]</span></p>
+<p>which, in the variance metric, is simply</p>
+<p><span class="math display">\[\hat p(1 - \hat p) / n.\]</span></p>
+<p>Following along, we can compute <code>sigma_squared</code> like so:</p>
+<pre class="r"><code>(sigma_squared &lt;- mean(baseball$y) * (1 - mean(baseball$y))  / 45)</code></pre>
+<pre><code>## [1] 0.004332842</code></pre>
+<p>Now we can reproduce the <span class="math inline">\(c\)</span> value from the paper.</p>
+<pre class="r"><code>baseball %&gt;% 
+  select(player, y:c) %&gt;% 
+  mutate(squared_deviation = (y - y_bar)^2) %&gt;%
+  summarise(c_by_hand = 1 - ((n() - 3) * sigma_squared / sum(squared_deviation)))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   c_by_hand
+##       &lt;dbl&gt;
+## 1     0.212</code></pre>
+</div>
+</div>
+<div id="lets-go-bayesian." class="section level2">
+<h2>Let’s go Bayesian.</h2>
+<p>This has been fun. But I don’t recommend you actually use the James-Stein estimator in your research.</p>
+<blockquote>
+<p>The James-Stein estimator is not the only one that is known to be better than the sample averages…</p>
+<p>The search for new estimators continues. Recent efforts [in the 1970s, that is] have been concentrated on achieving results like those obtained with Stein’s method for problems involving distributions other than the normal distribution. Several lines of work, including Stein’s and Robbins’ and more formal <em>Bayesian methods</em> seem to be converging on a powerful general theory of parameter estimation. <span class="citation">(<a href="#ref-efronSteinParadoxStatistics1977" role="doc-biblioref">Efron &amp; Morris, 1977, p. 127</a>, <em>emphasis</em> added)</span>
+The James-Stein estimator is not Bayesian, but it is a precursor to the kind of analyses we now do with Bayesian multilevel models, which pool cluster-level means toward a grand mean. To get a sense of this, we’ll fit a couple models. First, let’s load the <strong>brms</strong> package.</p>
+</blockquote>
+<pre class="r"><code>library(brms)</code></pre>
+<p>I typically work with the linear regression paradigm. If we were to analyze the <code>baseball</code> data, we’d use an aggregated binomial mode, which is a particular kind of logistic regression. You can learn more about it <a href="https://www.youtube.com/watch?v=DyrUkqK9Tj4&amp;t=1581s&amp;frags=pl%2Cwn">here</a>. If we wanted a model that corresponded to the <span class="math inline">\(y\)</span> estimates, above, we’d use <code>hits</code> as the criterion and allow each player to get his own <em>separate</em> estimate. Since we’re working within the Bayesian paradigm, we also need to assign priors. In this case, we’ll use a weakly-regularizing <span class="math inline">\(\operatorname{Normal}(0, 1.5)\)</span> on the intercepts. See <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations">this wiki</a> for more on weakly-regularizing priors.</p>
+<p>Here’s the code to fit the model with <strong>brms</strong>.</p>
+<pre class="r"><code>fit_y &lt;-
+  brm(data = baseball, 
+      family = binomial,
+      hits | trials(45) ~ 0 + player,
+      prior(normal(0, 1.5), class = b),
+      seed = 1)</code></pre>
+<p>If you were curious, that model followed the statistical formula</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{hits}_i &amp; \sim \operatorname{Binomial} (n = 45, p_i) \\
+\operatorname{logit}(p_i) &amp; = \alpha_\text{player} \\
+\alpha_\text{player}      &amp; \sim \operatorname{Normal}(0, 1.5),
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(p_i\)</span> is the probability of player <span class="math inline">\(i\)</span>, <span class="math inline">\(\alpha_\text{player}\)</span> is a vector of <span class="math inline">\(\text{player}\)</span>-specific intercepts from within the logistic regression model, and each of those intercepts are given a <span class="math inline">\(\operatorname{Normal}(0, 1.5)\)</span> prior on the log-odds scale. (If this is all new and confusing, don’t worry. I’ll recommended some resources at the end of this post.)</p>
+<p>For our analogue to the James-Stein estimate <span class="math inline">\(z\)</span>, we’ll fit the multilevel version of that last model. While each player still gets his own estimate, those estimates are now partially-pooled toward the grand mean.</p>
+<pre class="r"><code>fit_z &lt;-
+  brm(data = baseball, 
+      family = binomial,
+      hits | trials(45) ~ 1 + (1 | player),
+      prior = c(prior(normal(0, 1.5), class = Intercept),
+                prior(normal(0, 1.5), class = sd)),
+      seed = 1)</code></pre>
+<p>That model followed the statistical formula</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{hits}_i &amp; \sim \operatorname{Binomial}(n = 45, p_i) \\
+\operatorname{logit}(p_i) &amp; = \alpha + \alpha_\text{player} \\
+\alpha               &amp; \sim \operatorname{Normal}(0, 1.5) \\ 
+\alpha_\text{player} &amp; \sim \operatorname{Normal}(0, \sigma_\text{player}) \\
+\sigma_\text{player} &amp; \sim \operatorname{HalfNormal}(0, 1.5),
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\alpha\)</span> is the grand mean among the <span class="math inline">\(\text{player}\)</span>-specific intercepts, <span class="math inline">\(\alpha_\text{player}\)</span> is the vector of <span class="math inline">\(\text{player}\)</span>-specific deviations from the grand mean, which are Normally distributed with a mean of zero and a standard deviation of <span class="math inline">\(\sigma_\text{player}\)</span>, which is estimated from the data.</p>
+<p>Here are the model summaries.</p>
+<pre class="r"><code>fit_y$fit</code></pre>
+<pre><code>## Inference for Stan model: c40df95ccb9776814804fa2fdc850e74.
+## 4 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=4000.
+## 
+##                      mean se_mean   sd   2.5%    25%    50%    75%  97.5% n_eff Rhat
+## b_playerAlvis       -1.62    0.00 0.39  -2.42  -1.86  -1.61  -1.35  -0.89  8659 1.00
+## b_playerBerry       -0.77    0.00 0.31  -1.40  -0.98  -0.77  -0.56  -0.19  8866 1.00
+## b_playerCampaneris  -1.35    0.00 0.36  -2.08  -1.58  -1.33  -1.11  -0.67  9745 1.00
+## b_playerClemente    -0.40    0.00 0.31  -1.02  -0.60  -0.40  -0.21   0.20 11477 1.00
+## b_playerERodriguez  -1.22    0.00 0.35  -1.92  -1.45  -1.20  -0.99  -0.57  8931 1.00
+## b_playerFHoward     -0.58    0.00 0.31  -1.20  -0.78  -0.57  -0.37   0.01  8294 1.00
+## b_playerFRobinson   -0.49    0.00 0.30  -1.09  -0.70  -0.49  -0.28   0.09  8854 1.00
+## b_playerJohnstone   -0.68    0.00 0.32  -1.31  -0.89  -0.67  -0.46  -0.09  7975 1.00
+## b_playerKessinger   -0.89    0.00 0.33  -1.54  -1.11  -0.88  -0.66  -0.26  8191 1.00
+## b_playerLAlvarado   -0.99    0.00 0.32  -1.64  -1.20  -0.98  -0.76  -0.39  8147 1.00
+## b_playerMunson      -1.48    0.00 0.37  -2.25  -1.72  -1.47  -1.23  -0.78  9573 1.00
+## b_playerPetrocelli  -1.22    0.00 0.36  -1.95  -1.45  -1.21  -0.97  -0.55  9342 1.00
+## b_playerSanto       -1.09    0.00 0.32  -1.75  -1.31  -1.09  -0.88  -0.49  8616 1.00
+## b_playerScott       -1.22    0.00 0.35  -1.92  -1.44  -1.20  -0.98  -0.58 10266 1.00
+## b_playerSpencer     -0.77    0.00 0.32  -1.42  -0.98  -0.77  -0.56  -0.16  9060 1.00
+## b_playerSwoboda     -1.10    0.00 0.33  -1.79  -1.31  -1.09  -0.87  -0.47  9435 1.00
+## b_playerUnser       -1.21    0.00 0.34  -1.89  -1.44  -1.21  -0.97  -0.57  8065 1.00
+## b_playerWilliams    -1.22    0.00 0.36  -1.94  -1.46  -1.21  -0.98  -0.56  7829 1.00
+## lp__               -73.41    0.08 3.01 -80.13 -75.25 -73.08 -71.26 -68.43  1285 1.01
+## 
+## Samples were drawn using NUTS(diag_e) at Wed Apr 21 16:39:19 2021.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+<pre class="r"><code>fit_z$fit</code></pre>
+<pre><code>## Inference for Stan model: 668801c962bccfca26059b8ea6970ac4.
+## 4 chains, each with iter=2000; warmup=1000; thin=1; 
+## post-warmup draws per chain=1000, total post-warmup draws=4000.
+## 
+##                                   mean se_mean   sd   2.5%    25%    50%    75%  97.5% n_eff Rhat
+## b_Intercept                      -1.02    0.00 0.09  -1.20  -1.08  -1.02  -0.96  -0.83  3915    1
+## sd_player__Intercept              0.17    0.00 0.11   0.01   0.08   0.15   0.24   0.42  1542    1
+## r_player[Alvis,Intercept]        -0.12    0.00 0.19  -0.62  -0.21  -0.06   0.00   0.14  2305    1
+## r_player[Berry,Intercept]         0.04    0.00 0.16  -0.27  -0.04   0.02   0.12   0.42  4742    1
+## r_player[Campaneris,Intercept]   -0.07    0.00 0.17  -0.51  -0.14  -0.04   0.02   0.22  3840    1
+## r_player[Clemente,Intercept]      0.14    0.00 0.19  -0.13   0.00   0.08   0.23   0.62  2526    1
+## r_player[E.Rodriguez,Intercept]  -0.05    0.00 0.16  -0.43  -0.13  -0.02   0.03   0.24  3733    1
+## r_player[F.Howard,Intercept]      0.09    0.00 0.17  -0.19  -0.01   0.05   0.17   0.53  3200    1
+## r_player[F.Robinson,Intercept]    0.11    0.00 0.18  -0.15   0.00   0.07   0.20   0.55  3344    1
+## r_player[Johnstone,Intercept]     0.07    0.00 0.17  -0.23  -0.02   0.03   0.14   0.49  3796    1
+## r_player[Kessinger,Intercept]     0.02    0.00 0.16  -0.30  -0.06   0.01   0.09   0.37  4818    1
+## r_player[L.Alvarado,Intercept]    0.00    0.00 0.15  -0.34  -0.07   0.00   0.07   0.32  4687    1
+## r_player[Munson,Intercept]       -0.10    0.00 0.18  -0.56  -0.19  -0.05   0.01   0.18  3442    1
+## r_player[Petrocelli,Intercept]   -0.05    0.00 0.16  -0.44  -0.13  -0.02   0.03   0.26  5131    1
+## r_player[Santo,Intercept]        -0.03    0.00 0.16  -0.39  -0.10  -0.01   0.05   0.30  4883    1
+## r_player[Scott,Intercept]        -0.05    0.00 0.17  -0.45  -0.12  -0.02   0.04   0.26  4392    1
+## r_player[Spencer,Intercept]       0.05    0.00 0.16  -0.24  -0.03   0.02   0.13   0.42  4149    1
+## r_player[Swoboda,Intercept]      -0.02    0.00 0.16  -0.38  -0.10  -0.01   0.05   0.30  5432    1
+## r_player[Unser,Intercept]        -0.04    0.00 0.17  -0.45  -0.12  -0.02   0.04   0.26  4419    1
+## r_player[Williams,Intercept]     -0.05    0.00 0.16  -0.42  -0.12  -0.02   0.04   0.27  5162    1
+## lp__                            -73.87    0.12 4.09 -82.44 -76.44 -73.79 -71.06 -66.48  1112    1
+## 
+## Samples were drawn using NUTS(diag_e) at Wed Apr 21 16:39:41 2021.
+## For each parameter, n_eff is a crude measure of effective sample size,
+## and Rhat is the potential scale reduction factor on split chains (at 
+## convergence, Rhat=1).</code></pre>
+<p>If you’re new to aggregated binomial or logistic regression, those estimates might be confusing. For technical reasons–see <a href="https://www.youtube.com/watch?v=DyrUkqK9Tj4&amp;t=1430s&amp;frags=pl%2Cwn">here</a>–, they’re in the log-odds metric. But we can use the <code>brms::inv_logit_scaled()</code> function to convert them back to a probability metric. <em>Why would we want a probability metric?</em>, you might ask. As it turns out, batting average is in a probability metric, too. So you might also think of the <code>inv_logit_scaled()</code> function as turning the model results into a batting-average metric. For example, if we wanted to get the estimated batting average for E. Rodriguez based on the <code>y_fit</code> model (i.e., the model corresponding to the <span class="math inline">\(y\)</span> estimator), we might do something like this.</p>
+<pre class="r"><code>fixef(fit_y)[&quot;playerERodriguez&quot;, 1] %&gt;% 
+  inv_logit_scaled()</code></pre>
+<pre><code>## [1] 0.2282195</code></pre>
+<p>To double check the model returned a sensible estimate, here’s the corresponding <code>y</code> value from the <code>baseball</code> data.</p>
+<pre class="r"><code>baseball %&gt;% 
+  filter(player == &quot;E Rodriguez&quot;) %&gt;% 
+  select(y)</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##       y
+##   &lt;dbl&gt;
+## 1 0.222</code></pre>
+<p>It’s a little off, but in the right ballpark. Here is the corresponding estimate from the multilevel model, <code>fit_z</code>.</p>
+<pre class="r"><code>coef(fit_z)$player[&quot;E Rodriguez&quot;, 1, ] %&gt;% inv_logit_scaled()</code></pre>
+<pre><code>## [1] 0.2555493</code></pre>
+<p>And indeed that’s pretty close to the <code>z</code> value from the <code>baseball</code> data, too.</p>
+<pre class="r"><code>baseball %&gt;% 
+  filter(player == &quot;E Rodriguez&quot;) %&gt;% 
+  select(z)</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##       z
+##   &lt;dbl&gt;
+## 1 0.256</code></pre>
+<p>So now we have these too competing ways to model the data of the first 45 times at bat, let’s see how well their estimates predict the <code>true_ba</code> values. We’ll do so with a couple plots. This first one is of the single-level model which did not pool the batting averages.</p>
+<pre class="r"><code># get the `fitted()` draws and wrangle a bit
+f_y &lt;-
+  baseball %&gt;% 
+  distinct(player) %&gt;% 
+  add_fitted_draws(fit_y, dpar = &quot;mu&quot;) %&gt;% 
+  left_join(baseball %&gt;% 
+              select(player, true_ba))
+  
+# save the plot
+p1 &lt;-
+  f_y %&gt;% 
+  ggplot(aes(x = mu, y = reorder(player, true_ba))) +
+  geom_vline(xintercept = mean(baseball$true_ba), color = &quot;white&quot;) +
+  stat_interval(.width = .95, alpha = 1/3, color = nw_green) +
+  stat_interval(.width = .50, alpha = 1/3, color = nw_green) +
+  geom_point(data = baseball,
+             aes(x = true_ba),
+             size = 2, alpha = 3/4,
+             color = navy_blue) +
+  labs(subtitle = &quot;fit_y, the no pooling model&quot;,
+       x = &quot;batting average&quot;, 
+       y = NULL) +
+  coord_cartesian(xlim = c(0, .6)) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        plot.subtitle = element_text(hjust = .5))</code></pre>
+<p>Note our use of some handy convenience functions (i.e., <code>add_fitted_draws()</code> and <code>stat_interval()</code>) from the <a href="https://github.com/mjskay/tidybayes"><strong>tidybayes</strong> package</a> <span class="citation">(<a href="#ref-R-tidybayes" role="doc-biblioref">Kay, 2020</a>)</span>.</p>
+<p>This second plot is almost the same as the previous one, but this time based on the partial-pooling multilevel model.</p>
+<pre class="r"><code>f_z &lt;-
+  baseball %&gt;% 
+  distinct(player) %&gt;% 
+  add_fitted_draws(fit_z, dpar = &quot;mu&quot;) %&gt;% 
+  left_join(baseball %&gt;% 
+              select(player, true_ba))
+p2 &lt;-
+  f_z %&gt;% 
+  ggplot(aes(x = mu, y = reorder(player, true_ba))) +
+  geom_vline(xintercept = mean(baseball$true_ba), color = &quot;white&quot;) +
+  stat_interval(.width = .95, alpha = 1/3, color = nw_green) +
+  stat_interval(.width = .50, alpha = 1/3, color = nw_green) +
+  geom_point(data = baseball,
+             aes(x = true_ba),
+             size = 2, alpha = 3/4,
+             color = navy_blue) +
+  labs(subtitle = &quot;fit_z, the multilevel pooling model&quot;,
+       x = &quot;batting average&quot;, 
+       y = NULL) +
+  coord_cartesian(xlim = c(0, .6)) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        plot.subtitle = element_text(hjust = .5))</code></pre>
+<p>Here we join them together with <strong>patchwork</strong> <span class="citation">(<a href="#ref-R-patchwork" role="doc-biblioref">Pedersen, 2019</a>)</span>.</p>
+<pre class="r"><code>library(patchwork)
+p1 | p2</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-25-1.png" width="768" /></p>
+<p>In both panels, the end-of-the-season batting averages (i.e., <span class="math inline">\(\theta\)</span>) are the blue dots. The model-implied estimates are depicted by 95% and 50% interval bands (i.e., the lighter and darker green horizontal lines, respectively). The white line in the background marks off the mean of <span class="math inline">\(\theta\)</span>. Although neither model was perfect, the multilevel model, our analogue to the James-Stein estimates, yielded predictions that appear both more valid and more precise.</p>
+<p>We might also compare the models by their prediction errors. Here we’ll subtract the end-of-the-season batting averages from the model estimates. But unlike with <code>y</code> and <code>z</code> estimates, above, our <code>fit_y</code> and <code>fit_z</code> models yielded entire posterior distributions. Therefore, we’ll express our prediction errors in terms of error distributions, rather than single values.</p>
+<pre class="r"><code># save the `fit_y` plot
+p3 &lt;-
+  f_y %&gt;% 
+  # the error distribution is just the model-implied values minus 
+  # the true end-of-season values
+  mutate(error = mu - true_ba)  %&gt;% 
+  ggplot(aes(x = error, y = reorder(player, true_ba))) +
+  geom_vline(xintercept = c(0, -.2, .2), size = c(1/2, 1/4, 1/4), 
+             linetype = c(1, 3, 3), color = &quot;white&quot;) +
+  stat_halfeye(point_interval = mean_qi, .width = .95,
+               color = navy_blue, fill = alpha(nw_green, 2/3)) +
+  coord_cartesian(xlim = c(-.35, .35)) +
+  labs(subtitle = &quot;fit_y, the no pooling model&quot;,
+       x = &quot;error&quot;, 
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        plot.subtitle = element_text(hjust = .5))
+# save the `fit_z` plot
+p4 &lt;-
+  f_z %&gt;%   
+  mutate(error = mu - true_ba)  %&gt;% 
+  
+  ggplot(aes(x = error, y = reorder(player, true_ba))) +
+  geom_vline(xintercept = c(0, -.2, .2), size = c(1/2, 1/4, 1/4), 
+             linetype = c(1, 3, 3), color = &quot;white&quot;) +
+  stat_halfeye(point_interval = mean_qi, .width = .95,
+               color = navy_blue, fill = alpha(nw_green, 2/3)) +
+  coord_cartesian(xlim = c(-.35, .35)) +
+  labs(subtitle = &quot;fit_z, the multilevel pooling model&quot;,
+       x = &quot;error&quot;, 
+       y = NULL) +
+  theme(axis.text.y = element_text(hjust = 0),
+        axis.ticks.y = element_blank(),
+        plot.subtitle = element_text(hjust = .5))
+# now combine the two and behold
+p3 | p4</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-26-1.png" width="768" /></p>
+<p>For consistency, I’ve ordered the players along the <span class="math inline">\(y\)</span>-axis the same as above. In both panels, we see the prediction error distribution for each player in green and then summarize those distributions in terms of their means and percentile-based 95% intervals. Since these are error distributions, we prefer them to be as close to zero as possible. Although neither model made perfect predictions, the overall errors in the multilevel model were clearly smaller. Much like with the James-Stein estimator, the partial pooling of the multilevel model made for better end-of-the-season estimates.</p>
+<blockquote>
+<p>The paradoxical [consequence of Bayesian multilevel models] is that [they can contradict] this elementary law of statistical theory. If we have [two] or more baseball players, and if we are interested in predicting future batting averages for each of them, then [the Bayesian multilevel model can be better] than simply extrapolating from [the] separate averages. <span class="citation">(<a href="#ref-efronSteinParadoxStatistics1977" role="doc-biblioref">Efron &amp; Morris, 1977</a>.)</span>, p. 119]
+This is another example of how the <a href="https://en.wikipedia.org/wiki/KISS_principle">KISS principle</a> isn’t always the best bet with data analysis.</p>
+</blockquote>
+</div>
+<div id="next-steps" class="section level2">
+<h2>Next steps</h2>
+<p>If you’re new to logistic regression, multilevel models or Bayesian statistics, I recommend any of the following texts:</p>
+<ul>
+<li>either edition of McElreath’s <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>, <a href="#ref-mcelreathStatisticalRethinkingBayesian2015" role="doc-biblioref">2015</a>)</span> <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical rethinking</em></a>, both editions for which I have <strong>brms</strong> translations for <span class="citation">(<a href="#ref-kurzStatisticalRethinkingBrms2020" role="doc-biblioref">Kurz, 2020a</a>, <a href="#ref-kurzStatisticalRethinkingSecondEd2020" role="doc-biblioref">2020c</a>)</span>;</li>
+<li>Kruschke’s <span class="citation">(<a href="#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">2015</a>)</span> <a href="https://sites.google.com/site/doingbayesiandataanalysis/"><em>Doing Bayesian data analysis</em></a>, for which I have a <strong>brms</strong> translation <span class="citation">(<a href="#ref-kurzDoingBayesianData2020" role="doc-biblioref">Kurz, 2020b</a>)</span>; or</li>
+<li>Gelman and Hill’s <span class="citation">(<a href="#ref-gelmanDataAnalysisUsing2006" role="doc-biblioref">2006</a>)</span> <a href="https://stat.columbia.edu/~gelman/arm/"><em>Data analysis using regression and multilevel/hierarchical models</em></a>.</li>
+</ul>
+<p>If you choose <em>Statistical rethinking</em>, do check out <a href="https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists">these great lectures</a> on the text.</p>
+<p>Also, don’t miss the provocative <span class="citation">(<a href="#ref-davis-stoberWhenAreSample2017" role="doc-biblioref">2017</a>)</span> preprint by Davis-Stober, Dana and Rouder, <a href="https://osf.io/2ukxj/"><em>When are sample means meaningful? The role of modern estimation in psychological science</em></a>.</p>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] patchwork_1.1.1 brms_2.15.0     Rcpp_1.0.6      tidybayes_2.3.1 forcats_0.5.1   stringr_1.4.0  
+##  [7] dplyr_1.0.5     purrr_0.3.4     readr_1.4.0     tidyr_1.1.3     tibble_3.1.0    ggplot2_3.3.3  
+## [13] tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6           igraph_1.2.6        
+##   [5] splines_4.0.4        svUnit_1.0.3         crosstalk_1.1.0.1    TH.data_1.0-10      
+##   [9] rstantools_2.1.1     inline_0.3.17        digest_0.6.27        htmltools_0.5.1.1   
+##  [13] rsconnect_0.8.16     fansi_0.4.2          magrittr_2.0.1       modelr_0.1.8        
+##  [17] RcppParallel_5.0.2   matrixStats_0.57.0   sandwich_3.0-0       xts_0.12.1          
+##  [21] prettyunits_1.1.1    colorspace_2.0-0     rvest_0.3.6          ggdist_2.4.0.9000   
+##  [25] haven_2.3.1          xfun_0.22            callr_3.5.1          crayon_1.4.1        
+##  [29] jsonlite_1.7.2       lme4_1.1-25          survival_3.2-10      zoo_1.8-8           
+##  [33] glue_1.4.2           gtable_0.3.0         emmeans_1.5.2-1      V8_3.4.0            
+##  [37] distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.2         abind_1.4-5         
+##  [41] scales_1.1.1         mvtnorm_1.1-1        DBI_1.1.0            miniUI_0.1.1.1      
+##  [45] viridisLite_0.3.0    xtable_1.8-4         stats4_4.0.4         StanHeaders_2.21.0-7
+##  [49] DT_0.16              htmlwidgets_1.5.2    httr_1.4.2           threejs_0.3.3       
+##  [53] arrayhelpers_1.1-0   ellipsis_0.3.1       pkgconfig_2.0.3      loo_2.4.1           
+##  [57] farver_2.0.3         dbplyr_2.0.0         utf8_1.1.4           tidyselect_1.1.0    
+##  [61] labeling_0.4.2       rlang_0.4.10         reshape2_1.4.4       later_1.1.0.1       
+##  [65] munsell_0.5.0        cellranger_1.1.0     tools_4.0.4          cli_2.3.1           
+##  [69] generics_0.1.0       broom_0.7.5          ggridges_0.5.2       evaluate_0.14       
+##  [73] fastmap_1.0.1        yaml_2.2.1           processx_3.4.5       knitr_1.31          
+##  [77] fs_1.5.0             nlme_3.1-152         mime_0.10            projpred_2.0.2      
+##  [81] xml2_1.3.2           compiler_4.0.4       bayesplot_1.8.0      shinythemes_1.1.2   
+##  [85] rstudioapi_0.13      gamm4_0.2-6          curl_4.3             reprex_0.3.0        
+##  [89] statmod_1.4.35       stringi_1.5.3        highr_0.8            ps_1.6.0            
+##  [93] blogdown_1.3         Brobdingnag_1.2-6    lattice_0.20-41      Matrix_1.3-2        
+##  [97] nloptr_1.2.2.2       markdown_1.1         shinyjs_2.0.0        vctrs_0.3.6         
+## [101] pillar_1.5.1         lifecycle_1.0.0      bridgesampling_1.0-0 estimability_1.3    
+## [105] httpuv_1.5.4         R6_2.5.0             bookdown_0.21        promises_1.1.1      
+## [109] gridExtra_2.3        codetools_0.2-18     boot_1.3-26          colourpicker_1.1.0  
+## [113] MASS_7.3-53          gtools_3.8.2         assertthat_0.2.1     withr_2.4.1         
+## [117] shinystan_2.5.0      multcomp_1.4-16      mgcv_1.8-33          parallel_4.0.4      
+## [121] hms_0.5.3            grid_4.0.4           coda_0.19-4          minqa_1.2.4         
+## [125] rmarkdown_2.7        shiny_1.5.0          lubridate_1.7.9.2    base64enc_0.1-3     
+## [129] dygraphs_1.1.1.6</code></pre>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
+<div id="ref-burknerBrmsPackageBayesian2017" class="csl-entry">
+Bürkner, P.-C. (2017). <span class="nocase">brms</span>: <span>An R</span> package for <span>Bayesian</span> multilevel models using <span>Stan</span>. <em>Journal of Statistical Software</em>, <em>80</em>(1), 1–28. <a href="https://doi.org/10.18637/jss.v080.i01">https://doi.org/10.18637/jss.v080.i01</a>
+</div>
+<div id="ref-burknerAdvancedBayesianMultilevel2018" class="csl-entry">
+Bürkner, P.-C. (2018). Advanced <span>Bayesian</span> multilevel modeling with the <span>R</span> package brms. <em>The R Journal</em>, <em>10</em>(1), 395–411. <a href="https://doi.org/10.32614/RJ-2018-017">https://doi.org/10.32614/RJ-2018-017</a>
+</div>
+<div id="ref-R-brms" class="csl-entry">
+Bürkner, P.-C. (2020). <em><span class="nocase">brms</span>: <span>Bayesian</span> regression models using ’<span>Stan</span>’</em>. <a href="https://CRAN.R-project.org/package=brms">https://CRAN.R-project.org/package=brms</a>
+</div>
+<div id="ref-davis-stoberWhenAreSample2017" class="csl-entry">
+Davis-Stober, C., Dana, J., &amp; Rouder, J. (2017). <em>When are sample means meaningful? <span>The</span> role of modern estimation in psychological science</em>. <span>OSF Preprints</span>. <a href="https://doi.org/10.31219/osf.io/2ukxj">https://doi.org/10.31219/osf.io/2ukxj</a>
+</div>
+<div id="ref-efronEmpiricalBayesJamesStein2010" class="csl-entry">
+Efron, B. (2010). Empirical <span>Bayes</span> and the <span>James</span>-<span>Stein</span> estimator. In <em>Large-scale inference: <span>Empirical Bayes</span> methods for estimation, testing, and prediction</em>. <span>Cambridge University Press</span>. <a href="https://statweb.stanford.edu/~ckirby/brad/LSI/monograph_CUP.pdf">https://statweb.stanford.edu/~ckirby/brad/LSI/monograph_CUP.pdf</a>
+</div>
+<div id="ref-efronSteinParadoxStatistics1977" class="csl-entry">
+Efron, B., &amp; Morris, C. (1977). Stein’s paradox in statistics. <em>Scientific American</em>, <em>236</em>(5), 119–127. <a href="https://doi.org/10.1038/scientificamerican0577-119">https://doi.org/10.1038/scientificamerican0577-119</a>
+</div>
+<div id="ref-gelmanDataAnalysisUsing2006" class="csl-entry">
+Gelman, A., &amp; Hill, J. (2006). <em>Data analysis using regression and multilevel/hierarchical models</em>. <span>Cambridge University Press</span>. <a href="https://doi.org/10.1017/CBO9780511790942">https://doi.org/10.1017/CBO9780511790942</a>
+</div>
+<div id="ref-R-tidybayes" class="csl-entry">
+Kay, M. (2020). <em><span class="nocase">tidybayes</span>: <span>Tidy</span> data and ’geoms’ for <span>Bayesian</span> models</em>. <a href="http://mjskay.github.io/tidybayes">http://mjskay.github.io/tidybayes</a>
+</div>
+<div id="ref-kruschkeDoingBayesianData2015" class="csl-entry">
+Kruschke, J. K. (2015). <em>Doing <span>Bayesian</span> data analysis: <span>A</span> tutorial with <span>R</span>, <span>JAGS</span>, and <span>Stan</span></em>. <span>Academic Press</span>. <a href="https://sites.google.com/site/doingbayesiandataanalysis/">https://sites.google.com/site/doingbayesiandataanalysis/</a>
+</div>
+<div id="ref-kurzStatisticalRethinkingBrms2020" class="csl-entry">
+Kurz, A. S. (2020a). <em>Statistical rethinking with brms, <span class="nocase">ggplot2</span>, and the tidyverse</em> (version 1.2.0). <a href="https://doi.org/10.5281/zenodo.3693202">https://doi.org/10.5281/zenodo.3693202</a>
+</div>
+<div id="ref-kurzDoingBayesianData2020" class="csl-entry">
+Kurz, A. S. (2020b). <em>Doing <span>Bayesian</span> data analysis in brms and the tidyverse</em> (version 0.3.0). <a href="https://bookdown.org/content/3686/">https://bookdown.org/content/3686/</a>
+</div>
+<div id="ref-kurzStatisticalRethinkingSecondEd2020" class="csl-entry">
+Kurz, A. S. (2020c). <em>Statistical rethinking with brms, Ggplot2, and the tidyverse: <span>Second</span> edition</em> (version 0.1.1). <a href="https://bookdown.org/content/4857/">https://bookdown.org/content/4857/</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2020" class="csl-entry">
+McElreath, R. (2020). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em> (Second Edition). <span>CRC Press</span>. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2015" class="csl-entry">
+McElreath, R. (2015). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em>. <span>CRC press</span>. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-R-patchwork" class="csl-entry">
+Pedersen, T. L. (2019). <em><span class="nocase">patchwork</span>: <span>The</span> composer of plots</em>. <a href="https://CRAN.R-project.org/package=patchwork">https://CRAN.R-project.org/package=patchwork</a>
+</div>
+<div id="ref-R-base" class="csl-entry">
+R Core Team. (2020). <em>R: <span>A</span> language and environment for statistical computing</em>. <span>R Foundation for Statistical Computing</span>. <a href="https://www.R-project.org/">https://www.R-project.org/</a>
+</div>
+<div id="ref-R-tidyverse" class="csl-entry">
+Wickham, H. (2019). <em><span class="nocase">tidyverse</span>: <span>Easily</span> install and load the ’tidyverse’</em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>
+</div>
+<div id="ref-wickhamWelcomeTidyverse2019" class="csl-entry">
+Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. <em>Journal of Open Source Software</em>, <em>4</em>(43), 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>
+</div>
+</div>
+</div>

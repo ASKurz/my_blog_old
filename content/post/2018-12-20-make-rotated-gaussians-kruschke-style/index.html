@@ -1,0 +1,568 @@
+---
+title: Make rotated Gaussians, Kruschke style
+author: A. Solomon Kurz
+date: '2018-12-20'
+slug: ''
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - Kruschke
+  - plot
+  - R
+  - tutorial
+  - tidyverse
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-21T13:47:47-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>[edited Apr 21, 2021]</p>
+<div id="tldr" class="section level2">
+<h2>tl;dr</h2>
+<p>You too can make sideways Gaussian density curves within the tidyverse. Here’s how.</p>
+</div>
+<div id="heres-the-deal-i-like-making-pictures." class="section level2">
+<h2>Here’s the deal: I like making pictures.</h2>
+<p>Over the past several months, I’ve been slowly chipping away<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> at John Kruschke’s <a href="https://sites.google.com/site/doingbayesiandataanalysis/"><em>Doing Bayesian data analysis, Second Edition: A tutorial with R, JAGS, and Stan</em></a>. Kruschke has a unique plotting style. One of the quirks is once in a while he likes to express the results of his analyses in plots where he shows the data alongside density curves of the model-implied data-generating distributions. Here’s an example from chapter 19 (p. 563).</p>
+<p><img src="Kruschke_sideways_Gaussians.png" /></p>
+<p>In this example, he has lifespan data (i.e., <code>Longevity</code>) for fruit flies from five experimental conditions (i.e., <code>CompanionNumber</code>). Those are the black circles. In this section of the chapter, he used a Gaussian multilevel model in which the mean value for <code>Longevity</code> had a grand mean in addition to random effects for the five experimental conditions. Those sideways-turned blue Gaussians are his attempt to express the model-implied data generating distributions for each group.</p>
+<p>If you haven’t gone through Kruschke’s text, you should know he relies on base R and all its <a href="https://bookdown.org/rdpeng/rprogdatascience/control-structures.html#for-loops">loop</a>y glory. If you carefully go through his code, you can reproduce his plots in that fashion. I’m a <a href="https://www.tidyverse.org">tidyverse</a> man and prefer to avoid writing a <code>for()</code> loop at all costs. At first, I tried to work with convenience functions within ggplot2 and friends, but only had limited success. After staring long and hard at Kruschke’s base code, I came up with a robust solution, which I’d like to share here.</p>
+<p>In this post, we’ll practice making sideways Gaussians in the Kruschke style. We’ll do so with a simple intercept-only single-level model and then expand our approach to an intercept-only multilevel model like the one in the picture, above.</p>
+</div>
+<div id="my-assumptions" class="section level2">
+<h2>My assumptions</h2>
+<p>For the sake of this post, I’m presuming you’re familiar with <a href="https://bookdown.org/rdpeng/rprogdatascience/history-and-overview-of-r.html">R</a>, aware of the <a href="https://www.rstudio.com/resources/videos/data-science-in-the-tidyverse/">tidyverse</a>, and have fit a <a href="https://www.youtube.com/watch?v=4WVelCswXo4">Bayesian model</a> or two. Yes. I admit that’s a narrow crowd. Sometimes the target’s a small one.</p>
+</div>
+<div id="we-need-data." class="section level2">
+<h2>We need data.</h2>
+<p>First, we need data. Here we’ll borrow code from Matthew Kay’s nice <a href="https://mjskay.github.io/tidybayes/articles/tidy-brms.html">tutorial</a> on how to use his great <a href="https://github.com/mjskay/tidybayes">tidybayes package</a>.</p>
+<pre class="r"><code>library(tidyverse)
+
+set.seed(5)
+n           &lt;- 10
+n_condition &lt;- 5
+
+abc &lt;-
+  tibble(condition = rep(letters[1:5], times = n),
+         response  = rnorm(n * 5, mean = c(0, 1, 2, 1, -1), sd = 0.5))</code></pre>
+<p>The data structure looks like so.</p>
+<pre class="r"><code>str(abc)</code></pre>
+<pre><code>## tibble [50 × 2] (S3: tbl_df/tbl/data.frame)
+##  $ condition: chr [1:50] &quot;a&quot; &quot;b&quot; &quot;c&quot; &quot;d&quot; ...
+##  $ response : num [1:50] -0.42 1.692 1.372 1.035 -0.144 ...</code></pre>
+<p>With Kay’s code, we have <code>response</code> values for five <code>condition</code>s. All follow the normal distribution and share a common standard deviation. However, they differ in their group means.</p>
+<pre class="r"><code>abc %&gt;% 
+  group_by(condition) %&gt;% 
+  summarise(mean = mean(response) %&gt;% round(digits = 2))</code></pre>
+<pre><code>## # A tibble: 5 x 2
+##   condition  mean
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1 a          0.18
+## 2 b          1.01
+## 3 c          1.87
+## 4 d          1.03
+## 5 e         -0.94</code></pre>
+<p>Altogether, the data look like this.</p>
+<pre class="r"><code>theme_set(theme_grey() + 
+            theme(panel.grid = element_blank()))
+
+abc %&gt;%
+  ggplot(aes(y = condition, x = response)) +
+  geom_point(shape = 1)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="576" /></p>
+<p>Let’s get ready to model.</p>
+</div>
+<div id="just-one-intercept" class="section level2">
+<h2>Just one intercept</h2>
+<p>If you’ve read this far, you know we’re going Bayesian. Let’s open up our favorite Bayesian modeling package, Bürkner’s <a href="https://github.com/paul-buerkner/brms">brms</a>.</p>
+<pre class="r"><code>library(brms)</code></pre>
+<p>For our first model, we’ll ignore the groups and just estimate a grand mean and a standard deviation. Relative to the scale of the <code>abc</code> data, our priors are modestly <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations">regularizing</a>.</p>
+<pre class="r"><code>fit1 &lt;- 
+  brm(data = abc,
+      response ~ 1,
+      prior = c(prior(normal(0, 1), class = Intercept),
+                prior(student_t(3, 0, 1), class = sigma)))</code></pre>
+<p>Extract the posterior draws and save them as a data frame we’ll call <code>post</code>.</p>
+<pre class="r"><code>post &lt;- posterior_samples(fit1)
+
+glimpse(post)</code></pre>
+<pre><code>## Rows: 4,000
+## Columns: 3
+## $ b_Intercept &lt;dbl&gt; 0.5729167, 0.6185517, 0.4430281, 0.4383346, 0.8541620, 0.6280931, 0.5159498, 0…
+## $ sigma       &lt;dbl&gt; 1.1595969, 1.0350395, 1.0101029, 0.9758173, 1.1676389, 0.9694168, 1.0725615, 1…
+## $ lp__        &lt;dbl&gt; -77.17416, -76.99795, -77.92546, -78.35923, -78.25847, -77.55006, -77.13486, -…</code></pre>
+<p>If all you want is a quick and dirty way to plot a few of the model-implied Gaussians from the simple model, you can just nest <code>stat_function()</code> within <code>mapply()</code> and tack on the original data in a <code>geom_jitter()</code>.</p>
+<pre class="r"><code># How many Gaussians would you like?
+n_iter &lt;- 20
+
+tibble(response = c(-4, 4)) %&gt;%
+  ggplot(aes(x = response)) +
+  mapply(function(mean, sd) {
+    stat_function(fun   = dnorm, 
+                  args  = list(mean = mean, sd = sd), 
+                  alpha = 1/2, 
+                  color = &quot;steelblue&quot;)
+    }, 
+    # Enter means and standard deviations here
+    mean = post[1:n_iter, &quot;b_Intercept&quot;],
+    sd   = post[1:n_iter, &quot;sigma&quot;]
+    ) +
+  geom_jitter(data = abc, aes(y = -0.02),
+              height = .025, shape = 1, alpha = 2/3) +
+  scale_y_continuous(NULL, breaks = NULL)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-7-1.png" width="384" /></p>
+<p>This works pretty okay. But notice the orientation is the usual horizontal. Kruschke’s Gaussians were on their sides. If we switch out our <code>scale_y_continuous()</code> line with <code>scale_y_reverse()</code> and add in <code>coord_flip()</code>, we’ll have it.</p>
+<pre class="r"><code>tibble(response = c(-4, 4)) %&gt;%
+  ggplot(aes(x = response)) +
+  mapply(function(mean, sd) {
+    stat_function(fun   = dnorm, 
+                  args  = list(mean = mean, sd = sd), 
+                  alpha = 1/2, 
+                  color = &quot;steelblue&quot;)
+    }, 
+    mean = post[1:n_iter, &quot;b_Intercept&quot;],
+    sd   = post[1:n_iter, &quot;sigma&quot;]
+    ) +
+  geom_jitter(data = abc, aes(y = -0.02),
+              height = .025, shape = 1, alpha = 2/3) +
+  scale_y_reverse(NULL, breaks = NULL) +
+  coord_flip() </code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="288" /></p>
+<p>Boom. It won’t always be this easy, though.</p>
+</div>
+<div id="multiple-intercepts" class="section level2">
+<h2>Multiple intercepts</h2>
+<p>Since the <code>response</code> values are from a combination of five <code>condition</code> groups, we can fit a multilevel model to compute both the grand mean and the group-level deviations from the grand mean.</p>
+<pre class="r"><code>fit2 &lt;- 
+  brm(data = abc,
+      response ~ 1 + (1 | condition),
+      prior = c(prior(normal(0, 1), class = Intercept),
+                prior(student_t(3, 0, 1), class = sigma),
+                prior(student_t(3, 0, 1), class = sd)),
+      cores = 4)</code></pre>
+<p>“Wait. Whoa. I’m so confused”—you say. “What’s a multilevel model, again?” Read this <a href="https://xcelab.net/rm/statistical-rethinking/">book</a>, or this <a href="https://sites.google.com/site/doingbayesiandataanalysis/">book</a>; start <a href="https://www.youtube.com/watch?v=2sTQ7TG_85Q">here</a> on this lecture series; or even check out <a href="https://bookdown.org/content/3890/">my ebook</a>, starting with Chapter 12.</p>
+<p>Once again, extract the posterior draws and save them as a data frame, <code>post</code>.</p>
+<pre class="r"><code>post &lt;- posterior_samples(fit2)
+
+str(post)</code></pre>
+<pre><code>## &#39;data.frame&#39;:    4000 obs. of  9 variables:
+##  $ b_Intercept             : num  1.16 1.41 1.17 1.49 1.39 ...
+##  $ sd_condition__Intercept : num  1.012 0.892 0.871 0.846 0.813 ...
+##  $ sigma                   : num  0.581 0.537 0.491 0.537 0.541 ...
+##  $ r_condition[a,Intercept]: num  -0.934 -1.313 -0.9 -1.363 -1.337 ...
+##  $ r_condition[b,Intercept]: num  -0.336 -0.176 -0.523 -0.273 -0.241 ...
+##  $ r_condition[c,Intercept]: num  0.969 0.413 0.8 0.483 0.394 ...
+##  $ r_condition[d,Intercept]: num  -0.287 -0.198 -0.31 -0.105 -0.101 ...
+##  $ r_condition[e,Intercept]: num  -2.12 -2.32 -2.12 -2.37 -2.25 ...
+##  $ lp__                    : num  -52 -53 -54.6 -55.5 -54.1 ...</code></pre>
+<p>This is where our task becomes difficult. Now each level of <code>condition</code> has its own mean estimate, which is a combination of the grand mean <code>b_Intercept</code> and the group-specific deviation, <code>r_condition[a,Intercept]</code> through <code>r_condition[e,Intercept]</code>. If all we wanted to do was show the model-implied Gaussians for, say, <code>condition == a</code>, that’d be a small extension of our last approach.</p>
+<pre class="r"><code>tibble(response = c(-4, 4)) %&gt;%
+  ggplot(aes(x = response)) +
+  mapply(function(mean, sd) {
+    stat_function(fun   = dnorm, 
+                  args  = list(mean = mean, sd = sd), 
+                  alpha = 1/2, 
+                  color = &quot;steelblue&quot;)
+    }, 
+    # Here&#39;s the small extension, part a
+    mean = post[1:n_iter, &quot;b_Intercept&quot;] + post[1:n_iter, &quot;r_condition[a,Intercept]&quot;],
+    sd   = post[1:n_iter, &quot;sigma&quot;]
+    ) +
+  # The small extension, part b:
+  geom_jitter(data = abc %&gt;% filter(condition == &quot;a&quot;), aes(y = 0),
+              height = .025, shape = 1, alpha = 2/3) +
+  scale_y_reverse(NULL, breaks = NULL) +
+  coord_flip() +
+  labs(subtitle = &quot;This is just for condition a&quot;)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="288" /></p>
+<p>The main thing we did was add to the definition of the <code>mean</code> within <code>mapply()</code>: <code>mean = post[1:n_iter, "b_Intercept"] + post[1:n_iter, "r_condition[a,Intercept]"]</code>. Within <code>geom_jitter()</code>, we also isolated the <code>condition == "a"</code> cases with <code>filter()</code>. Simple. However, it’s more of a pickle if we want multiple densities stacked atop/next to one another within the same plot.</p>
+<p>Unfortunately, we can’t extend our <code>mapply(stat_function())</code> method to the group-level estimates–at least not that I’m aware. But there are other ways. We’ll need a little help from <code>tidybayes::spread_draws()</code>, about which you can learn more <a href="https://mjskay.github.io/tidybayes/articles/tidy-brms.html">here</a>.</p>
+<pre class="r"><code>library(tidybayes)
+
+sd &lt;-
+  fit2 %&gt;% 
+  spread_draws(b_Intercept, sigma, r_condition[condition,])
+  
+head(sd)</code></pre>
+<pre><code>## # A tibble: 6 x 7
+## # Groups:   condition [5]
+##   .chain .iteration .draw b_Intercept sigma condition r_condition
+##    &lt;int&gt;      &lt;int&gt; &lt;int&gt;       &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;           &lt;dbl&gt;
+## 1      1          1     1        1.16 0.581 a              -0.934
+## 2      1          1     1        1.16 0.581 b              -0.336
+## 3      1          1     1        1.16 0.581 c               0.969
+## 4      1          1     1        1.16 0.581 d              -0.287
+## 5      1          1     1        1.16 0.581 e              -2.12 
+## 6      1          2     2        1.41 0.537 a              -1.31</code></pre>
+<p>In our <code>sp</code> <a href="https://cran.r-project.org/web/packages/tibble/vignettes/tibble.html">tibble</a>, we have much of the same information we’d get from <code>brms::posterior_samples()</code>, but in the long format with respect to the random effects for <code>condition</code>. Also notice that each row is indexed by the chain, iteration, and draw number. Among those, <code>.draw</code> is the column that corresponds to a unique row like what we’d get from <code>brms::posterior_samples()</code>. This is the index that ranges from 1 to the number of chains multiplied by the number of post-warmup iterations (i.e., default 4000 in our case).</p>
+<p>But we need to wrangle a bit. Within the <code>expand()</code> function, we’ll select the columns we’d like to keep within the <code>nesting()</code> function and then expand the tibble by adding a sequence of <code>response</code> values ranging from -4 to 4, for each. This sets us up to use the <code>dnorm()</code> function in the next line to compute the density for each of those <code>response</code> values based on 20 unique normal distributions for each of the five <code>condition</code> groups. “Why 20?” Because we need some reasonably small number and 20’s the one Kruschke tended to use in his text and because, well, we set <code>filter(.draw &lt; 21)</code>. But choose whatever number you like.</p>
+<p>The difficulty, however, is that all of these densities will have a minimum value of around 0 and all will be on the same basic scale. So we need a way to serially shift the density values up the y-axis in such a way that they’ll be sensibly separated by group. As far as I can figure, this’ll take us a couple steps. For the first step, we’ll create an intermediary variable, <code>g</code>, with which we’ll arbitrarily assign each of our five groups an integer index ranging from 0 to 4.</p>
+<p>The second step is tricky. There we use our <code>g</code> integers to sequentially shift the density values up. Since our <code>g</code> value for <code>a == 0</code>, those we’ll keep 0 as their baseline. As our <code>g</code> value for <code>b == 1</code>, the baseline for those will now increase by 1. And so on for the other groups. But we still need to do a little more fiddling. What we want is for the maximum values of the density estimates to be a little lower than the baselines of the ones one grouping variable up. That is, we want the maximum values for the <code>a</code> densities to fall a little bit below 1 on the y-axis. It’s with the <code>* .75 / max(density)</code> part of the code that we accomplish that task. If you want to experiment with more or less room between the top and bottom of each density, play around with increasing/decreasing that .75 value.</p>
+<pre class="r"><code>sd &lt;-
+  sd %&gt;% 
+  filter(.draw &lt; 21) %&gt;% 
+  expand(nesting(.draw, b_Intercept, sigma, condition, r_condition), 
+         response = seq(from = -4, to = 4, length.out = 200)) %&gt;%
+  mutate(density = dnorm(response, mean = b_Intercept + r_condition, sd = sigma),
+         g       = recode(condition,
+                          a = 0,
+                          b = 1,
+                          c = 2,
+                          d = 3,
+                          e = 4)) %&gt;% 
+  mutate(density = g + density * .75 / max(density))
+
+glimpse(sd)</code></pre>
+<pre><code>## Rows: 20,000
+## Columns: 8
+## Groups: condition [5]
+## $ .draw       &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, …
+## $ b_Intercept &lt;dbl&gt; 1.164396, 1.164396, 1.164396, 1.164396, 1.164396, 1.164396, 1.164396, 1.164396…
+## $ sigma       &lt;dbl&gt; 0.5811467, 0.5811467, 0.5811467, 0.5811467, 0.5811467, 0.5811467, 0.5811467, 0…
+## $ condition   &lt;chr&gt; &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;…
+## $ r_condition &lt;dbl&gt; -0.9342895, -0.9342895, -0.9342895, -0.9342895, -0.9342895, -0.9342895, -0.934…
+## $ response    &lt;dbl&gt; -4.000000, -3.959799, -3.919598, -3.879397, -3.839196, -3.798995, -3.758794, -…
+## $ density     &lt;dbl&gt; 1.874794e-12, 3.094499e-12, 5.083339e-12, 8.310546e-12, 1.352172e-11, 2.189555…
+## $ g           &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, …</code></pre>
+<p>Since we’ll now be using the same axis for both the densities and the five <code>condition</code> groups, we’ll need to add a <code>density</code> column to our <code>abc</code> data.</p>
+<pre class="r"><code>abc &lt;-
+  abc %&gt;% 
+  mutate(density = recode(condition,
+                          a = 0,
+                          b = 1,
+                          c = 2,
+                          d = 3,
+                          e = 4))</code></pre>
+<p>Time to plot.</p>
+<pre class="r"><code>sd %&gt;% 
+  ggplot(aes(x = response, y = density)) +
+  # here we make our density lines
+  geom_line(aes(group = interaction(.draw, g)),
+            alpha = 1/2, size = 1/3, color = &quot;steelblue&quot;) +
+  # use the original data for the jittered points
+  geom_jitter(data = abc,
+              height = .05, shape = 1, alpha = 2/3) +
+  scale_y_continuous(&quot;condition&quot;,
+                     breaks = 0:4,
+                     labels = letters[1:5])</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="384" /></p>
+<p>Now we’re rolling. Let’s make a cosmetic adjustment. Recall that the full range of the normal distribution spans from <span class="math inline">\(-\infty\)</span> to <span class="math inline">\(\infty\)</span>. At a certain point, it’s just not informative to show the left and right tails. If you look back up at our motivating example, you’ll note Kruschke’s densities stopped well before trailing off into the tails. If you look closely to the code from his text, you’ll see he’s just showing the inner 95-percentile range for each. To follow suit, we can compute those ranges with <code>qnorm()</code>.</p>
+<pre class="r"><code>sd &lt;-
+  sd %&gt;% 
+  mutate(ll = qnorm(.025, mean = b_Intercept + r_condition, sd = sigma),
+         ul = qnorm(.975, mean = b_Intercept + r_condition, sd = sigma))</code></pre>
+<p>Now we have our lower- and upper-level points for each iteration, we can limit the ranges of our Gaussians with <code>filter()</code>.</p>
+<pre class="r"><code>sd %&gt;% 
+  filter(response &gt; ll,
+         response &lt; ul) %&gt;% 
+  
+  ggplot(aes(x = response, y = density)) +
+  geom_line(aes(group = interaction(.draw, g)),
+            alpha = 1/2, size = 1/3, color = &quot;steelblue&quot;) +
+  geom_jitter(data = abc,
+              height = .05, shape = 1, alpha = 2/3) +
+  scale_y_continuous(&quot;condition&quot;,
+                     breaks = 0:4,
+                     labels = letters[1:5])</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-16-1.png" width="384" /></p>
+<p>Oh man, just look how sweet that is. Although I prefer our current method, another difference between it and Kruschke’s example is all of his densities are the same relative height. In all our plots so far, though, the densities differ by their heights. We’ll need a slight adjustment in our <code>sd</code> workflow for that. All we need to do is insert a <code>group_by()</code> statement between the two <code>mutate()</code> lines.</p>
+<pre class="r"><code>sd &lt;-
+  sd %&gt;% 
+  mutate(density = dnorm(response, mean = b_Intercept + r_condition, sd = sigma),
+         g       = recode(condition,
+                          a = 0,
+                          b = 1,
+                          c = 2,
+                          d = 3,
+                          e = 4)) %&gt;% 
+  # here&#39;s the new line
+  group_by(.draw) %&gt;% 
+  mutate(density = g + density * .75 / max(density))
+
+# now plot
+sd %&gt;% 
+  filter(response &gt; ll,
+         response &lt; ul) %&gt;% 
+  ggplot(aes(x = response, y = density)) +
+  geom_line(aes(group = interaction(.draw, g)),
+            alpha = 1/2, size = 1/3, color = &quot;steelblue&quot;) +
+  geom_jitter(data = abc,
+              height = .05, shape = 1, alpha = 2/3) +
+  scale_y_continuous(&quot;condition&quot;,
+                     breaks = 0:4,
+                     labels = letters[1:5])</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" width="384" /></p>
+<p>Nice. “But wait!”, you say. “We wanted our Gaussians to be on their sides.” We can do that in at least two ways. At this point, the quickest way is to use our <code>scale_y_reverse() + coord_flip()</code> combo from before.</p>
+<pre class="r"><code>sd %&gt;% 
+  filter(response &gt; ll,
+         response &lt; ul) %&gt;% 
+  
+  ggplot(aes(x = response, y = density)) +
+  geom_line(aes(group = interaction(.draw, g)),
+            alpha = 1/2, size = 1/3, color = &quot;steelblue&quot;) +
+  geom_jitter(data = abc,
+              height = .05, shape = 1, alpha = 2/3) +
+  scale_y_reverse(&quot;condition&quot;,
+                  breaks = 0:4,
+                  labels = letters[1:5]) +
+  coord_flip()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-18-1.png" width="384" /></p>
+<p>Another way to get those sideways Gaussians is to alter our <code>sd</code> data workflow. The main difference is this time we change the original <code>mutate(density = g + density * .75 / max(density))</code> line to <code>mutate(density = g - density * .75 / max(density))</code>. In case you missed it, the only difference is we changed the <code>+</code> to a <code>-</code>.</p>
+<pre class="r"><code>sd &lt;-
+  sd %&gt;% 
+  # step one: starting fresh
+  mutate(density = dnorm(response, mean = b_Intercept + r_condition, sd = sigma)) %&gt;% 
+  group_by(.draw) %&gt;% 
+  # step two: now SUBTRACTING density from g within the equation
+  mutate(density = g - density * .75 / max(density))</code></pre>
+<p>Now in our global <code>aes()</code> statement in the plot, we put <code>density</code> on the x and <code>response</code> on the y. We need to take a few other subtle steps:</p>
+<ul>
+<li>Switch out <code>geom_line()</code> for <code>geom_path()</code> (see <a href="https://ggplot2.tidyverse.org/reference/geom_path.html">here</a>).</li>
+<li>Drop the <code>height</code> argument within <code>geom_jitter()</code> for <code>width</code>.</li>
+<li>Switch out <code>scale_y_continuous()</code> for <code>scale_x_continuous()</code>.</li>
+</ul>
+<p>Though totally not necessary, we’ll add a little something extra by coloring the Gaussians by their means.</p>
+<pre class="r"><code>sd %&gt;% 
+  filter(response &gt; ll,
+         response &lt; ul) %&gt;% 
+  
+  ggplot(aes(x = density, y = response)) +
+  geom_path(aes(group = interaction(.draw, g), 
+                color = b_Intercept + r_condition),
+            alpha = 1/2, size = 1/3, show.legend = F) +
+  geom_jitter(data = abc,
+              width = .05, shape = 1, alpha = 2/3) +
+  scale_x_continuous(&quot;condition&quot;,
+                     breaks = 0:4,
+                     labels = letters[1:5]) +
+  scale_color_viridis_c(option = &quot;A&quot;, end = .92)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-20-1.png" width="384" /></p>
+<p>There you have it–Kruschke-style sideways Gaussians for your model plots.</p>
+</div>
+<div id="afterward" class="section level2">
+<h2>Afterward</h2>
+<p>After releasing the initial version of this post, some of us had a lively twitter discussion on how to improve the code.</p>
+<p>{{% tweet "1076395687020056576" %}}</p>
+<p>Part of that discussion had to do with the possibility of using functions from <a href="https://twitter.com/ClausWilke/">Claus Wilke</a>’s great <a href="https://github.com/clauswilke/ggridges">ggridges package</a>. After some great efforts, especially from <a href="https://twitter.com/mjskay/">Matthew Kay</a>, we came up with solutions. In this section, we’ll cover them in some detail.</p>
+<p>First, here’s a more compact way to prepare the data for the plot.</p>
+<pre class="r"><code>abc %&gt;%
+  distinct(condition) %&gt;%
+  add_fitted_draws(fit2, n = 20, dpar = c(&quot;mu&quot;, &quot;sigma&quot;)) %&gt;% 
+  mutate(lower    = qnorm(.025, mean = mu, sd = sigma),
+         upper    = qnorm(.975, mean = mu, sd = sigma)) %&gt;% 
+  mutate(response = map2(lower, upper, seq, length.out = 200)) %&gt;% 
+  mutate(density  = pmap(list(response, mu, sigma), dnorm)) %&gt;% 
+  unnest() %&gt;% 
+  group_by(.draw) %&gt;% 
+  mutate(density  = density * .75 / max(density)) %&gt;% 
+  
+  glimpse()</code></pre>
+<pre><code>## Warning: `cols` is now required when using unnest().
+## Please use `cols = c(response, density)`</code></pre>
+<pre><code>## Rows: 20,000
+## Columns: 12
+## Groups: .draw [20]
+## $ condition  &lt;chr&gt; &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;,…
+## $ .row       &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ .chain     &lt;int&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ .iteration &lt;int&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ .draw      &lt;int&gt; 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72, 72,…
+## $ .value     &lt;dbl&gt; -0.04576743, -0.04576743, -0.04576743, -0.04576743, -0.04576743, -0.04576743, -…
+## $ mu         &lt;dbl&gt; -0.04576743, -0.04576743, -0.04576743, -0.04576743, -0.04576743, -0.04576743, -…
+## $ sigma      &lt;dbl&gt; 0.5396379, 0.5396379, 0.5396379, 0.5396379, 0.5396379, 0.5396379, 0.5396379, 0.…
+## $ lower      &lt;dbl&gt; -1.103438, -1.103438, -1.103438, -1.103438, -1.103438, -1.103438, -1.103438, -1…
+## $ upper      &lt;dbl&gt; 1.011903, 1.011903, 1.011903, 1.011903, 1.011903, 1.011903, 1.011903, 1.011903,…
+## $ response   &lt;dbl&gt; -1.1034383, -1.0928085, -1.0821786, -1.0715488, -1.0609189, -1.0502890, -1.0396…
+## $ density    &lt;dbl&gt; 0.1098804, 0.1141834, 0.1186089, 0.1231581, 0.1278322, 0.1326322, 0.1375591, 0.…</code></pre>
+<p>This could use some walking out. With the first two lines, we made a <span class="math inline">\(5 \times 1\)</span> tibble containing the five levels of <code>condition</code>, <code>a</code> through <code>f</code>. The <code>add_fitted_draws()</code> function comes from tidybayes. The first argument took our brms model fit, <code>fit2</code>. With the <code>n</code> argument, we indicated we just wanted <code>20</code> draws. With <code>dpar</code>, we requested distributional regression parameters in the output. In our case, those were the <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span> values for each level of <code>condition</code>. Here’s what that looks like.</p>
+<pre class="r"><code>abc %&gt;%
+  distinct(condition) %&gt;%
+  add_fitted_draws(fit2, n = 20, dpar = c(&quot;mu&quot;, &quot;sigma&quot;)) %&gt;% 
+  
+  head()</code></pre>
+<pre><code>## # A tibble: 6 x 8
+## # Groups:   condition, .row [1]
+##   condition  .row .chain .iteration .draw .value     mu sigma
+##   &lt;chr&gt;     &lt;int&gt;  &lt;int&gt;      &lt;int&gt; &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;
+## 1 a             1     NA         NA    57 0.562  0.562  0.645
+## 2 a             1     NA         NA    97 0.163  0.163  0.593
+## 3 a             1     NA         NA   277 0.0490 0.0490 0.682
+## 4 a             1     NA         NA   305 0.386  0.386  0.607
+## 5 a             1     NA         NA   360 0.162  0.162  0.563
+## 6 a             1     NA         NA   496 0.0224 0.0224 0.650</code></pre>
+<p>Next, we established the lower- and upper-bounds bounds for the density lines, which were 95% intervals in this example. Within the second <code>mutate()</code> function, we used the <a href="https://purrr.tidyverse.org/reference/map2.html"><code>purrr::map2()</code></a> function to feed those two values into the first two arguments of the <code>seq()</code> function. Those arguments, recall, are <code>from</code> and <code>to</code>. We then hard coded <code>200</code> into the <code>length.out</code> argument. As a result, we turned our regular old tibble into a <a href="https://tidyr.tidyverse.org/reference/nest.html">nested tibble</a>. In each row of our new <code>response</code> column, we now have a <span class="math inline">\(200 \times 1\)</span> data frame containing the <code>seq()</code> output. If you’re new to nested data structures, I recommend checking out Hadley Wickham’s <a href="https://www.youtube.com/watch?v=rz3_FDVt9eg"><em>Managing many models with R</em></a>.</p>
+<pre class="r"><code>abc %&gt;%
+  distinct(condition) %&gt;%
+  add_fitted_draws(fit2, n = 20, dpar = c(&quot;mu&quot;, &quot;sigma&quot;)) %&gt;% 
+  mutate(lower    = qnorm(.025, mean = mu, sd = sigma),
+         upper    = qnorm(.975, mean = mu, sd = sigma)) %&gt;% 
+  mutate(response = map2(lower, upper, seq, length.out = 200)) %&gt;% 
+  
+  head()</code></pre>
+<pre><code>## # A tibble: 6 x 11
+## # Groups:   condition, .row [1]
+##   condition  .row .chain .iteration .draw .value    mu sigma  lower upper response   
+##   &lt;chr&gt;     &lt;int&gt;  &lt;int&gt;      &lt;int&gt; &lt;int&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;list&gt;     
+## 1 a             1     NA         NA   130  0.105 0.105 0.553 -0.979  1.19 &lt;dbl [200]&gt;
+## 2 a             1     NA         NA   647  0.121 0.121 0.602 -1.06   1.30 &lt;dbl [200]&gt;
+## 3 a             1     NA         NA  1087  0.260 0.260 0.727 -1.17   1.68 &lt;dbl [200]&gt;
+## 4 a             1     NA         NA  1343  0.396 0.396 0.587 -0.754  1.55 &lt;dbl [200]&gt;
+## 5 a             1     NA         NA  1618  0.342 0.342 0.500 -0.638  1.32 &lt;dbl [200]&gt;
+## 6 a             1     NA         NA  1701  0.238 0.238 0.569 -0.878  1.35 &lt;dbl [200]&gt;</code></pre>
+<p>Much as the <code>purrr::map2()</code> function allowed us to iterate over two arguments, the <code>purrr::pmap()</code> function will allow us to iterate over an arbitrary number of arguments. In the case of our third <code>mutate()</code> function, we’ll iterate over the first three arguments of the <code>dnorm()</code> function. In case you forgot, those arguments are <code>x</code>, <code>mean</code>, and <code>sd</code>, respectively. Within our <code>list()</code>, we indicated we wanted to insert into them the <code>response</code>, <code>mu</code>, and <code>sigma</code> values. This returns the desired <code>density</code> values. Since our <code>map2()</code> and <code>pmap()</code> operations returned a nested tibble, we then followed them up with the <code>unnest()</code> function to make it easier to access the results.</p>
+<p>Before <code>unnest</code>ing, our nested tibble had 100 observations. After <code>unnest()</code>, we converted it to the long format, resulting in <span class="math inline">\(100 \times 200 = 20,000\)</span> observations.</p>
+<pre class="r"><code>abc %&gt;%
+  distinct(condition) %&gt;%
+  add_fitted_draws(fit2, n = 20, dpar = c(&quot;mu&quot;, &quot;sigma&quot;)) %&gt;% 
+  mutate(lower    = qnorm(.025, mean = mu, sd = sigma),
+         upper    = qnorm(.975, mean = mu, sd = sigma)) %&gt;% 
+  mutate(response = map2(lower, upper, seq, length.out = 200)) %&gt;% 
+  mutate(density  = pmap(list(response, mu, sigma), dnorm)) %&gt;% 
+  unnest() %&gt;% 
+  
+  glimpse()</code></pre>
+<pre><code>## Warning: `cols` is now required when using unnest().
+## Please use `cols = c(response, density)`</code></pre>
+<pre><code>## Rows: 20,000
+## Columns: 12
+## Groups: condition, .row [5]
+## $ condition  &lt;chr&gt; &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;,…
+## $ .row       &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ .chain     &lt;int&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ .iteration &lt;int&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ .draw      &lt;int&gt; 239, 239, 239, 239, 239, 239, 239, 239, 239, 239, 239, 239, 239, 239, 239, 239,…
+## $ .value     &lt;dbl&gt; 0.1866095, 0.1866095, 0.1866095, 0.1866095, 0.1866095, 0.1866095, 0.1866095, 0.…
+## $ mu         &lt;dbl&gt; 0.1866095, 0.1866095, 0.1866095, 0.1866095, 0.1866095, 0.1866095, 0.1866095, 0.…
+## $ sigma      &lt;dbl&gt; 0.5573212, 0.5573212, 0.5573212, 0.5573212, 0.5573212, 0.5573212, 0.5573212, 0.…
+## $ lower      &lt;dbl&gt; -0.9057199, -0.9057199, -0.9057199, -0.9057199, -0.9057199, -0.9057199, -0.9057…
+## $ upper      &lt;dbl&gt; 1.278939, 1.278939, 1.278939, 1.278939, 1.278939, 1.278939, 1.278939, 1.278939,…
+## $ response   &lt;dbl&gt; -0.9057199, -0.8947417, -0.8837635, -0.8727853, -0.8618071, -0.8508289, -0.8398…
+## $ density    &lt;dbl&gt; 0.1048678, 0.1089746, 0.1131982, 0.1175399, 0.1220008, 0.1265818, 0.1312839, 0.…</code></pre>
+<p>Hopefully, our last two lines look familiar. We <code>group_by(.draw)</code> just like in previous examples. However, our final <code>mutate()</code> line is a little simpler than in previous versions. Before we had to make that intermediary variable, <code>g</code>. Because we intend to plot these data with help from ggridges, we no longer have need for <code>g</code>. You’ll see. But the upshot is the only reason we’re adding this last <code>mutate()</code> line is to scale all the Gaussians to have the same maximum height the way Kruschke did.</p>
+<pre class="r"><code>afd &lt;-
+  abc %&gt;%
+  distinct(condition) %&gt;%
+  add_fitted_draws(fit2, n = 20, dpar = c(&quot;mu&quot;, &quot;sigma&quot;)) %&gt;% 
+  mutate(lower    = qnorm(.025, mean = mu, sd = sigma),
+         upper    = qnorm(.975, mean = mu, sd = sigma)) %&gt;% 
+  mutate(response = map2(lower, upper, seq, length.out = 200)) %&gt;% 
+  mutate(density  = pmap(list(response, mu, sigma), dnorm)) %&gt;% 
+  unnest() %&gt;% 
+  group_by(.draw) %&gt;% 
+  mutate(density  = density * .75 / max(density))</code></pre>
+<pre><code>## Warning: `cols` is now required when using unnest().
+## Please use `cols = c(response, density)`</code></pre>
+<pre class="r"><code>glimpse(afd)</code></pre>
+<pre><code>## Rows: 20,000
+## Columns: 12
+## Groups: .draw [20]
+## $ condition  &lt;chr&gt; &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;, &quot;a&quot;,…
+## $ .row       &lt;int&gt; 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1…
+## $ .chain     &lt;int&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ .iteration &lt;int&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA,…
+## $ .draw      &lt;int&gt; 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128, 128,…
+## $ .value     &lt;dbl&gt; 0.2600993, 0.2600993, 0.2600993, 0.2600993, 0.2600993, 0.2600993, 0.2600993, 0.…
+## $ mu         &lt;dbl&gt; 0.2600993, 0.2600993, 0.2600993, 0.2600993, 0.2600993, 0.2600993, 0.2600993, 0.…
+## $ sigma      &lt;dbl&gt; 0.570355, 0.570355, 0.570355, 0.570355, 0.570355, 0.570355, 0.570355, 0.570355,…
+## $ lower      &lt;dbl&gt; -0.857776, -0.857776, -0.857776, -0.857776, -0.857776, -0.857776, -0.857776, -0…
+## $ upper      &lt;dbl&gt; 1.377974, 1.377974, 1.377974, 1.377974, 1.377974, 1.377974, 1.377974, 1.377974,…
+## $ response   &lt;dbl&gt; -0.8577760, -0.8465410, -0.8353061, -0.8240712, -0.8128362, -0.8016013, -0.7903…
+## $ density    &lt;dbl&gt; 0.1098804, 0.1141834, 0.1186089, 0.1231581, 0.1278322, 0.1326322, 0.1375591, 0.…</code></pre>
+<p>Let’s open <a href="https://github.com/clauswilke/ggridges">ggridges</a></p>
+<pre class="r"><code>library(ggridges)</code></pre>
+<p>Note how contrary to before, we set the global y axis to our <code>condition</code> grouping variable. It’s within the <code>geom_ridgeline()</code> function that we now specify <code>height = density</code>. Other than that, the main thing to point out is you might want to adjust the <code>ylim</code> parameters. Otherwise the margins aren’t the best.</p>
+<pre class="r"><code>afd %&gt;%
+  
+  ggplot(aes(x = response, y = condition)) +
+  geom_ridgeline(aes(height = density, group = interaction(condition, .draw)),
+                 fill = NA, size = 1/3, color = adjustcolor(&quot;steelblue&quot;, alpha.f = 1/2)) +
+  geom_jitter(data = abc,
+              height = .05, shape = 1, alpha = 2/3) +
+  coord_cartesian(ylim = c(1.25, 5.5))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-28-1.png" width="384" /></p>
+<p>“But I wanted my Gaussians tipped to the left!”, you say. Yep, we can do that, too. Three things: First, we’ll want to adjust the <code>height</code> parameter to <code>-density</code>. We want our Gaussians to extend under their baselines. Along with that, we need to include <code>min_height = NA</code>. Finally, we’ll switch out <code>coord_cartesian()</code> for good old <code>coord_flip()</code>. And you can adjust your <code>ylim</code> parameters as desired.</p>
+<pre class="r"><code>afd %&gt;%
+  
+  ggplot(aes(x = response, y = condition)) +
+  geom_ridgeline(aes(height = -density, group = interaction(condition, .draw)),
+                 fill = NA, size = 1/3, color = adjustcolor(&quot;steelblue&quot;, alpha.f = 1/2),
+                 min_height = NA) +
+  geom_jitter(data = abc,
+              height = .05, shape = 1, alpha = 2/3) +
+  coord_flip(ylim = c(0.5, 4.75))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-29-1.png" width="384" /></p>
+<p>I think it’s important to note that I’ve never met any of the people who helped me with this project. Academic twitter, man–it’s a good place to be.</p>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] ggridges_0.5.2  tidybayes_2.3.1 brms_2.15.0     Rcpp_1.0.6      forcats_0.5.1   stringr_1.4.0  
+##  [7] dplyr_1.0.5     purrr_0.3.4     readr_1.4.0     tidyr_1.1.3     tibble_3.1.0    ggplot2_3.3.3  
+## [13] tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6           igraph_1.2.6        
+##   [5] svUnit_1.0.3         splines_4.0.4        crosstalk_1.1.0.1    TH.data_1.0-10      
+##   [9] rstantools_2.1.1     inline_0.3.17        digest_0.6.27        htmltools_0.5.1.1   
+##  [13] rsconnect_0.8.16     fansi_0.4.2          magrittr_2.0.1       modelr_0.1.8        
+##  [17] RcppParallel_5.0.2   matrixStats_0.57.0   xts_0.12.1           sandwich_3.0-0      
+##  [21] prettyunits_1.1.1    colorspace_2.0-0     rvest_0.3.6          ggdist_2.4.0.9000   
+##  [25] haven_2.3.1          xfun_0.22            callr_3.5.1          crayon_1.4.1        
+##  [29] jsonlite_1.7.2       lme4_1.1-25          survival_3.2-10      zoo_1.8-8           
+##  [33] glue_1.4.2           gtable_0.3.0         emmeans_1.5.2-1      V8_3.4.0            
+##  [37] distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.2         abind_1.4-5         
+##  [41] scales_1.1.1         mvtnorm_1.1-1        DBI_1.1.0            miniUI_0.1.1.1      
+##  [45] viridisLite_0.3.0    xtable_1.8-4         stats4_4.0.4         StanHeaders_2.21.0-7
+##  [49] DT_0.16              htmlwidgets_1.5.2    httr_1.4.2           threejs_0.3.3       
+##  [53] arrayhelpers_1.1-0   ellipsis_0.3.1       pkgconfig_2.0.3      loo_2.4.1           
+##  [57] farver_2.0.3         dbplyr_2.0.0         utf8_1.1.4           tidyselect_1.1.0    
+##  [61] labeling_0.4.2       rlang_0.4.10         reshape2_1.4.4       later_1.1.0.1       
+##  [65] munsell_0.5.0        cellranger_1.1.0     tools_4.0.4          cli_2.3.1           
+##  [69] generics_0.1.0       broom_0.7.5          evaluate_0.14        fastmap_1.0.1       
+##  [73] yaml_2.2.1           processx_3.4.5       knitr_1.31           fs_1.5.0            
+##  [77] nlme_3.1-152         mime_0.10            projpred_2.0.2       xml2_1.3.2          
+##  [81] compiler_4.0.4       bayesplot_1.8.0      shinythemes_1.1.2    rstudioapi_0.13     
+##  [85] gamm4_0.2-6          curl_4.3             reprex_0.3.0         statmod_1.4.35      
+##  [89] stringi_1.5.3        highr_0.8            ps_1.6.0             blogdown_1.3        
+##  [93] Brobdingnag_1.2-6    lattice_0.20-41      Matrix_1.3-2         nloptr_1.2.2.2      
+##  [97] markdown_1.1         shinyjs_2.0.0        vctrs_0.3.6          pillar_1.5.1        
+## [101] lifecycle_1.0.0      bridgesampling_1.0-0 estimability_1.3     httpuv_1.5.4        
+## [105] R6_2.5.0             bookdown_0.21        promises_1.1.1       gridExtra_2.3       
+## [109] codetools_0.2-18     boot_1.3-26          colourpicker_1.1.0   MASS_7.3-53         
+## [113] gtools_3.8.2         assertthat_0.2.1     withr_2.4.1          shinystan_2.5.0     
+## [117] multcomp_1.4-16      mgcv_1.8-33          parallel_4.0.4       hms_0.5.3           
+## [121] grid_4.0.4           coda_0.19-4          minqa_1.2.4          rmarkdown_2.7       
+## [125] shiny_1.5.0          lubridate_1.7.9.2    base64enc_0.1-3      dygraphs_1.1.1.6</code></pre>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>I’ve made a lot of progress working through Kruschke’s material since the initial release of this blog post. You can find the results in an ebook, <a href="https://bookdown.org/content/3686/">here</a>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

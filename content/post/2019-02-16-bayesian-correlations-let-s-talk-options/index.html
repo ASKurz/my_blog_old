@@ -1,0 +1,567 @@
+---
+title: 'Bayesian Correlations: Let''s Talk Options.'
+author: A. Solomon Kurz
+date: '2019-02-16'
+slug: ''
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - R
+  - tutorial
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-21T15:52:33-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>[edited Apr 21, 2021]</p>
+<div id="tldr" class="section level2">
+<h2>tl;dr</h2>
+<p>There’s more than one way to fit a Bayesian correlation in brms.</p>
+</div>
+<div id="heres-the-deal." class="section level2">
+<h2>Here’s the deal.</h2>
+<p>In the last post, we considered how we might estimate correlations when our data contain influential outlier values. Our big insight was that if we use variants of Student’s <span class="math inline">\(t\)</span>-distribution as the likelihood rather than the conventional normal distribution, our correlation estimates were less influenced by those outliers. And we mainly did that as Bayesians using the <a href="https://github.com/paul-buerkner/brms">brms package</a>. Click <a href="https://solomonkurz.netlify.com/post/bayesian-robust-correlations-with-brms-and-why-you-should-love-student-s-t/">here</a> for a refresher.</p>
+<p>Since the brms package is designed to fit regression models, <a href="https://twitter.com/tjmahr/status/1094808459239981056">it can be surprising</a> when you discover it’s handy for correlations, too. In short, you can fit them using a few tricks based on the <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_multivariate.html">multivariate syntax</a>.</p>
+<p>Shortly after uploading the post, it occurred to me we had more options and it might be useful to walk through them a bit.</p>
+</div>
+<div id="i-assume-things." class="section level2">
+<h2>I assume things.</h2>
+<p>For this post, I’m presuming you are vaguely familiar with linear regression–both univariate and multivariate–, have a little background with Bayesian statistics, and have used Paul Bürkner’s brms packge. As you might imagine, all code in is <a href="https://www.r-bloggers.com/why-use-r-five-reasons/">R</a>, with a heavy use of the <a href="http://style.tidyverse.org">tidyverse</a>.</p>
+</div>
+<div id="we-need-data." class="section level2">
+<h2>We need data.</h2>
+<p>First, we’ll load our main packages.</p>
+<pre class="r"><code>library(mvtnorm)
+library(brms)
+library(tidyverse)</code></pre>
+<p>We’ll use the <a href="https://cran.r-project.org/web/packages/mvtnorm/index.html">mvtnorm package</a> to simulate three positively correlated variables.</p>
+<pre class="r"><code>m &lt;- c(10, 15, 20)  # the means
+s &lt;- c(10, 20, 30)  # the sigmas
+r &lt;- c(.9, .6, .3)  # the correlations
+
+# here&#39;s the variance/covariance matrix
+v &lt;- 
+  matrix(c((s[1] * s[1]),        (s[2] * s[1] * r[1]), (s[3] * s[1] * r[2]),
+           (s[2] * s[1] * r[1]), (s[2] * s[2]),        (s[3] * s[2] * r[3]),
+           (s[3] * s[1] * r[2]), (s[3] * s[2] * r[3]), (s[3] * s[3])),
+         nrow = 3, ncol = 3)
+
+# after setting our seed, we&#39;re ready to simulate with `rmvnorm()`
+set.seed(1)
+d &lt;- 
+  rmvnorm(n = 50, mean = m, sigma = v) %&gt;% 
+  as_tibble() %&gt;% 
+  set_names(&quot;x&quot;, &quot;y&quot;, &quot;z&quot;)</code></pre>
+<p>Our data look like so.</p>
+<pre class="r"><code>library(GGally)
+theme_set(theme_gray() +
+            theme(panel.grid = element_blank()))
+
+d %&gt;% 
+  ggpairs()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="384" /></p>
+<p>Do note the Pearson’s correlation coefficients in the upper triangle.</p>
+<p>In order to exploit all the methods we’ll cover in this post, we need to standardize our data. Here we do so by hand using the typical formula</p>
+<p><span class="math display">\[z_{x_i} = \frac{x_i - \overline x}{s_x}\]</span></p>
+<p>where <span class="math inline">\(\overline x\)</span> is the observed mean and <span class="math inline">\(s_x\)</span> is the observed standard deviation.</p>
+<pre class="r"><code>d &lt;-
+  d %&gt;% 
+  mutate(x_s = (x - mean(x)) / sd(x),
+         y_s = (y - mean(y)) / sd(y),
+         z_s = (z - mean(z)) / sd(z))
+
+head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 6
+##       x     y     z    x_s      y_s    z_s
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;  &lt;dbl&gt;
+## 1  3.90  11.5 -6.90 -0.723 -0.308   -0.928
+## 2 17.7   29.5  4.01  0.758  0.653   -0.512
+## 3 20.4   33.8 41.5   1.05   0.886    0.917
+## 4 20.3   42.1 34.8   1.04   1.33     0.663
+## 5 -3.64 -26.8 43.5  -1.53  -2.36     0.994
+## 6 13.9   17.3 47.6   0.347  0.00255  1.15</code></pre>
+<p>There are at least two broad ways to get correlations out of standardized data in brms. One way uses the typical univariate syntax. The other way is an extension of the multivariate <code>cbind()</code> approach. Let’s start univariate.</p>
+<p>And for a point of clarification, we’re presuming the Gaussian likelihood for all the examples in this post.</p>
+</div>
+<div id="univariate" class="section level2">
+<h2>Univariate</h2>
+<p>If you fit a simple univariate model with standardized data and a single predictor, the coefficient for the slope will be in a correlation-like metric. Happily, since the data are all standardized, it’s easy to use <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations">regularizing priors</a>.</p>
+<pre class="r"><code>f1 &lt;- 
+  brm(data = d, 
+      family = gaussian,
+      y_s ~ 1 + x_s,
+      prior = c(prior(normal(0, 1), class = Intercept),
+                prior(normal(0, 1), class = b),
+                prior(normal(0, 1), class = sigma)),
+      chains = 4, cores = 4, 
+      seed = 1)</code></pre>
+<p>Take a look at the model summary.</p>
+<pre class="r"><code>print(f1)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y_s ~ 1 + x_s 
+##    Data: d (Number of observations: 50) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -0.00      0.06    -0.12     0.12 1.00     3689     2507
+## x_s           0.91      0.06     0.79     1.03 1.00     3385     2456
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.42      0.05     0.35     0.52 1.00     3199     2787
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>The ‘Population-Level Effects’ has the summary information for our intercept and slope. Notice how our <code>x_s</code> slope is the same as the Pearson’s correlation.</p>
+<pre class="r"><code>cor(d$x, d$y)</code></pre>
+<pre><code>## [1] 0.9119708</code></pre>
+<p>Since this approach only yields one correlation at a time, we have to fit two more models to get the other two correlations. To do so with haste, we can use the <code>update()</code> syntax.</p>
+<pre class="r"><code>f2 &lt;-
+  update(f1,
+         newdata = d,
+         formula = z_s ~ 1 + x_s)
+
+f3 &lt;-
+  update(f2,
+         newdata = d,
+         formula = z_s ~ 1 + y_s)</code></pre>
+<p>With the <code>fixef()</code> function, we can easily isolate the <span class="math inline">\(\beta\)</span> estimates.</p>
+<pre class="r"><code>fixef(f2)[2, ]</code></pre>
+<pre><code>##  Estimate Est.Error      Q2.5     Q97.5 
+## 0.5800785 0.1186747 0.3436443 0.8113266</code></pre>
+<pre class="r"><code>fixef(f3)[2, ]</code></pre>
+<pre><code>##   Estimate  Est.Error       Q2.5      Q97.5 
+## 0.31107268 0.14237961 0.02815067 0.58747426</code></pre>
+<p>There’s another thing I’d like to point out. Plotting the model results will help make the point.</p>
+<pre class="r"><code># define the predictor values you&#39;d like the fitted values for
+nd &lt;- tibble(x_s = seq(from = -3, to = 3, length.out = d %&gt;% nrow()))
+
+# wrangle
+fitted(f1,
+       newdata = nd) %&gt;% 
+  as_tibble() %&gt;% 
+  bind_cols(nd) %&gt;% 
+  
+  # plot
+  ggplot(aes(x_s)) +
+  geom_vline(xintercept = 0, color = &quot;white&quot;) +
+  geom_hline(yintercept = 0, color = &quot;white&quot;) +
+  geom_point(data = d,
+             aes(y = y_s)) +
+  geom_smooth(aes(y = Estimate, ymin = Q2.5, ymax = Q97.5),
+              stat = &quot;identity&quot;,
+              alpha = 1/4, size = 1/2) +
+  coord_cartesian(xlim = range(d$x_s),
+                  ylim = range(d$y_s))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="336" /></p>
+<p>The blue line is the posterior mean and the surrounding gray ribbon depicts the 95% posterior interval. Notice how the data and their respective fitted lines pass through [0, 0]? This is a consequence of modeling standardized data. We should always expect the intercept of a model like this to be 0. Here are the intercept summaries for all three models.</p>
+<pre class="r"><code>fixef(f1)[&quot;Intercept&quot;, ] %&gt;% round(3)</code></pre>
+<pre><code>##  Estimate Est.Error      Q2.5     Q97.5 
+##     0.000     0.062    -0.123     0.121</code></pre>
+<pre class="r"><code>fixef(f2)[&quot;Intercept&quot;, ] %&gt;% round(3)</code></pre>
+<pre><code>##  Estimate Est.Error      Q2.5     Q97.5 
+##     0.000     0.114    -0.214     0.225</code></pre>
+<pre class="r"><code>fixef(f3)[&quot;Intercept&quot;, ] %&gt;% round(3)</code></pre>
+<pre><code>##  Estimate Est.Error      Q2.5     Q97.5 
+##     0.002     0.138    -0.267     0.270</code></pre>
+<p>Within simulation error, they’re all centered on zero. So instead of estimating the intercept, why not just bake that into the models? Here we refit the models by fixing the intercept for each to zero.</p>
+<pre class="r"><code>f4 &lt;-
+  update(f1,
+         formula = y_s ~ 0 + x_s)
+
+f5 &lt;-
+  update(f4,
+         newdata = d,
+         formula = z_s ~ 0 + x_s)
+
+f6 &lt;-
+  update(f4,
+         newdata = d,
+         formula = z_s ~ 0 + y_s)</code></pre>
+<p>Let’s take a look at the summary for the first.</p>
+<pre class="r"><code>print(f4)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y_s ~ x_s - 1 
+##    Data: d (Number of observations: 50) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Population-Level Effects: 
+##     Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## x_s     0.91      0.06     0.79     1.02 1.00     3141     2537
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.42      0.04     0.35     0.52 1.00     3664     2536
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Even though it may have seemed like we substantially changed the models by fixing the intercepts to 0, the summaries are essentially the same as when we estimated the intercepts. Here we’ll confirm the summaries with a plot, like above.</p>
+<pre class="r"><code># wrangle
+fitted(f4,
+       newdata = nd) %&gt;% 
+  as_tibble() %&gt;% 
+  bind_cols(nd) %&gt;% 
+  
+  # plot
+  ggplot(aes(x_s)) +
+  geom_vline(xintercept = 0, color = &quot;white&quot;) +
+  geom_hline(yintercept = 0, color = &quot;white&quot;) +
+  geom_point(data = d,
+             aes(y = y_s)) +
+  geom_smooth(aes(y = Estimate, ymin = Q2.5, ymax = Q97.5),
+              stat = &quot;identity&quot;,
+              alpha = 1/4, size = 1/2) +
+  coord_cartesian(xlim = range(d$x_s),
+                  ylim = range(d$y_s))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="336" /></p>
+<p>The difference is subtle. By fixing the intercepts at 0, we estimated the slopes (i.e., the correlations) with increased precision as demonstrated by the slightly smaller posterior standard deviations (i.e., the values in the ‘Est.Error’ columns).</p>
+<p>Here are the correlation summaries for those last three models.</p>
+<pre class="r"><code>fixef(f4) %&gt;% round(3)</code></pre>
+<pre><code>##     Estimate Est.Error  Q2.5 Q97.5
+## x_s    0.908     0.059 0.787 1.024</code></pre>
+<pre class="r"><code>fixef(f5) %&gt;% round(3)</code></pre>
+<pre><code>##     Estimate Est.Error  Q2.5 Q97.5
+## x_s    0.581     0.116 0.355 0.801</code></pre>
+<pre class="r"><code>fixef(f6) %&gt;% round(3)</code></pre>
+<pre><code>##     Estimate Est.Error  Q2.5 Q97.5
+## y_s    0.311     0.135 0.049 0.569</code></pre>
+<p>But anyway, you get the idea. If you want to estimate a correlation in brms using simple univariate syntax, just (a) standardize the data and (b) fit a univariate model with or without an intercept. The slop will be in a correlation-like metric.</p>
+</div>
+<div id="lets-go-multivariate." class="section level2">
+<h2>Let’s go multivariate.</h2>
+<p>If you don’t recall the steps to fit correlations in brms with the multivariate syntax, here they are:</p>
+<ul>
+<li>List the variables you’d like correlations for within <code>mvbind()</code>.</li>
+<li>Place the <code>mvbind()</code> function within the left side of the model formula.</li>
+<li>On the right side of the model formula, indicate you only want intercepts (i.e., <code>~ 1</code>).</li>
+<li>Wrap that whole formula within <code>bf()</code>.</li>
+<li>Then use the <code>+</code> operator to append <code>set_rescor(TRUE)</code>, which will ensure brms fits a model with residual correlations.</li>
+</ul>
+<p>In addition, you you want to use non-default priors, you’ll want to use the <code>resp</code> argument to specify which prior is associated with which criterion variable. Here’s what that all looks like:</p>
+<pre class="r"><code>f7 &lt;- 
+  brm(data = d, 
+      family = gaussian,
+      bf(mvbind(x_s, y_s, z_s) ~ 1) + set_rescor(TRUE),
+      prior = c(prior(normal(0, 1), class = Intercept, resp = xs),
+                prior(normal(0, 1), class = Intercept, resp = ys),
+                prior(normal(0, 1), class = Intercept, resp = zs),
+                prior(normal(1, 1), class = sigma, resp = xs),
+                prior(normal(1, 1), class = sigma, resp = ys),
+                prior(normal(1, 1), class = sigma, resp = zs),
+                prior(lkj(2), class = rescor)),
+      chains = 4, cores = 4, 
+      seed = 1)</code></pre>
+<p>Behold the summary.</p>
+<pre class="r"><code>print(f7)</code></pre>
+<pre><code>##  Family: MV(gaussian, gaussian, gaussian) 
+##   Links: mu = identity; sigma = identity
+##          mu = identity; sigma = identity
+##          mu = identity; sigma = identity 
+## Formula: x_s ~ 1 
+##          y_s ~ 1 
+##          z_s ~ 1 
+##    Data: d (Number of observations: 50) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Population-Level Effects: 
+##              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## xs_Intercept     0.00      0.14    -0.27     0.27 1.00     2031     2446
+## ys_Intercept     0.00      0.14    -0.27     0.28 1.00     2288     2677
+## zs_Intercept     0.00      0.15    -0.28     0.29 1.00     2697     2728
+## 
+## Family Specific Parameters: 
+##          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_xs     0.99      0.10     0.82     1.19 1.00     1999     2074
+## sigma_ys     1.00      0.10     0.83     1.21 1.00     2265     2463
+## sigma_zs     1.03      0.11     0.85     1.26 1.00     3137     2530
+## 
+## Residual Correlations: 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(xs,ys)     0.89      0.03     0.83     0.94 1.00     2458     2815
+## rescor(xs,zs)     0.55      0.09     0.35     0.72 1.00     3039     2828
+## rescor(ys,zs)     0.26      0.13    -0.00     0.49 1.00     2733     2530
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Look at the ‘Residual Correlations:’ section at the bottom of the output. Since there are no predictors in the model, the residual correlations are just correlations. Now notice how the intercepts in this model are also hovering around 0, just like in our univariate models. Yep, we can fix those, too. We do this by changing our formula to <code>mvbind(x_s, y_s, z_s) ~ 0</code>.</p>
+<pre class="r"><code>f8 &lt;- 
+  brm(data = d, 
+      family = gaussian,
+      bf(mvbind(x_s, y_s, z_s) ~ 0) + set_rescor(TRUE),
+      prior = c(prior(normal(1, 1), class = sigma, resp = xs),
+                prior(normal(1, 1), class = sigma, resp = ys),
+                prior(normal(1, 1), class = sigma, resp = zs),
+                prior(lkj(2), class = rescor)),
+      chains = 4, cores = 4, 
+      seed = 1)</code></pre>
+<p>Without the intercepts, the rest of the model is the same within simulation variance.</p>
+<pre class="r"><code>print(f8)</code></pre>
+<pre><code>##  Family: MV(gaussian, gaussian, gaussian) 
+##   Links: mu = identity; sigma = identity
+##          mu = identity; sigma = identity
+##          mu = identity; sigma = identity 
+## Formula: x_s ~ 0 
+##          y_s ~ 0 
+##          z_s ~ 0 
+##    Data: d (Number of observations: 50) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Family Specific Parameters: 
+##          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_xs     0.98      0.09     0.81     1.18 1.00     1967     2063
+## sigma_ys     0.99      0.10     0.82     1.19 1.00     2204     1917
+## sigma_zs     1.01      0.10     0.83     1.24 1.00     2690     2817
+## 
+## Residual Correlations: 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(xs,ys)     0.90      0.03     0.83     0.94 1.00     2441     2328
+## rescor(xs,zs)     0.55      0.09     0.35     0.71 1.00     2739     2438
+## rescor(ys,zs)     0.26      0.12     0.01     0.48 1.00     2608     2468
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>If you wanna get silly, we can prune even further. Did you notice how the estimates for <span class="math inline">\(\sigma\)</span> are all hovering around 1? Since we have no predictors, <span class="math inline">\(\sigma\)</span> is just an estimate of the population standard deviation. And since we’re working with standardized data, the population standard deviation has to be 1. Any other estimate would be nonsensical. So why not fix it to 1?</p>
+<p>With brms, we can fix those <span class="math inline">\(\sigma\)</span>’s to 1 with a trick of the nonlinear <a href="https://cran.r-project.org/web/packages/brms/vignettes/brms_distreg.html">distributional modeling syntax</a>. Recall when you model <span class="math inline">\(\sigma\)</span>, the brms default is to actually model its log. As is turns out, the log of 1 is zero.</p>
+<pre class="r"><code>log(1)</code></pre>
+<pre><code>## [1] 0</code></pre>
+<p>Here’s how to make use of that within <code>brm()</code>.</p>
+<pre class="r"><code>f9 &lt;- 
+  brm(data = d, 
+      family = gaussian,
+      bf(mvbind(x_s, y_s, z_s) ~ 0,
+         sigma ~ 0) + 
+        set_rescor(TRUE),
+      prior(lkj(2), class = rescor),
+      chains = 4, cores = 4, 
+      seed = 1)</code></pre>
+<p>Here are the results.</p>
+<pre class="r"><code>print(f9)</code></pre>
+<pre><code>##  Family: MV(gaussian, gaussian, gaussian) 
+##   Links: mu = identity; sigma = log
+##          mu = identity; sigma = log
+##          mu = identity; sigma = log 
+## Formula: x_s ~ 0 
+##          sigma ~ 0
+##          y_s ~ 0 
+##          sigma ~ 0
+##          z_s ~ 0 
+##          sigma ~ 0
+##    Data: d (Number of observations: 50) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Residual Correlations: 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(xs,ys)     0.90      0.02     0.87     0.93 1.00     3719     3031
+## rescor(xs,zs)     0.57      0.07     0.42     0.69 1.00     3047     2773
+## rescor(ys,zs)     0.29      0.09     0.11     0.46 1.00     2839     2615
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>The correlations are the only things left in the model.</p>
+<p>Just to be clear, the multivariate approach does not require standardized data. To demonstrate, here we refit <code>f7</code>, but with the unstandardized variables. And, since we’re no longer in the standardized metric, we’ll be less certain with our priors.</p>
+<pre class="r"><code>f10 &lt;- 
+  brm(data = d, 
+      family = gaussian,
+      bf(mvbind(x, y, z) ~ 1) + set_rescor(TRUE),
+      prior = c(prior(normal(0, 10), class = Intercept, resp = x),
+                prior(normal(0, 10), class = Intercept, resp = y),
+                prior(normal(0, 10), class = Intercept, resp = z),
+                prior(student_t(3, 0, 10), class = sigma, resp = x),
+                prior(student_t(3, 0, 10), class = sigma, resp = y),
+                prior(student_t(3, 0, 10), class = sigma, resp = z),
+                prior(lkj(2), class = rescor)),
+      chains = 4, cores = 4, 
+      seed = 1)</code></pre>
+<p>See, the ‘rescor()’ results are about the same as with <code>f7</code>.</p>
+<pre class="r"><code>print(f10)</code></pre>
+<pre><code>##  Family: MV(gaussian, gaussian, gaussian) 
+##   Links: mu = identity; sigma = identity
+##          mu = identity; sigma = identity
+##          mu = identity; sigma = identity 
+## Formula: x ~ 1 
+##          y ~ 1 
+##          z ~ 1 
+##    Data: d (Number of observations: 50) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Population-Level Effects: 
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## x_Intercept     9.63      1.22     7.14    12.02 1.00     1941     2016
+## y_Intercept    15.60      2.49    10.63    20.30 1.00     2238     2441
+## z_Intercept    14.71      3.58     7.65    21.51 1.00     3021     2316
+## 
+## Family Specific Parameters: 
+##         Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_x     8.93      0.84     7.44    10.70 1.00     2263     2515
+## sigma_y    18.13      1.73    15.13    21.77 1.00     2553     2793
+## sigma_z    26.15      2.58    21.78    31.92 1.00     2626     2198
+## 
+## Residual Correlations: 
+##             Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(x,y)     0.89      0.03     0.82     0.94 1.00     2540     2630
+## rescor(x,z)     0.54      0.09     0.34     0.70 1.00     3122     3224
+## rescor(y,z)     0.24      0.12    -0.01     0.47 1.00     2689     2829
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+</div>
+<div id="its-time-to-compare-methods." class="section level2">
+<h2>It’s time to compare methods.</h2>
+<p>To recap, we’ve compared several ways to fit correlations in brms. Some of the methods were with univariate syntax, others were with the multivariate syntax. Some of the models had all free parameters, others included fixed intercepts and sigmas. Whereas all the univariate models required standardized data, the multivariate approach can work with unstandardized data, too.</p>
+<p>Now it might be of help to compare the results from each of the methods to get a sense of which ones you might prefer. Before we do so, we’ll define a couple custom functions to streamline the data wrangling.</p>
+<pre class="r"><code>get_rho &lt;- function(fit) {
+  posterior_samples(fit) %&gt;% 
+    select(starts_with(&quot;b_&quot;), -contains(&quot;Intercept&quot;)) %&gt;% 
+    set_names(&quot;rho&quot;) 
+}
+
+get_rescor &lt;- function(fit) {
+  posterior_samples(fit) %&gt;% 
+    select(starts_with(&quot;rescor&quot;)) %&gt;% 
+    set_names(&quot;x with y&quot;, &quot;x with z&quot;, &quot;y with z&quot;) %&gt;% 
+    gather(label, rho) %&gt;% 
+    select(rho, label)
+}</code></pre>
+<p>Now let’s put those functions to work and plot.</p>
+<pre class="r"><code>library(tidybayes)
+
+# collect the posteriors from the univariate models
+tibble(name = str_c(&quot;f&quot;, 1:6)) %&gt;% 
+  mutate(fit = map(name, get)) %&gt;% 
+  mutate(rho = map(fit, get_rho)) %&gt;% 
+  unnest(rho) %&gt;% 
+  mutate(predictor = rep(c(&quot;x&quot;, &quot;x&quot;, &quot;y&quot;), each = 4000) %&gt;% rep(., times = 2),
+         criterion = rep(c(&quot;y&quot;, &quot;z&quot;, &quot;z&quot;), each = 4000) %&gt;% rep(., times = 2)) %&gt;% 
+  mutate(label = str_c(predictor, &quot; with &quot;, criterion)) %&gt;% 
+  select(-c(predictor:criterion)) %&gt;% 
+  # add in the posteriors from the multivariate models
+  bind_rows(
+    tibble(name = str_c(&quot;f&quot;, 7:10)) %&gt;% 
+      mutate(fit = map(name, get)) %&gt;% 
+      mutate(post = map(fit, get_rescor)) %&gt;% 
+      unnest(post)
+  ) %&gt;% 
+  # wrangle a bit just to make the y axis easier to understand
+  mutate(name = factor(name, 
+                       levels = c(str_c(&quot;f&quot;, 1:10)),
+                       labels = c(&quot;1. standardized, univariate&quot;,
+                                  &quot;2. standardized, univariate&quot;,
+                                  &quot;3. standardized, univariate&quot;,
+                                  &quot;4. standardized, univariate, fixed intercepts&quot;,
+                                  &quot;5. standardized, univariate, fixed intercepts&quot;,
+                                  &quot;6. standardized, univariate, fixed intercepts&quot;,
+                                  &quot;7. standardized, multivariate, fixed intercepts&quot;,
+                                  &quot;8. standardized, multivariate, fixed intercepts&quot;,
+                                  &quot;9. standardized, multivariate, fixed intercepts/sigmas&quot;,
+                                  &quot;10. unstandardized, multivariate&quot;))) %&gt;%
+  
+  # plot
+  ggplot(aes(x = rho, y = name)) +
+  geom_vline(data = tibble(label = c(&quot;x with y&quot;, &quot;x with z&quot;, &quot;y with z&quot;),
+                           rho   = r),
+             aes(xintercept = rho), color = &quot;white&quot;) +
+  stat_halfeye(.width = .95, size = 5/4) +
+  scale_x_continuous(breaks = c(0, r)) +
+  labs(x = expression(rho),
+       y = NULL) +
+  coord_cartesian(0:1) +
+  theme(axis.ticks.y = element_blank(),
+        axis.text.y  = element_text(hjust = 0)) +
+  facet_wrap(~ label, ncol = 3)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-19-1.png" width="768" /></p>
+<p>To my eye, a few patterns emerged. First, the point estimates were about the same across methods. Second, fixing the intercepts didn’t seem to effect things, much. But, third, it appears that fixing the sigmas in the multivariate models did narrow the posteriors a bit.</p>
+<p>Fourth, and perhaps most importantly, notice how the posteriors for the multivariate models were more asymmetric when they approached 1. Hopefully this makes intuitive sense. Correlations are bound between -1 and 1. However, standardized regression coefficients are not so bound. Accordingly, notice how the posteriors from the univariate models stayed symmetric when approaching 1 and some of their right tails even crossed over 1. So while the univariate approach did a reasonable job capturing the correlation point estimates, their posteriors weren’t quite in a correlation metric. Alternately, the univariate approach did make it convenient to express the correlations with fitted regression lines in scatter plots.</p>
+<p>Both univariate and multivariate approaches appear to have their strengths and weaknesses. Choose which methods seems most appropriate for your correlation needs.</p>
+<p>Happy modeling.</p>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] tidybayes_2.3.1 GGally_2.1.1    forcats_0.5.1   stringr_1.4.0  
+##  [5] dplyr_1.0.5     purrr_0.3.4     readr_1.4.0     tidyr_1.1.3    
+##  [9] tibble_3.1.0    ggplot2_3.3.3   tidyverse_1.3.0 brms_2.15.0    
+## [13] Rcpp_1.0.6      mvtnorm_1.1-1  
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6          
+##   [4] igraph_1.2.6         svUnit_1.0.3         splines_4.0.4       
+##   [7] crosstalk_1.1.0.1    TH.data_1.0-10       rstantools_2.1.1    
+##  [10] inline_0.3.17        digest_0.6.27        htmltools_0.5.1.1   
+##  [13] rsconnect_0.8.16     fansi_0.4.2          magrittr_2.0.1      
+##  [16] modelr_0.1.8         RcppParallel_5.0.2   matrixStats_0.57.0  
+##  [19] xts_0.12.1           sandwich_3.0-0       prettyunits_1.1.1   
+##  [22] colorspace_2.0-0     rvest_0.3.6          ggdist_2.4.0.9000   
+##  [25] haven_2.3.1          xfun_0.22            callr_3.5.1         
+##  [28] crayon_1.4.1         jsonlite_1.7.2       lme4_1.1-25         
+##  [31] survival_3.2-10      zoo_1.8-8            glue_1.4.2          
+##  [34] gtable_0.3.0         emmeans_1.5.2-1      V8_3.4.0            
+##  [37] distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.2        
+##  [40] abind_1.4-5          scales_1.1.1         DBI_1.1.0           
+##  [43] miniUI_0.1.1.1       xtable_1.8-4         stats4_4.0.4        
+##  [46] StanHeaders_2.21.0-7 DT_0.16              htmlwidgets_1.5.2   
+##  [49] httr_1.4.2           threejs_0.3.3        arrayhelpers_1.1-0  
+##  [52] RColorBrewer_1.1-2   ellipsis_0.3.1       farver_2.0.3        
+##  [55] reshape_0.8.8        pkgconfig_2.0.3      loo_2.4.1           
+##  [58] dbplyr_2.0.0         utf8_1.1.4           labeling_0.4.2      
+##  [61] tidyselect_1.1.0     rlang_0.4.10         reshape2_1.4.4      
+##  [64] later_1.1.0.1        munsell_0.5.0        cellranger_1.1.0    
+##  [67] tools_4.0.4          cli_2.3.1            generics_0.1.0      
+##  [70] broom_0.7.5          ggridges_0.5.2       evaluate_0.14       
+##  [73] fastmap_1.0.1        yaml_2.2.1           processx_3.4.5      
+##  [76] knitr_1.31           fs_1.5.0             nlme_3.1-152        
+##  [79] mime_0.10            projpred_2.0.2       xml2_1.3.2          
+##  [82] compiler_4.0.4       bayesplot_1.8.0      shinythemes_1.1.2   
+##  [85] rstudioapi_0.13      curl_4.3             gamm4_0.2-6         
+##  [88] reprex_0.3.0         statmod_1.4.35       stringi_1.5.3       
+##  [91] highr_0.8            ps_1.6.0             blogdown_1.3        
+##  [94] Brobdingnag_1.2-6    lattice_0.20-41      Matrix_1.3-2        
+##  [97] nloptr_1.2.2.2       markdown_1.1         shinyjs_2.0.0       
+## [100] vctrs_0.3.6          pillar_1.5.1         lifecycle_1.0.0     
+## [103] bridgesampling_1.0-0 estimability_1.3     httpuv_1.5.4        
+## [106] R6_2.5.0             bookdown_0.21        promises_1.1.1      
+## [109] gridExtra_2.3        codetools_0.2-18     boot_1.3-26         
+## [112] colourpicker_1.1.0   MASS_7.3-53          gtools_3.8.2        
+## [115] assertthat_0.2.1     withr_2.4.1          shinystan_2.5.0     
+## [118] multcomp_1.4-16      mgcv_1.8-33          parallel_4.0.4      
+## [121] hms_0.5.3            grid_4.0.4           coda_0.19-4         
+## [124] minqa_1.2.4          rmarkdown_2.7        shiny_1.5.0         
+## [127] lubridate_1.7.9.2    base64enc_0.1-3      dygraphs_1.1.1.6</code></pre>
+</div>

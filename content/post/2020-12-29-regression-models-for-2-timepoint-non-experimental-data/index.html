@@ -1,0 +1,1780 @@
+---
+title: Regression models for 2-timepoint non-experimental data
+author: A. Solomon Kurz
+date: '2020-12-29'
+slug: ''
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - longitudinal
+  - multilevel
+  - R
+  - robust
+  - tidyverse
+  - tutorial
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-22T10:56:23-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+bibliography: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/my_blog.bib
+biblio-style: apalike
+csl: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/apa.csl  
+link-citations: yes
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<div id="purpose" class="section level2">
+<h2>Purpose</h2>
+<p>In the contemporary longitudinal data analysis literature, 2-timepoint data (a.k.a. pre/post data) get a bad wrap. Singer and Willett <span class="citation">(<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003, p. 10</a>)</span> described 2-timepoint data as only “marginally better” than cross-sectional data and <span class="citation"><a href="#ref-rogosaGrowthCurveApproach1982" role="doc-biblioref">Rogosa et al.</a> (<a href="#ref-rogosaGrowthCurveApproach1982" role="doc-biblioref">1982</a>)</span> give a technical overview on the limitations of 2-timepoint data. Limitations aside, sometimes two timepoints are all you have. In those cases, researchers should have a good sense of which data analysis options they have at their disposal. I recently came across <a href="https://twitter.com/jwalkrunski">Jeffrey Walker</a>’s free <span class="citation">(<a href="#ref-walkerElementsOfStatisticalModeling2018" role="doc-biblioref">2018</a>)</span> text, <a href="https://www.middleprofessor.com/files/applied-biostatistics_bookdown/_book/"><em>Elements of statistical modeling for experimental biology</em></a>, which contains a <a href="https://www.middleprofessor.com/files/applied-biostatistics_bookdown/_book/models-for-longitudinal-experiments-pre-post-designs.html">nice chapter</a> on 2-timepoint experimental designs. Inspired by his work, this post aims to explore how one might analyze <em>non-experimental</em> 2-timepoint data within a regression model paradigm.</p>
+<div id="i-make-assumptions." class="section level3">
+<h3>I make assumptions.</h3>
+<p>In this post, I’m presuming you are familiar with longitudinal data analysis with conventional and multilevel regression. Though I don’t emphasize it much, it will also help if you’re familiar with Bayesian statistics. All code is in <strong>R</strong> <span class="citation">(<a href="#ref-R-base" role="doc-biblioref">R Core Team, 2020</a>)</span>, with healthy doses of the <strong>tidyverse</strong> <span class="citation">(<a href="#ref-R-tidyverse" role="doc-biblioref">Wickham, 2019</a>; <a href="#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>)</span>. The statistical models will be fit with <strong>brms</strong> <span class="citation">(<a href="#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">Bürkner, 2017</a>, <a href="#ref-burknerAdvancedBayesianMultilevel2018" role="doc-biblioref">2018</a>, <a href="#ref-R-brms" role="doc-biblioref">2020</a>)</span> and we’ll also make some use of the <strong>tidybayes</strong> <span class="citation">(<a href="#ref-R-tidybayes" role="doc-biblioref">Kay, 2020</a>)</span> and <strong>patchwork</strong> <span class="citation">(<a href="#ref-R-patchwork" role="doc-biblioref">Pedersen, 2019</a>)</span> packages. If you need to shore up, I list some educational resources at the <a href="#next-steps">end of the post</a>.</p>
+<p>Load the primary packages.</p>
+<pre class="r"><code>library(tidyverse)
+library(brms)
+library(tidybayes)
+library(patchwork)</code></pre>
+</div>
+</div>
+<div id="warm-up" class="section level2">
+<h2>Warm-up</h2>
+<p>Before we jump into 2-timepoint data, we’ll first explore how one might analyze a fuller data set of 6 timepoints. We will then reduce the data set to two different 2-timepoint versions for use in the remainder of the post.</p>
+<div id="we-need-data." class="section level3">
+<h3>We need data.</h3>
+<p>We will simulate the data based on a conventional multilevel growth model of the kind you can learn about in <span class="citation"><a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">Singer &amp; Willett</a> (<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003</a>)</span>, <span class="citation"><a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">Hoffman</a> (<a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">2015</a>)</span>, or Kurz <span class="citation">(<a href="#ref-kurzStatisticalRethinkingSecondEd2020" role="doc-biblioref">2020</a>, Chapter 14)</span>. We’ll have one criterion variable <span class="math inline">\(y\)</span> which will vary across participants <span class="math inline">\(i\)</span> and over time <span class="math inline">\(t\)</span>. For simplicity, the systemic change over time will be linear. We might express it in statistical notation<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> as</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_{ti}, \sigma) \\
+\mu_{ti} &amp; = \beta_0 + \beta_1 \text{time}_{ti} + u_{0i} + u_{1i} \text{time}_{ti} \\
+\sigma &amp; = \sigma_\epsilon \\
+\begin{bmatrix} u_{0i} \\ u_{1i} \end{bmatrix} &amp; \sim \operatorname{MVNormal} \left (\begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf \Sigma \right) \\
+\mathbf \Sigma &amp; = \mathbf{SRS} \\
+\mathbf S &amp; = \begin{bmatrix} \sigma_0 &amp; 0 \\ 0 &amp; \sigma_1 \end{bmatrix} \\
+\mathbf R &amp; = \begin{bmatrix} 1 &amp; \rho \\ \rho &amp; 1 \end{bmatrix},
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\beta_0\)</span> is the population-level intercept (initial status) and <span class="math inline">\(\beta_1\)</span> is the population-level slope (change over time). The <span class="math inline">\(u_{0i}\)</span> and <span class="math inline">\(u_{1i}\)</span> terms are the participant-level deviations around the population-level intercept and slope. Those <span class="math inline">\(u\)</span> deviations follow a bivariate normal distribution centered on zero (they are deviations, after all) and including a covariance matrix, <span class="math inline">\(\mathbf \Sigma\)</span>. As is typical within the <strong>brms</strong> framework <span class="citation">(see <a href="#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">Bürkner, 2017</a>)</span>, <span class="math inline">\(\mathbf \Sigma\)</span> is decomposed into a matrix of standard deviations (<span class="math inline">\(\mathbf S\)</span>) and a correlation matrix (<span class="math inline">\(\mathbf R\)</span>). Also notice we renamed our original <span class="math inline">\(\sigma\)</span> parameter as <span class="math inline">\(\sigma_\epsilon\)</span> to help distinguish it from the multilevel standard deviations in the <span class="math inline">\(\mathbf S\)</span> matrix (<span class="math inline">\(\sigma_0\)</span> and <span class="math inline">\(\sigma_1\)</span>). In this way, <span class="math inline">\(\sigma_0\)</span> and <span class="math inline">\(\sigma_1\)</span> capture differences <em>between</em> participants in their intercepts and slopes, whereas <span class="math inline">\(\sigma_\epsilon\)</span> captures the differences <em>within</em> participants over time that occur apart from their linear trajectories.</p>
+<p>To simulate data of this kind, we’ll first set the true values for <span class="math inline">\(\beta_0, \beta_1, \sigma_0, \sigma_1, \rho,\)</span> and <span class="math inline">\(\sigma_\epsilon\)</span>.</p>
+<pre class="r"><code>b0     &lt;- 0      # starting point (average intercept)
+b1     &lt;- 1      # growth over time (average slope)
+sigma0 &lt;- 1      # std dev in intercepts
+sigma1 &lt;- 1      # std dev in slopes
+rho    &lt;- -.5    # correlation between intercepts and slopes
+sigma_e &lt;- 0.75  # std dev within participants</code></pre>
+<p>Now combine several of those values to define the <span class="math inline">\(\mathbf S, \mathbf R,\)</span> and <span class="math inline">\(\mathbf \Sigma\)</span> matrices. Then simulate <span class="math inline">\(N = 100\)</span> participant-level intercepts and slopes.</p>
+<pre class="r"><code>mu     &lt;- c(b0, b1)          # combine the means in a vector
+sigmas &lt;- c(sigma0, sigma1)  # combine the std devs in a vector
+
+s &lt;- diag(sigmas)      # standard deviation matrix
+r &lt;- matrix(c(1, rho,  # correlation matrix
+             rho, 1), nrow = 2)
+
+# now matrix multiply s and r to get a covariance matrix
+sigma &lt;- s %*% r %*% s
+
+# how many participants would you like?
+n_id &lt;- 100
+
+# make the simulation reproducible
+set.seed(1)
+
+vary_effects &lt;- 
+  MASS::mvrnorm(n_id, mu = mu, Sigma = sigma) %&gt;% 
+  data.frame() %&gt;% 
+  set_names(&quot;intercepts&quot;, &quot;slopes&quot;) %&gt;% 
+  mutate(id = 1:n_id) %&gt;% 
+  select(id, everything())
+
+head(vary_effects)</code></pre>
+<pre><code>##   id  intercepts     slopes
+## 1  1  0.85270825  0.7676584
+## 2  2 -0.18009772  1.1379818
+## 3  3  1.17913643  0.7317852
+## 4  4 -1.46056809  2.3025393
+## 5  5  0.04193022  1.6126544
+## 6  6 -0.17309717 -0.5941901</code></pre>
+<p>Now we have our random intercepts and slopes, we’re almost ready to simulate our <span class="math inline">\(y_{ti}\)</span> values. We just need to decide on how many values we’d like to collect over time and how we’d like to structure those assessment periods. To keep things simple, I’m going to specify six evenly-spaced timepoints. The first timepoint will be set to 0, the last timepoint will be set to 1, and the four timepoints in the middle will be the corresponding fractions.</p>
+<pre class="r"><code># how many timepoints?
+time_points &lt;- 6
+
+d &lt;-
+  vary_effects %&gt;% 
+  # add in time
+  expand(nesting(id, intercepts, slopes),
+         time = seq(from = 0, to = 1, length.out = time_points)) %&gt;% 
+  # now use the model formula to compute y
+  mutate(y = rnorm(n(), mean = intercepts + slopes * time, sd = sigma_e))
+
+head(d, n = 10)</code></pre>
+<pre><code>## # A tibble: 10 x 5
+##       id intercepts slopes  time      y
+##    &lt;int&gt;      &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;
+##  1     1      0.853  0.768   0    1.16 
+##  2     1      0.853  0.768   0.2  2.27 
+##  3     1      0.853  0.768   0.4  2.35 
+##  4     1      0.853  0.768   0.6  1.07 
+##  5     1      0.853  0.768   0.8 -0.247
+##  6     1      0.853  0.768   1    3.49 
+##  7     2     -0.180  1.14    0    0.320
+##  8     2     -0.180  1.14    0.2  0.453
+##  9     2     -0.180  1.14    0.4  0.265
+## 10     2     -0.180  1.14    0.6  0.885</code></pre>
+<p>Before we move on, I should acknowledge that this simulation workflow is heavily influenced by McElreath <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>, Chapter 14)</span>. You can find a similar workflow in the <span class="citation">(<a href="#ref-debruineUnderstandingMixedEffects2020" role="doc-biblioref">2020</a>)</span> preprint by DeBruine and Barr, <a href="https://psyarxiv.com/xp5cy/"><em>Understanding mixed effects models through data simulation</em></a>.</p>
+</div>
+<div id="explore-the-data." class="section level3">
+<h3>Explore the data.</h3>
+<p>Before fitting the model, it might help if we look at what we’ve done. Here’s a scatter plot of the random intercepts and slopes.</p>
+<pre class="r"><code># set the global plotting theme
+theme_set(theme_linedraw() +
+            theme(text = element_text(family = &quot;Times&quot;),
+                  panel.grid = element_blank()))
+
+p1 &lt;-
+  vary_effects %&gt;% 
+  ggplot(aes(x = intercepts, y = slopes)) +
+  geom_point() +
+  stat_ellipse(color = &quot;grey50&quot;)
+
+p1</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="288" style="display: block; margin: auto;" /></p>
+<p>The 95%-interval ellipse helps point out the negative correlation between the intercepts and slopes. Here’s the Pearson’s correlation.</p>
+<pre class="r"><code>vary_effects %&gt;% 
+  summarise(rho = cor(intercepts, slopes))</code></pre>
+<pre><code>##          rho
+## 1 -0.4502206</code></pre>
+<p>It’s no coincidence that value is very close to our data-generating <code>rho</code> value.</p>
+<pre class="r"><code>rho</code></pre>
+<pre><code>## [1] -0.5</code></pre>
+<p>Now check the sample means and standard deviations of our <code>intercepts</code> and <code>slopes</code>.</p>
+<pre class="r"><code>vary_effects %&gt;% 
+  summarise(b0 = mean(intercepts),
+            b1 = mean(slopes),
+            sigma0 = sd(intercepts),
+            sigma1 = sd(slopes)) %&gt;% 
+  mutate_all(round, digits = 2)</code></pre>
+<pre><code>##      b0   b1 sigma0 sigma1
+## 1 -0.08 1.11   0.91   0.91</code></pre>
+<p>Those aren’t quite the true data-generating values for <code>b0</code> through <code>sigma1</code>, from above. But they’re pretty decent sample approximations. With only <span class="math inline">\(N = 100\)</span> and <span class="math inline">\(T = 6\)</span>, this is about as close as we should expect.</p>
+<p>To get a sense of the <code>time</code> and <code>y</code> values, we’ll plot them in two ways. First we’ll plot a random subset from nine of our simulated participants. Then we’ll plot the linear trajectories from all 100 participants, along with the grand mean trajectory.</p>
+<pre class="r"><code>set.seed(1)
+
+p2 &lt;-
+  d %&gt;% 
+  nest(data = c(intercepts, slopes, time, y)) %&gt;% 
+  slice_sample(n = 9) %&gt;% 
+  unnest(data) %&gt;% 
+  
+  ggplot(aes(x = time, y = y)) +
+  geom_point() +
+  geom_abline(aes(intercept = intercepts, slope = slopes),
+              color = &quot;blue&quot;) +
+  labs(subtitle = &quot;random subset of 9 participants&quot;) +
+  theme(strip.background = element_blank(),
+        strip.text = element_blank()) +
+  facet_wrap(~slopes)
+
+p3 &lt;-
+  d %&gt;% 
+  ggplot(aes(x = time, y = y)) +
+  geom_point(color = &quot;transparent&quot;) +
+  geom_abline(aes(intercept = intercepts, slope = slopes, group = id),
+              color = &quot;blue&quot;, size = 1/10, alpha = 1/2) +
+  geom_abline(intercept = b0, slope = b1,
+              color = &quot;blue&quot;, size = 2) +
+  labs(subtitle = &quot;All participant-level trajectories, along\nwith the grand mean&quot;)
+
+# combine
+(p2 + p3) &amp;
+  scale_x_continuous(breaks = 0:5 / 5, labels = c(0, &quot;&quot;, &quot;&quot;, &quot;&quot;, &quot;&quot;, 1)) &amp;
+  coord_cartesian(ylim = c(-2.5, 3.5))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>See how the points in the plots on the left deviate quite a bit from their linear trajectories? That’s the result of <span class="math inline">\(\sigma_\epsilon\)</span>.</p>
+</div>
+<div id="fit-the-multilevel-growth-model." class="section level3">
+<h3>Fit the multilevel growth model.</h3>
+<p>Now we’ll use <strong>brms</strong> to fit the multilevel growth model. If all goes well, we should largely reproduce our data-generating values in the posterior. Before fitting the model, we should consider a few things about the <code>brm()</code> syntax.</p>
+<p>In this model and in most of the models to follow, we’re relying on the default <code>brm()</code> priors. When fitting real-world models, you are much better off going beyond the defaults. However, I will generally deemphasize priors, in this post, to help keep the focus on the conceptual models.</p>
+<p>Note how we set the <code>seed</code> argument. Though you don’t need to do this, setting the <code>seed</code> makes the results more reproducible.</p>
+<p>Also, note the custom settings for <code>iter</code> and <code>warmup</code>. Often times, the default settings are fine. But since we’ll be comparing a lot of models, I want to make sure we have enough posterior draws from each to ensure stable estimates.</p>
+<p>Okay, fit the model.</p>
+<pre class="r"><code>m0 &lt;-
+  brm(data = d,
+      y ~ 1 + time + (1 + time | id),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<p>Check the model summary.</p>
+<pre class="r"><code>print(m0)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ 1 + time + (1 + time | id) 
+##    Data: d (Number of observations: 600) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 100) 
+##                     Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)           0.89      0.09     0.72     1.07 1.00     3663     5989
+## sd(time)                0.84      0.15     0.53     1.14 1.00     1782     2936
+## cor(Intercept,time)    -0.40      0.15    -0.65    -0.05 1.00     3758     4228
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -0.13      0.11    -0.33     0.08 1.00     4153     6181
+## time          1.16      0.13     0.91     1.42 1.00     6636     6477
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.81      0.03     0.76     0.87 1.00     4706     5720
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>A series of plots might help show how well our model captured the data-generating values.</p>
+<pre class="r"><code># name the parameters with the Greek terms
+names &lt;- c(&quot;beta[0]&quot;, &quot;beta[1]&quot;, &quot;sigma[0]&quot;, &quot;sigma[1]&quot;, &quot;rho&quot;, &quot;sigma[epsilon]&quot;)
+
+# for the vertical lines marking off the true values
+vline &lt;-
+  tibble(name = names,
+         true_value = c(b0, b1, sigma0, sigma1, rho, sigma_e))
+
+# wrangle
+posterior_samples(m0) %&gt;% 
+  select(b_Intercept:sigma) %&gt;% 
+  set_names(names) %&gt;% 
+  pivot_longer(everything()) %&gt;% 
+  
+  # plot
+  ggplot(aes(x = value, y = 0)) +
+  stat_halfeye(.width = .95, normalize = &quot;panels&quot;, size = 1/2) +
+  geom_vline(data = vline,
+             aes(xintercept = true_value),
+             size = 1/4, linetype = 2) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  xlab(&quot;marginal posterior&quot;) +
+  facet_wrap(~name, scales = &quot;free&quot;, labeller = label_parsed)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-12-1.png" width="480" style="display: block; margin: auto;" /></p>
+<p>The marginal posterior distribution for all the major summary parameters is summarized by the median (dot) and percentile-based 95% interval (horizontal line). The true values are shown in the dashed vertical lines. Overall, we did okay.</p>
+<p>As fun as this has all been, we’ve just been warming up.</p>
+</div>
+<div id="make-the-2-timepoint-data." class="section level3">
+<h3>Make the 2-timepoint data.</h3>
+<p>Before fitting the 2-timepoint longitudinal models, we’ll need to adjust the data, which currently contains values over six timepoints. Since it’s easy to think of 2-timepoint data in terms of pre and post, we’ll keep the data points for which <code>time == 0</code> and <code>time == 1</code>.</p>
+<pre class="r"><code>small_data_long &lt;-
+  d %&gt;% 
+  filter(time == 0 | time == 1) %&gt;% 
+  select(-intercepts, -slopes) %&gt;% 
+  mutate(`pre/post` = factor(if_else(time == 0, &quot;pre&quot;, &quot;post&quot;),
+                             levels = c(&quot;pre&quot;, &quot;post&quot;))) 
+
+head(small_data_long)</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##      id  time     y `pre/post`
+##   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;fct&gt;     
+## 1     1     0 1.16  pre       
+## 2     1     1 3.49  post      
+## 3     2     0 0.320 pre       
+## 4     2     1 1.27  post      
+## 5     3     0 0.879 pre       
+## 6     3     1 0.971 post</code></pre>
+<p>As the name implies, the <code>small_data_long</code> data are still in the long format. <span class="citation"><a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">Hoffman</a> (<a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">2015</a>)</span> described this as the <em>stacked format</em> and Singer and Willett <span class="citation">(<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003</a>)</span> called this a <em>person-period data set</em>. Each level of <code>id</code> has two rows, one for each level of <code>time</code>, which is an explicit variable. In this formulation, <code>time == 0</code> is the same as the “pre” timepoint and <code>time == 1</code> is the same as “post.” To help clarify that, we added a <code>pre/post</code> column.</p>
+<p>We’ll need a second variant of this data set, this time in the wide format.</p>
+<pre class="r"><code>small_data_wide &lt;-
+  small_data_long %&gt;% 
+  select(-time) %&gt;% 
+  pivot_wider(names_from = `pre/post`, values_from = y) %&gt;% 
+  mutate(change = post - pre)
+
+head(small_data_wide)</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##      id    pre   post change
+##   &lt;int&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+## 1     1  1.16   3.49  2.33  
+## 2     2  0.320  1.27  0.953 
+## 3     3  0.879  0.971 0.0920
+## 4     4 -0.979  0.586 1.57  
+## 5     5 -0.825  1.85  2.68  
+## 6     6 -0.912 -0.841 0.0715</code></pre>
+<p>With our <code>small_data_wide</code> data, each level of <code>id</code> only has one row. The time-structured <code>y</code> column was broken up into a <code>pre</code> and <code>post</code> column, and we no longer have a variable explicitly defining <em>time</em>. We have a new column, <code>change</code>, which is the result of subtracting <code>pre</code> from <code>post</code>. In her text, Hoffman referred to this type of data structure as the <em>multivariate format</em> and Singer and Willett called it a <em>person-level data set</em>.</p>
+<p>The information is essentially the same in these two data sets, <code>small_data_long</code> and <code>small_data_wide</code>. Yet, the models supported by them will provide different insights.</p>
+</div>
+</div>
+<div id="timepoint-longitudinal-models" class="section level2">
+<h2>2-timepoint longitudinal models</h2>
+<p>Before we start fitting and interpreting models, we should prepare ourselves with an overview.</p>
+<div id="overview." class="section level3">
+<h3>Overview.</h3>
+<p>We will consider 20 ways to fit models based on 2-timepoint data. It seems like there multiple ways to categorize these. Here we’ll break them up into four groupings.</p>
+<p>The first four model types will take <code>post</code> as the criterion:</p>
+<ul>
+<li><span class="math inline">\(\mathcal M_1 \colon\)</span> The unconditional post model (<code>post ~ 1</code>),</li>
+<li><span class="math inline">\(\mathcal M_2 \colon\)</span> The simple autoregressive model (<code>post ~ 1 + pre</code>),</li>
+<li><span class="math inline">\(\mathcal M_3 \colon\)</span> The bivariate autoregressive model (<code>bf(post ~ 1 + pre) + bf(pre ~ 1) + set_rescor(rescor = FALSE)</code>), and</li>
+<li><span class="math inline">\(\mathcal M_4 \colon\)</span> The bivariate correlational pre/post model (<code>bf(post ~ 1) + bf(pre ~ 1) + set_rescor(rescor = TRUE)</code>).</li>
+</ul>
+<p>The next four model types will take <code>change</code> as the criterion:</p>
+<ul>
+<li><span class="math inline">\(\mathcal M_5 \colon\)</span> The unconditional change-score model (<code>change ~ 1</code>) and</li>
+<li><span class="math inline">\(\mathcal M_6 \colon\)</span> The conditional change-score model (<code>change ~ 1 + pre</code>).</li>
+<li><span class="math inline">\(\mathcal M_7 \colon\)</span> The bivariate conditional change-score model (<code>bf(change ~ 1 + pre) + bf(pre ~ 1) + set_rescor(rescor = FALSE)</code>), and</li>
+<li><span class="math inline">\(\mathcal M_8 \colon\)</span> The bivariate correlational pre/change model (<code>bf(change ~ 1) + bf(pre ~ 1) + set_rescor(rescor = TRUE)</code>).</li>
+</ul>
+<p>The next eight model types will take <code>y</code> as the criterion:</p>
+<ul>
+<li><span class="math inline">\(\mathcal M_9 \colon\)</span> The grand-mean model (<code>y ~ 1</code>),</li>
+<li><span class="math inline">\(\mathcal M_{10} \colon\)</span> The random-intercept model (<code>y ~ 1 + (1 | id)</code>),</li>
+<li><span class="math inline">\(\mathcal M_{11} \colon\)</span> The cross-classified model (<code>y ~ 1 + (1 | id) + (1 | time)</code>),</li>
+<li><span class="math inline">\(\mathcal M_{12} \colon\)</span> The simple liner model (<code>y ~ 1 + time</code>),</li>
+<li><span class="math inline">\(\mathcal M_{13} \colon\)</span> The liner model with a random intercept (<code>y ~ 1 + time + (1 | id)</code>),</li>
+<li><span class="math inline">\(\mathcal M_{14} \colon\)</span> The liner model with a random slope (<code>y ~ 1 + time + (0 + time | id)</code>),</li>
+<li><span class="math inline">\(\mathcal M_{15} \colon\)</span> The multilevel growth model with regularizing priors (<code>y ~ 1 + time + (1 + time | id)</code>), and</li>
+<li><span class="math inline">\(\mathcal M_{16} \colon\)</span> The fixed effects with correlated error model (<code>y ~ 1 + time + ar(time = time, p = 1, gr = id</code>).</li>
+</ul>
+<p>The final four model types will expand previous ones with robust variance parameters:</p>
+<ul>
+<li><span class="math inline">\(\mathcal M_{17} \colon\)</span> The cross-classified model with robust variances for discrete time (<code>bf(y ~ 1 + (1 | id) + (1 | time), sigma ~ 0 + factor(time))</code>),</li>
+<li><span class="math inline">\(\mathcal M_{18} \colon\)</span> The simple liner model with robust variance for linear time (<code>bf(y ~ 1 + time, sigma ~ 1 + time)</code>),</li>
+<li><span class="math inline">\(\mathcal M_{19} \colon\)</span> The liner model with correlated random intercepts for <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span> (<code>bf(y ~ 1 + time + (1 |x| id), sigma ~ 1 + (1 |x| id))</code>), and</li>
+<li><span class="math inline">\(\mathcal M_{20} \colon\)</span> The liner model with a random slope for <span class="math inline">\(\mu\)</span> and uncorrelated random intercept for <span class="math inline">\(\sigma\)</span> (<code>bf(y ~ 1 + time + (0 + time | id), sigma ~ 1 + (1 | id))</code>).</li>
+</ul>
+<p>As far as these model names go, I’m making no claim they are canonical. Call them what you want. My goal, here, is to use names that are minimally descriptive and similar to the terms you might find used by other authors.</p>
+</div>
+<div id="models-focusing-on-the-second-timepoint-post." class="section level3">
+<h3>Models focusing on the second timepoint, <code>post</code>.</h3>
+<div id="mathcal-m_1-colon-the-unconditional-post-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_1 \colon\)</span> The unconditional post model.</h4>
+<p>We can write the unconditional post model as</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{post}_i &amp; \sim \operatorname{Normal}(\mu, \sigma) \\
+\mu &amp; = \beta_0,
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\beta_0\)</span> is both the model intercept and the estimate for the mean value of <code>post</code>. The focus this model places on <code>post</code> comes at the cost of any contextual information on what earlier values we might compare <code>post</code> to. Also, since the only variable in the model is <code>post</code>, this technically is <em>not</em> a 2-timepoint model. But given its connection to the models to follow, it’s worth working through.</p>
+<p>Here’s how to fit the model with <strong>brms</strong>.</p>
+<pre class="r"><code>m1 &lt;-
+  brm(data = small_data_wide,
+      post ~ 1,
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m1)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: post ~ 1 
+##    Data: small_data_wide (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     1.02      0.12     0.79     1.25 1.00     6972     5683
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.17      0.08     1.02     1.36 1.00     8412     6599
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>We might compare those parameters with their sample values.</p>
+<pre class="r"><code>small_data_wide %&gt;% 
+  summarise(mean = mean(post),
+            sd = sd(post))</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##    mean    sd
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1  1.02  1.16</code></pre>
+<p>If you only care about computing the population estimates for <span class="math inline">\(\mu_\text{post}\)</span> and <span class="math inline">\(\sigma_\text{post}\)</span>, this model does a great job. With no other variables in the model, this approach does a poor job telling us about growth processes.</p>
+</div>
+<div id="mathcal-m_2-colon-the-simple-autoregressive-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_2 \colon\)</span> The simple autoregressive model.</h4>
+<p>The simple model with the <code>pre</code> scores predicting <code>post</code> is a substantial improvement from the previous one. It follows the form</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{post}_i &amp; \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i &amp; = \beta_0 + \beta_1 \text{pre}_i,
+\end{align*}
+\]</span></p>
+<p>where the intercept <span class="math inline">\(\beta_0\)</span> is the expected value of <code>post</code> when <code>pre</code> is at zero. As with many other regression contexts, centering the predictor <code>pre</code> at the mean or some other meaningful value can help make <span class="math inline">\(\beta_0\)</span> more interpretable. Of greater interest is the <span class="math inline">\(\beta_1\)</span> coefficient, which is the expected deviation from <span class="math inline">\(\beta_0\)</span> for a one-unit increase in <code>pre</code>. But since <code>pre</code> and <code>post</code> are really the same variable <code>y</code> measured at two timepoints, it might be helpful if we express this model in another way. In perhaps more technical form, the simple model with <code>pre</code> predicting <code>post</code> is really an autoregressive model following the form</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i &amp; = \beta_0 + \phi y_{t - 1,i},
+\end{align*}
+\]</span></p>
+<p>where the criterion <span class="math inline">\(y\)</span> varies across persons <span class="math inline">\(i\)</span> and timepoints <span class="math inline">\(t\)</span>. Here we only have two timepoints, <span class="math inline">\(\text{post} = t\)</span> and <span class="math inline">\(\text{pre} = t - 1\)</span>. The strength of association between <span class="math inline">\(y_t\)</span> and <span class="math inline">\(y_{t - 1}\)</span> captured by the autoregressive parameter <span class="math inline">\(\phi\)</span>, which is often expressed in a correlation metric.</p>
+<p>Here’s how to fit the model with <code>brm()</code>.</p>
+<pre class="r"><code>m2 &lt;-
+  brm(data = small_data_wide,
+      post ~ 1 + pre,
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m2)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: post ~ 1 + pre 
+##    Data: small_data_wide (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     1.05      0.12     0.83     1.28 1.00     8995     6957
+## pre           0.24      0.10     0.04     0.43 1.00     9548     6404
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.15      0.08     1.00     1.32 1.00     8407     7109
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Let’s compare the <code>pre</code> coefficient with the Pearson’s correlation between <code>pre</code> and <code>post</code>.</p>
+<pre class="r"><code>small_data_wide %&gt;% 
+  summarise(correlation = cor(pre, post))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   correlation
+##         &lt;dbl&gt;
+## 1       0.232</code></pre>
+<p>Well look at that. Recall that the <span class="math inline">\(\beta_0\)</span> parameter is the expected value in <code>post</code> when the predictor <code>pre</code> is at zero. Though the sample mean for <code>pre</code> is very close to zero, it’s not exactly so.</p>
+<pre class="r"><code>small_data_wide %&gt;% 
+  summarise(pre_mean = mean(pre))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   pre_mean
+##      &lt;dbl&gt;
+## 1   -0.154</code></pre>
+<p>Here’s how to use that information to predict the mean value for <code>post</code>.</p>
+<pre class="r"><code>fixef(m2)[1, 1] + fixef(m2)[2, 1] * mean(small_data_wide$pre)</code></pre>
+<pre><code>## [1] 1.015851</code></pre>
+<p>We can get a full posterior summary with aid from <code>fitted()</code>.</p>
+<pre class="r"><code>nd &lt;- tibble(pre = mean(small_data_wide$pre))
+
+fitted(m2, newdata = nd)</code></pre>
+<pre><code>##      Estimate Est.Error      Q2.5    Q97.5
+## [1,] 1.015851 0.1142147 0.7939083 1.241721</code></pre>
+</div>
+<div id="mathcal-m_3-colon-the-bivariate-autoregressive-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_3 \colon\)</span> The bivariate autoregressive model.</h4>
+<p>Though the simple autoregressive model gives us a sense of the strength of association between <code>pre</code> and <code>post</code>–and thus a sense of the stability in <span class="math inline">\(y\)</span> over time–, it still lacks an explicit parameter for mean value of <span class="math inline">\(y\)</span> at <span class="math inline">\(t - 1\)</span>. Enter the bivariate autoregressive model,</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{post}_i &amp; \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\text{pre}_i &amp; \sim \operatorname{Normal}(\nu, \tau) \\
+\mu_i &amp; = \beta_0 + \beta_1 \text{pre}_i \\
+\nu   &amp; = \gamma_0,
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\text{post}_i\)</span> is still modeled as a simple linear function of <span class="math inline">\(\text{pre}_i\)</span>, but now we also include an unconditional model for <span class="math inline">\(\text{pre}_i\)</span>. This will give us an explicit comparison for where we started at the outset (<span class="math inline">\(\nu\)</span>) and where we ended up (<span class="math inline">\(\mu_i\)</span>). We can fit this model using the <strong>brms</strong> multivariate syntax where the two submodels are encased in <code>bf()</code> statements <span class="citation">(<a href="#ref-Bürkner2021Multivariate" role="doc-biblioref">Bürkner, 2021b</a>)</span>. Also, be careful to use <code>set_rescor(rescor = FALSE)</code> to omit a residual correlation between the two. Their association is already handled with the <span class="math inline">\(\beta_1\)</span> parameter.</p>
+<pre class="r"><code>m3 &lt;-
+  brm(data = small_data_wide,
+      bf(post ~ 1 + pre) +
+        bf(pre ~ 1) +
+        set_rescor(rescor = FALSE),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m3)</code></pre>
+<pre><code>##  Family: MV(gaussian, gaussian) 
+##   Links: mu = identity; sigma = identity
+##          mu = identity; sigma = identity 
+## Formula: post ~ 1 + pre 
+##          pre ~ 1 
+##    Data: small_data_wide (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##                Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## post_Intercept     1.05      0.12     0.82     1.28 1.00    10717     7470
+## pre_Intercept     -0.15      0.11    -0.38     0.07 1.00    12822     7706
+## post_pre           0.24      0.10     0.04     0.43 1.00    11030     7641
+## 
+## Family Specific Parameters: 
+##            Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_post     1.15      0.08     1.00     1.33 1.00    10955     7694
+## sigma_pre      1.16      0.08     1.01     1.33 1.00    13273     7703
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Now that we’ve broken out the multivariate syntax, we might consider a second bivariate model.</p>
+</div>
+<div id="mathcal-m_4-colon-the-bivariate-correlational-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_4 \colon\)</span> The bivariate correlational model.</h4>
+<p>The bivariate correlational model follows the form</p>
+<p><span class="math display">\[
+\begin{align*}
+\begin{bmatrix} \text{post}_i \\ \text{pre}_i \end{bmatrix} &amp; \sim \operatorname{MVNormal} \left (\begin{bmatrix} \mu \\ \nu \end{bmatrix}, \mathbf \Sigma \right) \\
+\mu &amp; = \beta_0 \\
+\nu &amp; = \gamma_0 \\
+\mathbf \Sigma &amp; = \mathbf{SRS} \\
+\mathbf S &amp; = \begin{bmatrix} \sigma &amp; 0 \\ 0 &amp; \tau \end{bmatrix} \\
+\mathbf R &amp; = \begin{bmatrix} 1 &amp; \rho \\ \rho &amp; 1 \end{bmatrix},
+\end{align*}
+\]</span></p>
+<p>where means of both <code>pre</code> and <code>post</code> are modeled in intercept-only models. However, the association between the two timepoints is captured in the residual correlation <span class="math inline">\(\rho\)</span>. Yet because we have no predictors in for either variable, the “residual” correlation is really just a correlation. We might also gain some insights if we re-express this model in terms of <span class="math inline">\(y_{ti}\)</span> and <span class="math inline">\(y_{t - 1,i}\)</span>:</p>
+<p><span class="math display">\[
+\begin{align*}
+\begin{bmatrix} y_{ti} \\ y_{t - 1,i} \end{bmatrix} &amp; \sim \operatorname{MVNormal} \left (\begin{bmatrix} \mu_t \\ \mu_{t - 1} \end{bmatrix}, \mathbf \Sigma \right) \\
+\mu_t &amp; = \beta_t \\
+\mu_{t - 1} &amp; = \beta_{t - 1} \\
+\mathbf \Sigma &amp; = \mathbf{SRS} \\
+\mathbf S &amp; = \begin{bmatrix} \sigma_t &amp; 0 \\ 0 &amp; \sigma_{t - 1} \end{bmatrix} \\
+\mathbf R &amp; = \begin{bmatrix} 1 &amp; \rho \\ \rho &amp; 1 \end{bmatrix},
+\end{align*}
+\]</span></p>
+<p>where what we formerly called an autoregressive coefficient in <span class="math inline">\(\mathcal M_2\)</span>, we’re now calling a correlation. Note also that this model freely estimates <span class="math inline">\(\sigma_t\)</span> and <span class="math inline">\(\sigma_{t - 1}\)</span>. In some contexts, these are presumed to be equal. Though we won’t be imposing that constraint, here, I believe it is possible with the <strong>brms</strong> <a href="https://CRAN.R-project.org/package=brms/vignettes/brms_nonlinear.html">non-linear syntax</a> <span class="citation">(<a href="#ref-Bürkner2021Non_linear" role="doc-biblioref">Bürkner, 2021c</a>)</span>. Anyway, here’s how to fit the model with the <code>brm()</code> function .</p>
+<pre class="r"><code>m4 &lt;-
+  brm(data = small_data_wide,
+      bf(post ~ 1) +
+        bf(pre ~ 1) +
+        set_rescor(rescor = TRUE),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<p>Note out use of the <code>set_rescor(rescor = TRUE)</code> syntax in the model <code>formula</code>. This explicitly told <code>brm()</code> to include the residual correlation. Here’s the summary.</p>
+<pre class="r"><code>print(m4)</code></pre>
+<pre><code>##  Family: MV(gaussian, gaussian) 
+##   Links: mu = identity; sigma = identity
+##          mu = identity; sigma = identity 
+## Formula: post ~ 1 
+##          pre ~ 1 
+##    Data: small_data_wide (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##                Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## post_Intercept     1.02      0.12     0.79     1.24 1.00    10992     8033
+## pre_Intercept     -0.15      0.12    -0.39     0.08 1.00    10679     8012
+## 
+## Family Specific Parameters: 
+##            Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_post     1.18      0.08     1.03     1.36 1.00    11342     7819
+## sigma_pre      1.16      0.08     1.02     1.34 1.00    11150     7777
+## 
+## Residual Correlations: 
+##                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(post,pre)     0.23      0.09     0.03     0.40 1.00    10074     7292
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Now the intercept and sigma parameters do a good job capturing the sample statistics.</p>
+<pre class="r"><code>small_data_wide %&gt;% 
+  pivot_longer(pre:post) %&gt;% 
+  group_by(name) %&gt;% 
+  summarise(mean = mean(value),
+            sd = sd(value)) %&gt;% 
+  mutate_if(is.double, round, digits = 2)</code></pre>
+<pre><code>## # A tibble: 2 x 3
+##   name   mean    sd
+##   &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 post   1.02  1.16
+## 2 pre   -0.15  1.14</code></pre>
+<p>The new ‘rescor’ line at the bottom of the <code>print()</code> summary approximates the Pearson’s correlation of the two variables, much like the autoregressive parameter did two models up.</p>
+<pre class="r"><code>small_data_wide %&gt;% 
+  summarise(correlation = cor(pre, post))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   correlation
+##         &lt;dbl&gt;
+## 1       0.232</code></pre>
+<p>Another nice quality of this model is if you subtract <span class="math inline">\(\gamma_0\)</span> from <span class="math inline">\(\beta_0\)</span> (i.e., <span class="math inline">\(\beta_t - \beta_{t - 1}\)</span>), you’d end up with the posterior mean of the change score.</p>
+<pre class="r"><code>posterior_samples(m4) %&gt;% 
+  mutate(change = b_post_Intercept - b_pre_Intercept) %&gt;% 
+  summarise(mu_change = mean(change))</code></pre>
+<pre><code>##   mu_change
+## 1  1.168898</code></pre>
+<p>Keeping that in mind, let’s switch gears to the first of the change-score models.</p>
+</div>
+</div>
+<div id="change-score-models." class="section level3">
+<h3>Change-score models.</h3>
+<p>Instead of modeling <code>post</code>, <span class="math inline">\(y_{ti}\)</span>, we might instead want to focus on the change from <code>pre</code> to <code>post</code>, <span class="math inline">\(y_{ti} - y_{t - 1,i}\)</span>. When you subtract <code>pre</code> from <code>post</code> in your data set–like we did to make the <code>change</code> variable–, the product is often referred to as a change score or difference score, <span class="math inline">\(y_\Delta\)</span>. Though they’re conceptually intuitive and simple to compute, change scores have a long history of criticisms in the methodological literature, particularly around issues of reliability <span class="citation">(see <a href="#ref-lordStatisticalTheoriesMental1968" role="doc-biblioref">Lord &amp; Novick, 1968</a>; <a href="#ref-rogosaGrowthCurveApproach1982" role="doc-biblioref">Rogosa et al., 1982</a>; cf. <a href="#ref-kisbu2013monte" role="doc-biblioref">Kisbu-Sakarya et al., 2013</a>)</span>. Here we consider four change-score models simply as options.</p>
+<div id="mathcal-m_5-colon-the-unconditional-change-score-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_5 \colon\)</span> The unconditional change-score model.</h4>
+<p>We’ve already saved that in our <code>small_data_wide</code> data as <code>change</code>. Here’s what the unconditional change-score model<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a> looks like:</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{change}_i &amp; \sim \operatorname{Normal}(\mu, \sigma) \\
+\mu &amp; = \beta_0,
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\beta_0\)</span> is the expected value for <span class="math inline">\(\text{change}_i\)</span>. In the terms of the last model, <span class="math inline">\(\text{change}_i = \text{post}_i - \text{pre}_i\)</span> or, in the terms of the simple autoregressive model, <span class="math inline">\(y_{\Delta i} = y_{ti} - y_{t - 1,i}\)</span>.</p>
+<pre class="r"><code>m5 &lt;-
+  brm(data = small_data_wide,
+      change ~ 1,
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m5)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: change ~ 1 
+##    Data: small_data_wide (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     1.17      0.14     0.89     1.45 1.00     8075     6240
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.44      0.10     1.26     1.66 1.00     8673     6829
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Thus, this model suggests the average change from <code>pre</code> to <code>post</code> was about 1.2 units. We can compute the sample statistics for that in two ways.</p>
+<pre class="r"><code>small_data_wide %&gt;% 
+  summarise(change = mean(change),
+            `post - pre` = mean(post - pre))</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##   change `post - pre`
+##    &lt;dbl&gt;        &lt;dbl&gt;
+## 1   1.17         1.17</code></pre>
+<p>The major deficit in the unconditional change model is that change is disconnected from any reference points. We have no explicit way of knowing what number we changed from or what number we changed to. The next model offers a solution.</p>
+</div>
+<div id="mathcal-m_6-colon-the-conditional-change-score-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_6 \colon\)</span> The conditional change-score model.</h4>
+<p>Instead of fitting an unconditional model of <code>change</code>, why not condition on the initial <code>pre</code> value? We might express this as</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{change}_i &amp; \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i &amp; = \beta_0 + \beta_1 \text{pre}_i,
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\beta_0\)</span> is now the expected value for <code>change</code> when <code>pre</code> is at zero. As with the simple autoregressive model, centering the predictor <code>pre</code> at the mean or some other meaningful value can help make <span class="math inline">\(\beta_0\)</span> more interpretable. Perhaps of greater interest, the <span class="math inline">\(\beta_1\)</span> coefficient allows us to predict different levels of <code>change</code>, conditional in the initial values at <code>pre</code>.</p>
+<pre class="r"><code>m6 &lt;-
+  brm(data = small_data_wide,
+      change ~ 1 + pre,
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m6)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: change ~ 1 + pre 
+##    Data: small_data_wide (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     1.05      0.12     0.82     1.28 1.00     9315     7108
+## pre          -0.76      0.10    -0.96    -0.57 1.00    10559     7804
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.15      0.08     1.00     1.33 1.00     9745     7268
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Since the intercept in this model is the expected <code>change</code> value based on when <code>pre == 0</code>, it might be easiest to interpret that value when using the mean of <code>pre</code>.</p>
+<pre class="r"><code>fixef(m6)[1, 1] + fixef(m6)[2, 1] * mean(small_data_wide$pre)</code></pre>
+<pre><code>## [1] 1.167458</code></pre>
+<p>That is the point prediction for the mean of <code>change</code>. Let’s compare that to the sample value.</p>
+<pre class="r"><code>small_data_wide %&gt;% 
+  summarise(mean = mean(change))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##    mean
+##   &lt;dbl&gt;
+## 1  1.17</code></pre>
+<p>Of course, we can get a fuller summary using the <code>fitted()</code> method.</p>
+<pre class="r"><code>nd &lt;- tibble(pre = mean(small_data_wide$pre))
+
+fitted(m6, newdata = nd)</code></pre>
+<pre><code>##      Estimate Est.Error      Q2.5   Q97.5
+## [1,] 1.167458 0.1151598 0.9428394 1.39075</code></pre>
+<p>Note how the coefficient for <code>pre</code> is about -0.76. This is a rough analogue of the negative correlation among the intercepts and slopes in the original data-generating model.</p>
+<pre class="r"><code>rho</code></pre>
+<pre><code>## [1] -0.5</code></pre>
+<p>It tells us something very similar; participants with higher values at <code>pre</code> tended to have lower <code>change</code> values. Much like with the simple autoregressive model, a deficit of this model is there is no explicit parameter for the expected value of <code>pre</code>, which we can amend by fitting a bivariate model.</p>
+</div>
+<div id="mathcal-m_7-colon-the-bivariate-conditional-change-score-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_7 \colon\)</span> The bivariate conditional change-score model.</h4>
+<p>The bivariate conditional change-score model follows the form</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{change}_i &amp; \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\text{pre}_i &amp; \sim \operatorname{Normal}(\nu, \tau) \\
+\mu_i &amp; = \beta_0 + \beta_1 \text{pre}_i \\
+\nu   &amp; = \gamma_0,
+\end{align*}
+\]</span></p>
+<p>where the simple linear model of <span class="math inline">\(\text{change}_i\)</span> conditional on <span class="math inline">\(\text{pre}_i\)</span> is coupled with an unconditional intercept-only model for <span class="math inline">\(\text{pre}_i\)</span>. We can fit this model with <strong>brms</strong> by way of the multivariate syntax, where the two submodels are encased in <code>bf()</code> statements and we set <code>set_rescor(rescor = FALSE)</code> to omit a residual correlation between the two.</p>
+<pre class="r"><code>m7 &lt;-
+  brm(data = small_data_wide,
+      bf(change ~ 1 + pre) +
+        bf(pre ~ 1) +
+        set_rescor(rescor = FALSE),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m7)</code></pre>
+<pre><code>##  Family: MV(gaussian, gaussian) 
+##   Links: mu = identity; sigma = identity
+##          mu = identity; sigma = identity 
+## Formula: change ~ 1 + pre 
+##          pre ~ 1 
+##    Data: small_data_wide (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## change_Intercept     1.05      0.12     0.82     1.28 1.00    11908     7575
+## pre_Intercept       -0.16      0.12    -0.39     0.07 1.00    13113     8030
+## change_pre          -0.76      0.10    -0.96    -0.57 1.00    12023     7190
+## 
+## Family Specific Parameters: 
+##              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_change     1.15      0.08     1.00     1.33 1.00    13064     7696
+## sigma_pre        1.16      0.08     1.01     1.33 1.00    11419     7142
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Now we have an intercept for <code>pre</code>, we can use the model parameters to compute the expected values for <code>pre</code>, <code>change</code>, and <code>post</code>.</p>
+<pre class="r"><code>posterior_samples(m7) %&gt;% 
+  mutate(pre    = b_pre_Intercept,
+         change = b_change_Intercept + b_change_pre * b_pre_Intercept) %&gt;% 
+  mutate(post = pre + change) %&gt;% 
+  pivot_longer(pre:post) %&gt;% 
+  group_by(name) %&gt;% 
+  mean_qi(value) %&gt;% 
+  mutate_if(is.double, round, digits = 2)</code></pre>
+<pre><code>## # A tibble: 3 x 7
+##   name   value .lower .upper .width .point .interval
+##   &lt;chr&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    
+## 1 change  1.17   0.88   1.45   0.95 mean   qi       
+## 2 post    1.01   0.78   1.25   0.95 mean   qi       
+## 3 pre    -0.16  -0.39   0.07   0.95 mean   qi</code></pre>
+<p>The posterior means are in the <code>value</code> column and the lower- and upper-levels of the percentile-based 95% intervals are in the <code>.lower</code> and <code>.upper</code> columns. Now compare those mean estimates with the sample means.</p>
+<pre class="r"><code>small_data_wide %&gt;% 
+  pivot_longer(-id) %&gt;% 
+  group_by(name) %&gt;% 
+  summarise(mean = mean(value)) %&gt;% 
+  mutate_if(is.double, round, digits = 2)</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   name    mean
+##   &lt;chr&gt;  &lt;dbl&gt;
+## 1 change  1.17
+## 2 post    1.02
+## 3 pre    -0.15</code></pre>
+<p>As handy as this model is, the <span class="math inline">\(\beta_1\)</span> coefficient might not be in the most intuitive metric. Let’s reparameterize.</p>
+</div>
+<div id="mathcal-m_8-colon-the-bivariate-correlational-prechange-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_8 \colon\)</span> The bivariate correlational pre/change model.</h4>
+<p>The bivariate correlational pre/change model follows the form</p>
+<p><span class="math display">\[
+\begin{align*}
+\begin{bmatrix} \text{change}_i \\ \text{pre}_i \end{bmatrix} &amp; \sim \operatorname{MVNormal} \left (\begin{bmatrix} \mu \\ \nu \end{bmatrix}, \mathbf \Sigma \right) \\
+\mu &amp; = \beta_0 \\
+\nu &amp; = \gamma_0 \\
+\mathbf \Sigma &amp; = \mathbf{SRS} \\
+\mathbf S &amp; = \begin{bmatrix} \sigma &amp; 0 \\ 0 &amp; \tau \end{bmatrix} \\
+\mathbf R &amp; = \begin{bmatrix} 1 &amp; \rho \\ \rho &amp; 1 \end{bmatrix},
+\end{align*}
+\]</span></p>
+<p>where means of both <code>pre</code> and <code>change</code> are modeled in intercept-only models and the association between the two is captured by the correlation <span class="math inline">\(\rho\)</span>. And again, because we have no predictors in for either variable, the “residual” correlation is really just a correlation. Here’s how to fit the model with <strong>brms</strong>.</p>
+<pre class="r"><code>m8 &lt;-
+  brm(data = small_data_wide,
+      bf(change ~ 1) +
+        bf(pre ~ 1) +
+        set_rescor(rescor = TRUE),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m8)</code></pre>
+<pre><code>##  Family: MV(gaussian, gaussian) 
+##   Links: mu = identity; sigma = identity
+##          mu = identity; sigma = identity 
+## Formula: change ~ 1 
+##          pre ~ 1 
+##    Data: small_data_wide (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##                  Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## change_Intercept     1.17      0.15     0.88     1.45 1.00     8200     7551
+## pre_Intercept       -0.15      0.12    -0.38     0.08 1.00     8160     7194
+## 
+## Family Specific Parameters: 
+##              Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma_change     1.44      0.10     1.26     1.67 1.00     8811     7147
+## sigma_pre        1.16      0.08     1.01     1.33 1.00     8996     7487
+## 
+## Residual Correlations: 
+##                    Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## rescor(change,pre)    -0.60      0.06    -0.71    -0.46 1.00     8299     7233
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Now the parameter in the ‘Residual Correlations’ section of the summary output is a close analogue to our original data-generating <code>rho</code> parameter.</p>
+<pre class="r"><code>rho</code></pre>
+<pre><code>## [1] -0.5</code></pre>
+<p>Those with higher <code>pre</code> values tended to have lower <code>change</code> values. We can look at that with a plot of the data.</p>
+<pre class="r"><code>p2 &lt;-
+  small_data_wide %&gt;% 
+  ggplot(aes(x = pre, y = change)) +
+  geom_point() +
+  stat_ellipse(color = &quot;grey50&quot;)
+
+(p1 + p2) &amp;
+  coord_cartesian(xlim = range(small_data_wide$pre),
+                  ylim = range(small_data_wide$change))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-39-1.png" width="576" style="display: block; margin: auto;" /></p>
+<p>Here we’ve placed the scatter plot of the data-generating <code>id</code>-level <code>intercepts</code> and <code>slopes</code> next to the scatter plot of the <code>pre</code> and <code>change</code> scores. They are not exactly the same, but the latter are a partial consequence of the former. This is why the correlation parameter in our <code>m8</code> model closely, but not exactly, resembled the data-generating <code>rho</code> parameter.</p>
+<p>Okay, let’s switch gears again.</p>
+</div>
+</div>
+<div id="models-modeling-the-criterion-y_ti-directly." class="section level3">
+<h3>Models modeling the criterion <span class="math inline">\(y_{ti}\)</span> directly.</h3>
+<p>All of the models focusing on <code>post</code> or <code>change</code> used the wide version of the data, <code>small_data_wide</code>. The remaining models will all take advantage of the long data set, <code>small_data_long</code>, and take <span class="math inline">\(y_{ti}\)</span> as the criterion. Consequently, most of these models will use some version of the multilevel model.</p>
+<div id="mathcal-m_9-colon-the-grand-mean-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_9 \colon\)</span> The grand-mean model.</h4>
+<p>The simplest model we might fit using the long version of the 2-timepoint data, <code>small_data_long</code>, is what we might call the grand-mean model, or what <span class="citation"><a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">Hoffman</a> (<a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">2015</a>)</span> called the <em>between-person empty model</em>. It follows the form</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu, \sigma) \\
+\mu &amp; = \beta_0,
+\end{align*}
+\]</span></p>
+<p>where the intercept <span class="math inline">\(\beta_0\)</span> is the expected value value for <span class="math inline">\(y\)</span> across all <span class="math inline">\(i\)</span> participants and <span class="math inline">\(t\)</span> timepoints. We fit this with <code>brm()</code> much like we fit the unconditional post model and the unconditional change-score model.</p>
+<pre class="r"><code>m9 &lt;-
+  brm(data = small_data_long,
+      y ~ 1 ,
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m9)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ 1 
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     0.43      0.09     0.25     0.61 1.00     8486     6236
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.30      0.07     1.18     1.43 1.00     9455     6868
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>We might check these with the sample statistics for <code>y</code>.</p>
+<pre class="r"><code>small_data_long %&gt;% 
+  summarise(mean = mean(y),
+            sd = sd(y))</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##    mean    sd
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1 0.431  1.29</code></pre>
+<p>Though this model did to a good job describing the population values for the mean and standard deviation for <code>y</code>, it did a terrible job telling us about change in <code>y</code>, about individual differences in that change, or about anything else of interest we might have as longitudinal researchers.</p>
+</div>
+<div id="mathcal-m_10-colon-the-random-intercept-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{10} \colon\)</span> The random-intercept model.</h4>
+<p>Now that we have a grand mean, we might want to ask what kinds of variables would help explain the variation around the grand mean. From a multilevel perspective, the first source of variation of interest will be across participants, which we can express by allowing the mean to vary by participant. This is what Hoffman called the <em>within-person empty model</em> and the <em>empty means, random intercept model</em>. It follows the form</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i  &amp; = \beta_0 + u_{\text{id},i} \\
+u_\text{id} &amp; \sim \operatorname{Normal}(0, \sigma_\text{id}) \\
+\sigma &amp; = \sigma_\epsilon,
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\beta_0\)</span> is now the grand mean among the participant-level means in <span class="math inline">\(y_{ti}\)</span>. The participant-level deviations from the grand mean are expressed as <span class="math inline">\(u_{\text{id},i}\)</span>, which is normally distributed with a mean at zero (these are <em>deviations</em>, after all) and a standard deviation of <span class="math inline">\(\sigma_\text{id}\)</span>. The <span class="math inline">\(\sigma_\epsilon\)</span> parameter is a mixture of the variation within participants and over time. With <strong>brms</strong>, we can fit the random-intercept model model like so.</p>
+<pre class="r"><code>m10 &lt;-
+  brm(data = small_data_long,
+      y ~ 1 + (1 | id),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000,
+      control = list(adapt_delta = .99))</code></pre>
+<pre class="r"><code>print(m10)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ 1 + (1 | id) 
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 100) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.23      0.15     0.01     0.56 1.00     2079     4188
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     0.43      0.09     0.24     0.61 1.00    13669     6976
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.27      0.07     1.14     1.41 1.00     6211     5523
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Our <span class="math inline">\(\beta_0\)</span> intercept returned a very similar estimate for the grand mean, but we now interpret it as the grand mean for the within-person means for <code>y</code>. The variation in the <code>id</code>-level deviations around the grand mean, which we called <span class="math inline">\(u_{\text{id},i}\)</span>, is summarized by <span class="math inline">\(\sigma_\text{id}\)</span> in the ‘Group-Level Effects’ section of the summary output.</p>
+<p>Authors of many longitudinal text books <span class="citation">(e.g., <a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">Hoffman, 2015</a>; <a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">Singer &amp; Willett, 2003</a>)</span> typically present this model as a way to directly compare the between- and within-person variation in the data by way of the intraclass correlation coefficient (ICC),</p>
+<p><span class="math display">\[\text{ICC} = \frac{\text{between-person variance}}{\text{total variance}} = \frac{\sigma_\text{id}^2}{\sigma_\text{id}^2 + \sigma_\epsilon^2}.\]</span></p>
+<p>When using frequentist methods, the ICC is typically expressed with a point estimate. When working with all our posterior draws, we can get full posterior distributions within the Bayesian framework.</p>
+<pre class="r"><code>posterior_samples(m10) %&gt;% 
+  mutate(icc = sd_id__Intercept^2 / (sd_id__Intercept^2 + sigma^2)) %&gt;% 
+  ggplot(aes(x = icc, y = 0)) +
+  stat_halfeye(.width = .95) +
+  scale_x_continuous(&quot;Intraclass correlation coefficient (ICC)&quot;, 
+                     breaks = 0:5 / 5, expand = c(0, 0), limits = 0:1) +
+  scale_y_continuous(NULL, breaks = NULL)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-43-1.png" width="384" style="display: block; margin: auto;" /></p>
+<p>The ICC is a proportion, which limits it to the range of zero to one. Here it suggests that 0–20% of the variation in our data is due to differences <em>between</em> participants; the remaining variation occurs within them. Given that our data were collected across time, it might make sense to fit a model that explicitly accounts for time.</p>
+</div>
+<div id="mathcal-m_11-colon-the-cross-classified-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{11} \colon\)</span> The cross-classified model.</h4>
+<p>A direct extension of the random-intercept model is the cross-classified multilevel model <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2015" role="doc-biblioref">McElreath, 2015</a>, Chapter 12)</span>, which we might express as</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti}   &amp; \sim \operatorname{Normal}(\mu_{ti}, \sigma) \\
+\mu_{ti} &amp; = \beta_0 + u_{\text{id},i} + u_{\text{time},i} \\
+u_\text{id} &amp; \sim \operatorname{Normal}(0, \sigma_\text{id}) \\
+u_\text{time} &amp; \sim \operatorname{Normal}(0, \sigma_\text{time}) \\
+\sigma &amp; = \sigma_\epsilon,
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\sigma_\text{id}\)</span> captures systemic differences between participants, <span class="math inline">\(\sigma_\text{time}\)</span> captures systemic variation across the two timepoints, and <span class="math inline">\(\sigma_\epsilon\)</span> captures the variation within participants over time. Another way to think of this model is as a Bayesian multilevel version of the repeated-measures ANOVA<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a>, where variance is partitioned into a between level (<span class="math inline">\(\sigma_\text{id} \approx \text{SS}_\text{between}\)</span>), a model level (<span class="math inline">\(\sigma_\text{time} \approx \text{SS}_\text{model}\)</span>), and error (<span class="math inline">\(\sigma_\epsilon \approx \text{SS}_\text{error}\)</span>).</p>
+<pre class="r"><code>m11 &lt;-
+  brm(data = small_data_long,
+      y ~ 1 + (1 | time) + (1 | id),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000,
+      control = list(adapt_delta = .9999,
+                     max_treedepth = 11))</code></pre>
+<pre class="r"><code>print(m11)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ 1 + (1 | time) + (1 | id) 
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 100) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.51      0.16     0.14     0.78 1.00     1519     1545
+## 
+## ~time (Number of levels: 2) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     1.67      1.30     0.41     5.00 1.00     5240     7037
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     0.46      1.07    -1.78     2.81 1.00     4541     4935
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.04      0.08     0.90     1.20 1.00     2313     3750
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>The intercept is the grand mean across all measures of <code>y</code>. The first row in the ‘Group-Level Effects’ section is our summary for <span class="math inline">\(\sigma_\text{id}\)</span>, which gives us a sense of the variation between participants in their overall tendencies in the criterion <code>y</code>. If we use the <code>posterior_samples()</code>, we can even look at the posteriors for the <span class="math inline">\(u_{\text{id},i}\)</span> parameters, themselves.</p>
+<pre class="r"><code>posterior_samples(m11) %&gt;% 
+  pivot_longer(starts_with(&quot;r_id&quot;)) %&gt;% 
+  
+  ggplot(aes(x = value, y = reorder(name, value))) +
+  stat_pointinterval(point_interval = mean_qi, .width = .95, size = 1/6) +
+  scale_y_discrete(expression(italic(i)), breaks = NULL) +
+  labs(subtitle = expression(sigma[id]~is~the~summary~of~the~variation~across~these),
+       x = expression(italic(u)[id][&#39;,&#39;*italic(i)]))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-45-1.png" width="336" style="display: block; margin: auto;" /></p>
+<p>Given that each of the <span class="math inline">\(u_{\text{id},i}\)</span> parameters is based primarily on two data points (the two data points per participant), it should be no surprise they are fairly wide. Even a few more measurement occasions within participants will narrow them substantially. If you fit the same model using the original 6-timepoint data, you’ll see the 95% intervals are almost half as wide.</p>
+<p>Perhaps of greater interest are the <span class="math inline">\(u_{\text{time},i}\)</span> parameters. If you combine them with the intercept, you’ll get the model-based expected values at both timepoints.</p>
+<pre class="r"><code>posterior_samples(m11) %&gt;% 
+  transmute(pre  = b_Intercept + `r_time[0,Intercept]`,
+            post = b_Intercept + `r_time[1,Intercept]`) %&gt;% 
+  pivot_longer(everything()) %&gt;% 
+  group_by(name) %&gt;% 
+  mean_qi(value) %&gt;% 
+  mutate_if(is.double, round, digits = 2)</code></pre>
+<pre><code>## # A tibble: 2 x 7
+##   name  value .lower .upper .width .point .interval
+##   &lt;chr&gt; &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;  &lt;chr&gt;    
+## 1 post   1.01   0.78   1.24   0.95 mean   qi       
+## 2 pre   -0.15  -0.38   0.09   0.95 mean   qi</code></pre>
+<p>The final variance parameter, <span class="math inline">\(\sigma_\text{time}\)</span>, captures the within-participant variation over time. With a model like this, it seems natural to directly compare the magnitudes of the three variance parameters, which answers the question: <em>Where’s the variance at</em>? Here we’ll do so with a plot.</p>
+<pre class="r"><code>posterior_samples(m11) %&gt;% 
+  select(sd_id__Intercept:sigma) %&gt;% 
+  set_names(&quot;sigma[id]&quot;, &quot;sigma[time]&quot;, &quot;sigma[epsilon]&quot;) %&gt;% 
+  pivot_longer(everything()) %&gt;% 
+  mutate(name = factor(name, levels = c(&quot;sigma[epsilon]&quot;, &quot;sigma[time]&quot;, &quot;sigma[id]&quot;))) %&gt;%
+  
+  ggplot(aes(x = value, y = name)) +
+  tidybayes::stat_halfeye(.width = .95, size = 1, normalize = &quot;xy&quot;) +
+  scale_x_continuous(&quot;marginal posterior&quot;, expand = expansion(mult = c(0, 0.05)), breaks = c(0, 1, 2, 5)) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  coord_cartesian(xlim = c(0, 5.25),
+                  ylim = c(1.5, 3.5)) +
+  theme(axis.text.y = element_text(hjust = 0))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-48-1.png" width="384" style="display: block; margin: auto;" /></p>
+<p>At first glance, it might be surprising how wide the <span class="math inline">\(\sigma_\text{time}\)</span> posterior is compared to the other two. Yet recall this parameter is summarizing the standard deviation of only two levels. If you have experience with multilevel models, you’ll know that it can be difficult to estimate a variance parameter with few levels–two levels is the extreme lower limit. This is why we had to fiddle with the <code>adapt_delta</code> and <code>max_treedepth</code> parameters within the <code>brm()</code> function to get the model to sample properly. Though we pulled this off using default priors, don’t be surprised if you have to use tighter priors when fitting a model like this.</p>
+</div>
+<div id="mathcal-m_12-colon-the-simple-liner-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{12} \colon\)</span> The simple liner model.</h4>
+<p>The last three models focused on the grand mean and sources of variance around that grand mean. A more familiar looking approach might be to fit a simple linear model with <code>y</code> conditional on <code>time</code>,</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_{ti}, \sigma) \\
+\mu_{ti} &amp; = \beta_0 + \beta_1 \text{time}_{ti},
+\end{align*}
+\]</span></p>
+<p>where the intercept <span class="math inline">\(\beta_0\)</span> is the expected value at the first timepoint and <span class="math inline">\(\beta_1\)</span> captures the change in <span class="math inline">\(y_{ti}\)</span> for the final timepoint.</p>
+<pre class="r"><code>m12 &lt;-
+  brm(data = small_data_long,
+      y ~ 1 + time,
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m12)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ 1 + time 
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -0.15      0.12    -0.38     0.08 1.00     9459     7344
+## time          1.17      0.16     0.85     1.49 1.00     9582     7294
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.16      0.06     1.05     1.28 1.00     9982     7362
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Now our <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span> parameters are the direct pre/post single-level analogues to the population-level <span class="math inline">\(\beta_0\)</span> and <span class="math inline">\(\beta_1\)</span> parameters from our original multilevel model based on the full 6-timepoint data set.</p>
+<pre class="r"><code>fixef(m0) %&gt;% round(digits = 2)</code></pre>
+<pre><code>##           Estimate Est.Error  Q2.5 Q97.5
+## Intercept    -0.13      0.11 -0.33  0.08
+## time          1.16      0.13  0.91  1.42</code></pre>
+<p>The major deficit in this model, which is the reason you’ll see it criticized in the methodological literature, is it ignores how the <code>y</code> values are nested within levels of <code>id</code>. The only variance parameter, <span class="math inline">\(\sigma\)</span>, was estimated under the typical assumption that the residuals are all independent of one another. Sure, the model formula accounted for the overall trend in <code>time</code>, but it ignored the insights revealed from many of the other models the capture between-participant correlations in intercepts and slopes. This means that if you know something about the value of one’s residual for when <code>time == 0</code>, you’ll also know something about where to expect their residual for when <code>time == 1</code>. The two are not independent. As long as we’re working with the data in the long format, we’ll want to account for this, somehow.</p>
+</div>
+<div id="mathcal-m_13-colon-the-liner-model-with-a-random-intercept." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{13} \colon\)</span> The liner model with a random intercept.</h4>
+<p>A natural first step to accounting for how the <code>y</code> values are nested within levels of <code>id</code> is to fit a random-intercept model, or what <span class="citation"><a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">Hoffman</a> (<a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">2015</a>)</span> called the <em>fixed linear time, random intercept model</em>. It follows the form</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_{ti}, \sigma) \\
+\mu_{ti} &amp; = \beta_{0i} + \beta_1 \text{time}_{ti} \\
+\beta_{0i} &amp; = \gamma_0 + u_{0i} \\
+u_{0i}  &amp; \sim \operatorname{Normal}(0, \sigma_0) \\
+\sigma &amp; = \sigma_\epsilon,
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\beta_{0i}\)</span> is the intercept and <span class="math inline">\(\beta_1\)</span> is the time slope. Although this parameterization holds the variation in slopes constant across participants, between-participant variation is at least captured in <span class="math inline">\(\beta_{0i}\)</span>, which is decomposed into a grand mean, <span class="math inline">\(\gamma_0\)</span>, and participant-level deviations around that grand mean, <span class="math inline">\(u_{0i}\)</span>. Those participant-level deviations are summarized by the <span class="math inline">\(\sigma_0\)</span> parameter. In this model, <span class="math inline">\(\sigma_\epsilon\)</span> is a mixture of within-participant variation and between-participant variation in slopes.</p>
+<pre class="r"><code>m13 &lt;-
+  brm(data = small_data_long,
+      y ~ 1 + time + (1 | id),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m13)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ 1 + time + (1 | id) 
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 100) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.52      0.15     0.14     0.78 1.00     1645     1960
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -0.15      0.12    -0.38     0.08 1.00     9441     7715
+## time          1.17      0.15     0.88     1.46 1.00    14821     6993
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.03      0.08     0.90     1.19 1.00     2403     4360
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>The <span class="math inline">\(\beta\)</span> parameters are very similar to those from the simple linear model, above.</p>
+<pre class="r"><code>fixef(m12) %&gt;% round(digits = 2)</code></pre>
+<pre><code>##           Estimate Est.Error  Q2.5 Q97.5
+## Intercept    -0.15      0.12 -0.38  0.08
+## time          1.17      0.16  0.85  1.49</code></pre>
+<p>But now look at the size of <span class="math inline">\(\sigma_0\)</span>, which suggests substantial differences in staring points. To get a sense of what this means, we’ll plot all 100 participant-level trajectories with a little help from <code>fitted()</code>.</p>
+<pre class="r"><code>nd &lt;- distinct(small_data_long, id, time)
+
+fitted(m13, 
+       newdata = nd) %&gt;% 
+  data.frame() %&gt;% 
+  bind_cols(nd) %&gt;% 
+  
+  ggplot(aes(x = time, y = Estimate, group = id)) +
+  geom_abline(intercept = fixef(m13)[1, 1],
+              slope = fixef(m13)[2, 1],
+              size = 3, color = &quot;blue&quot;) +
+  geom_line(size = 1/4, alpha = 2/3) +
+  scale_x_continuous(breaks = 0:1) +
+  labs(subtitle = &quot;Random intercepts, fixed slope&quot;,
+       y = &quot;y&quot;) +
+  coord_cartesian(ylim = c(-1, 2))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-53-1.png" width="288" style="display: block; margin: auto;" /></p>
+<p>The bold blue line in the middle is based on the population-level intercept and slope, whereas the thinner black lines are the participant-level trajectories. To keep from <a href="https://www.data-to-viz.com/caveat/overplotting.html">overplotting</a>, we’re only showing the posterior means, here. Because we only allowed the intercept to vary across participants, all the slopes are identical. And indeed, look at all the variation we see in the intercepts–an insight lacking in the simple linear model.</p>
+</div>
+<div id="mathcal-m_14-colon-the-liner-model-with-a-random-slope." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{14} \colon\)</span> The liner model with a random slope.</h4>
+<p>The counterpoint to the last model is to allow the time slopes, but not the intercepts, vary across participants:</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_{ti}, \sigma) \\
+\mu_{ti} &amp; = \beta_0 + \beta_{1i} \text{time}_{ti} \\
+\beta_{1i} &amp; = \gamma_1 + u_{1i} \\
+u_{1i} &amp; \sim \operatorname{Normal}(0, \sigma_1) \\
+\sigma   &amp; = \sigma_\epsilon,
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\beta_0\)</span> is the intercept for all participants. Now <span class="math inline">\(\beta_{1i}\)</span> is the population mean for the distribution of slopes, which vary across participants, the standard deviation for which is measured by <span class="math inline">\(\sigma_1\)</span>.</p>
+<pre class="r"><code>m14 &lt;-
+  brm(data = small_data_long,
+      y ~ 1 + time + (0 + time | id),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000,
+      control = list(adapt_delta = .95))</code></pre>
+<pre class="r"><code>print(m14)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ 1 + time + (0 + time | id) 
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 100) 
+##          Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(time)     0.33      0.21     0.02     0.75 1.00     2240     4641
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -0.15      0.11    -0.38     0.08 1.00    20513     7195
+## time          1.17      0.16     0.85     1.49 1.00    18079     7133
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.13      0.06     1.01     1.26 1.00     6825     6149
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Here’s random-slopes alternative to the random-intercepts plot from the last section.</p>
+<pre class="r"><code>fitted(m14, 
+       newdata = nd) %&gt;% 
+  data.frame() %&gt;% 
+  bind_cols(nd) %&gt;% 
+  
+  ggplot(aes(x = time, y = Estimate, group = id)) +
+  geom_abline(intercept = fixef(m14)[1, 1],
+              slope = fixef(m14)[2, 1],
+              size = 3, color = &quot;blue&quot;) +
+  geom_line(size = 1/4, alpha = 2/3) +
+  scale_x_continuous(breaks = 0:1) +
+  labs(subtitle = &quot;Fixed intercept, random slopes&quot;,
+       y = &quot;y&quot;) +
+  coord_cartesian(ylim = c(-1, 2))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-55-1.png" width="288" style="display: block; margin: auto;" /></p>
+<p>But why choose between random intercepts or random slopes?</p>
+</div>
+<div id="mathcal-m_15-colon-the-multilevel-growth-model-with-regularizing-priors." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{15} \colon\)</span> The multilevel growth model with regularizing priors.</h4>
+<p>If you were modeling 2-timepoint data with conventional frequentist estimators (e.g., maximum likelihood), you can have random intercepts or random slopes, but you can’t have both; that would require data from three timepoints or more. But because Bayesian models bring in extra information by way of the priors, you can actually fit a full multilevel growth model with both random intercepts and slopes:</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti}   &amp; \sim \operatorname{Normal}(\mu_{ti}, \sigma_\epsilon ) \\
+\mu_{ti} &amp; = \beta_0 + \beta_1 \text{time}_{ti} + u_{0i} + u_{1i} \text{time}_{ti} \\
+\begin{bmatrix} u_{0i} \\ u_{1i} \end{bmatrix} &amp; \sim \operatorname{MVNormal} \left (\begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf \Sigma \right) \\
+\mathbf \Sigma &amp; = \mathbf{SRS} \\
+\mathbf S &amp; = \begin{bmatrix} \sigma_0 &amp; 0 \\ 0 &amp; \sigma_1 \end{bmatrix} \\
+\mathbf R &amp; = \begin{bmatrix} 1 &amp; \rho \\ \rho &amp; 1 \end{bmatrix}.
+\end{align*}
+\]</span></p>
+<p>The trick is you have to go beyond the diffuse <strong>brms</strong> default settings for the priors for <span class="math inline">\(\sigma_0\)</span> and <span class="math inline">\(\sigma_1\)</span>. If you have high-quality information from theory or previous studies, you can base the priors on those. Another approach is to use regularizing priors. Given standardized data, members of the Stan team like either <span class="math inline">\(\operatorname{Normal}^+(0, 1)\)</span> or <span class="math inline">\(\operatorname{Student-t}^+(3, 0, 1)\)</span> for variance parameters (see the <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations#generic-prior-for-anything">Generic prior for anything</a> section from the <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations"><em>Prior choice recommendations</em> wiki</a>). In the second edition of his text, McElreath generally favored the <span class="math inline">\(\operatorname{Exponential}(1)\)</span> prior <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">McElreath, 2020</a>)</span>, which is the approach we’ll experiment with, here. It’ll also help if we use a regularizing prior on the correlation among the intercepts and slopes, <span class="math inline">\(\rho\)</span>.</p>
+<pre class="r"><code>m15 &lt;-
+  brm(data = small_data_long,
+      y ~ 1 + time + (1 + time | id),
+      seed = 1,
+      prior = prior(exponential(1), class = sd) +
+        prior(lkj(4), class = cor),
+      cores = 4, chains = 4, iter = 3500, warmup = 1000,
+      control = list(adapt_delta = .9995))</code></pre>
+<p>Even with our tighter priors, we still had to adjust the <code>adapt_delta</code> parameter to improve the quality of the MCMC sampling. Take a look at the model summary.</p>
+<pre class="r"><code>print(m15)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ 1 + time + (1 + time | id) 
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 100) 
+##                     Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)           0.52      0.18     0.12     0.84 1.01     1012     1473
+## sd(time)                0.31      0.23     0.01     0.88 1.00     1021      876
+## cor(Intercept,time)    -0.05      0.33    -0.63     0.59 1.00     4039     6272
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -0.15      0.11    -0.38     0.07 1.00    10022     8348
+## time          1.17      0.15     0.88     1.46 1.00    13870     7175
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.01      0.10     0.80     1.18 1.00     1060      946
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Though the posteriors, particularly for the <span class="math inline">\(\sigma\)</span> and <span class="math inline">\(\rho\)</span> parameters, are not as precise as with the 6-timepoint data, we now have a model with a summary mirroring the structure of the data-generating model. Yet compared to the data-generating values, the estimates for <span class="math inline">\(\sigma_1\)</span> and <span class="math inline">\(\rho\)</span> are particularly biased toward zero. Here’s a look at the trajectories.</p>
+<pre class="r"><code>fitted(m15,
+       newdata = nd) %&gt;% 
+  data.frame() %&gt;% 
+  bind_cols(nd) %&gt;% 
+  
+  ggplot(aes(x = time, y = Estimate, group = id)) +
+  geom_abline(intercept = fixef(m15)[1, 1],
+              slope = fixef(m15)[2, 1],
+              size = 3, color = &quot;blue&quot;) +
+  geom_line(size = 1/4, alpha = 2/3) +
+  scale_x_continuous(breaks = 0:1) +
+  labs(subtitle = &quot;Random intercepts AND random slopes\n(2-timepoint data)&quot;,
+       y = &quot;y&quot;) +
+  coord_cartesian(ylim = c(-1, 2))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-57-1.png" width="288" style="display: block; margin: auto;" /></p>
+<p>For comparision, here’s the plot for the original 6-timepoint model.</p>
+<pre class="r"><code>fitted(m0,
+       newdata = nd) %&gt;% 
+  data.frame() %&gt;% 
+  bind_cols(nd) %&gt;% 
+  
+  ggplot(aes(x = time, y = Estimate, group = id)) +
+  geom_abline(intercept = fixef(m0)[1, 1],
+              slope = fixef(m0)[2, 1],
+              size = 3, color = &quot;blue&quot;) +
+  geom_line(size = 1/4, alpha = 2/3) +
+  scale_x_continuous(breaks = 0:1) +
+  labs(subtitle = &quot;Random intercepts AND random slopes\n(6-timepoint data)&quot;,
+       y = &quot;y&quot;) +
+  coord_cartesian(ylim = c(-1, 2))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-58-1.png" width="288" style="display: block; margin: auto;" /></p>
+<p>There wasn’t enough information in the 2-timepoint data set to capture the complexity in the full 6-timepoint data set.</p>
+</div>
+<div id="mathcal-m_16-colon-the-fixed-effects-with-correlated-error-model." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{16} \colon\)</span> The fixed effects with correlated error model.</h4>
+<p>Though our Bayesian 2-timepoint version of the full multilevel growth model was exciting, it’s not generally used in the wild. Even with our tighter regularizing priors, there just wasn’t enough information in the data to do the model justice. A very different and humbler approach is to combine the simple linear model with the autoregressive model,</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_{ti}, \mathbf \Sigma) \\
+\mu_{ti} &amp; = \beta_0 + \beta_1 \text{time}_{ti} \\
+\mathbf \Sigma &amp; = \mathbf{SRS} \\
+\mathbf S &amp; = \begin{bmatrix} \sigma &amp; 0 \\ 0 &amp; \sigma \end{bmatrix} \\
+\mathbf R &amp; = \begin{bmatrix} 1 &amp; \rho \\ \rho &amp; 1 \end{bmatrix},
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\rho\)</span> captures the correlation between the responses in the two timepoints, <span class="math inline">\(t\)</span> and <span class="math inline">\(t - 1\)</span>, which is an alternative to the way the mixed model from above handles the dependencies (a.k.a <a href="https://en.wikipedia.org/wiki/Heteroscedasticity">heteroskedasticity</a>) inherent in longitudinal data. Note how <span class="math inline">\(\mathbf \Sigma\)</span> in this model is defined very differently from the full multilevel growth model from above. To fit this model with <strong>brms</strong>, we use the <code>ar()</code> syntax.</p>
+<pre class="r"><code>m16 &lt;-
+  brm(data = small_data_long,
+      y ~ time + ar(time = time, p = 1, gr = id),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m16)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ time + ar(time = time, p = 1, gr = id) 
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Correlation Structures:
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## ar[1]     0.23      0.10     0.04     0.43 1.00     9766     7458
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -0.15      0.12    -0.38     0.07 1.00    10593     7136
+## time          1.17      0.15     0.89     1.46 1.00     9607     6546
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     1.15      0.06     1.04     1.27 1.00    10604     7665
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>This summary suggests that, after you account for the linear trend, the correlation between <span class="math inline">\(y_{ti}\)</span> and <span class="math inline">\(y_{t - 1,i}\)</span> is about 0.23. Though we don’t get <code>id</code>-specific variance parameters, this model does account for the nonindependence of the data over time. If you scroll back up, notice how similar this is to the correlation from the bivariate correlational model, <code>m4</code>.</p>
+</div>
+</div>
+<div id="the-models-with-robust-variance-parameters." class="section level3">
+<h3>The models with robust variance parameters.</h3>
+<p>In the social sciences, many of our theories and statistical models are comparisons of or changes in group means. Every model in this blog post uses the normal likelihood, which parameterizes the criterion in terms of <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span>. Every time we added some kind of linear model, we focused that model around the <span class="math inline">\(\mu\)</span>. But contemporary Bayesian software allows us to model the <span class="math inline">\(\sigma\)</span> parameter, too. Within the <strong>brms</strong> framework, <span class="citation"><a href="#ref-Bürkner2021Distributional" role="doc-biblioref">Bürkner</a> (<a href="#ref-Bürkner2021Distributional" role="doc-biblioref">2021a</a>)</span> calls these <a href="https://CRAN.R-project.org/package=brms/vignettes/brms_distreg.html">distributional models</a>. The final four models under consideration all use some form of the distributional modeling syntax to relax unnecessarily restrictive assumptions on the variance parameters. Though this section is not exhaustive, it should give a sense of how flexible this approach can be.</p>
+<div id="mathcal-m_17-colon-the-cross-classified-model-with-robust-variances-for-discrete-time." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{17} \colon\)</span> The cross-classified model with robust variances for discrete time.</h4>
+<p>One of the criticisms of the conventional repeated measures ANOVA approach is how it presumes the variances in <span class="math inline">\(y\)</span> are constant over time. However, we can relax that constraint with a model like</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_{ti}, \sigma_{ti}) \\
+\mu_{ti} &amp; = \beta_0 + u_{\text{id},i} + u_{\text{time},t} \\
+\log (\sigma_{ti}) &amp; = \eta_{\text{time},t} \\
+u_\text{id} &amp; \sim \operatorname{Normal}(0, \sigma_\text{id}) \\
+u_\text{time} &amp; \sim \operatorname{Normal}(0, \sigma_\text{time}),
+\end{align*}
+\]</span></p>
+<p>where we are now modeling both parameters in the likelihood, <span class="math inline">\(\mu\)</span> AND <span class="math inline">\(\sigma\)</span>. The second line shows a typical-looking model for <span class="math inline">\(\mu_{ti}\)</span>. All the excitement lies in the third line, which contains the linear model for <span class="math inline">\(\log (\sigma_{ti})\)</span>. The reason we are modeling <span class="math inline">\(\log (\sigma_{ti})\)</span> rather than directly modeling <span class="math inline">\(\sigma\)</span> is to avoid solutions that predict negative values for <span class="math inline">\(\sigma\)</span>. For this model, it’s unlikely we’d run into that problem. But since the <strong>brms</strong> default is to use the log link anytime we model <span class="math inline">\(\sigma\)</span> within the distributional modeling syntax, we’ll just get used to the log link right from the start. If you are unfamiliar with link functions, they’re widely used within the generalized linear modeling framework. Logistic regression with the logit link and Poisson regression with the log link are two widely-used examples. For more on link functions and the generalized linear model, check out the texts by <span class="citation"><a href="#ref-agrestiFoundationsLinearGeneralized2015" role="doc-biblioref">Agresti</a> (<a href="#ref-agrestiFoundationsLinearGeneralized2015" role="doc-biblioref">2015</a>)</span>; Gelman, Hill, and Vehtari <span class="citation">(<a href="#ref-gelmanRegressionOtherStories2020" role="doc-biblioref">2020</a>)</span>; and McElreath <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>, <a href="#ref-mcelreathStatisticalRethinkingBayesian2015" role="doc-biblioref">2015</a>)</span>.</p>
+<p>Anyway, the linear model for <span class="math inline">\(\mu_{ti}\)</span> is exactly the same as with the original cross-classified model, <code>m11</code>; it includes a grand mean (<span class="math inline">\(\beta_0\)</span>) and two kinds of deviations around that grand mean (<span class="math inline">\(u_{\text{id},i}\)</span> and <span class="math inline">\(u_{\text{time},t}\)</span>). The model for <span class="math inline">\(\log (\sigma_{ti})\)</span> contains an intercept, which varies across the two levels of time, <span class="math inline">\(\eta_{\text{time},t}\)</span>. Here’s how to fit the model with <code>brms::brm()</code>.</p>
+<pre class="r"><code>m17 &lt;-
+  brm(data = small_data_long,
+      bf(y ~ 1 + (1 | time) + (1 | id),
+         sigma ~ 0 + factor(time)),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000,
+      control = list(adapt_delta = .999,
+                     max_treedepth = 12))</code></pre>
+<pre class="r"><code>print(m17)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = log 
+## Formula: y ~ 1 + (1 | time) + (1 | id) 
+##          sigma ~ 0 + factor(time)
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 100) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     0.53      0.15     0.15     0.79 1.00     1376     1194
+## 
+## ~time (Number of levels: 2) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     1.66      1.26     0.41     5.00 1.00     5133     6854
+## 
+## Population-Level Effects: 
+##                   Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept             0.45      1.07    -1.78     2.66 1.00     4653     5056
+## sigma_factortime0     0.01      0.10    -0.18     0.20 1.00     3068     5577
+## sigma_factortime1     0.03      0.10    -0.17     0.22 1.00     2678     4488
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Even though we didn’t explicitly ask to use the log link in our <code>brm()</code> syntax, you can look at the second line in the <code>print()</code> output to see that it was automatically used. Though I won’t explore how to do so, here, one can fit this model without the log link. Anyway, the primary focus in this model is the <code>sigma_factortime0</code> and <code>sigma_factortime1</code> lines in the ‘Population-Level Effects’ section of the output. Those are the summaries for the <span class="math inline">\(\sigma\)</span> parameters, conditional on whether <code>time == 0</code> or <code>time == 1</code>. Though is might be difficult to evaluate parameters on the log scale, we can simply exponentiate them to convert them back to their natural metric.</p>
+<pre class="r"><code>fixef(m17)[2:3, c(1, 3:4)] %&gt;% exp()</code></pre>
+<pre><code>##                   Estimate      Q2.5    Q97.5
+## sigma_factortime0 1.013928 0.8352872 1.223336
+## sigma_factortime1 1.032290 0.8446723 1.247435</code></pre>
+<p>In this case, it looks like the two parameters are largely overlapping. If we work directly with the posterior draws, we can compute a formal difference score and plot the results.</p>
+<pre class="r"><code>posterior_samples(m17) %&gt;% 
+  mutate(`sigma[time==0]` = exp(b_sigma_factortime0),
+         `sigma[time==1]` = exp(b_sigma_factortime1),
+         `sigma[time==1]-sigma[time==0]` = exp(b_sigma_factortime1) - exp(b_sigma_factortime0)) %&gt;% 
+  pivot_longer(`sigma[time==0]`:`sigma[time==1]-sigma[time==0]`) %&gt;% 
+  
+  ggplot(aes(x = value, y = name)) + 
+  stat_halfeye(.width = .95) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  coord_cartesian(ylim = c(1.5, 3.1)) +
+  xlab(&quot;marginal posterior&quot;) +
+  theme(axis.text.y = element_text(hjust = 0))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-62-1.png" width="384" style="display: block; margin: auto;" /></p>
+<p>In this case, it looks like there was little difference between <span class="math inline">\(\sigma_{\text{time} = 0}\)</span> and <span class="math inline">\(\sigma_{\text{time} = 1}\)</span>. This shouldn’t be a surprise; we simulated that data that way. However, it won’t always be like this in real-world data.</p>
+</div>
+<div id="mathcal-m_18-colon-the-simple-liner-model-with-robust-variance-for-linear-time." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{18} \colon\)</span> The simple liner model with robust variance for linear time.</h4>
+<p>Our cross-classified approach treated <code>time</code> as a factor. Here we’ll treat it as a continuous variable in the models of both <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span>. This will be a straight extension of the simple linear model, <code>m12</code>, following the form</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_{ti}, \sigma_{ti}) \\
+\mu_{ti} &amp; = \beta_0 + \beta_1 \text{time}_{ti} \\
+\log(\sigma_{ti}) &amp; = \eta_0 + \eta_1 \text{time}_{ti},
+\end{align*}
+\]</span></p>
+<p>where the intercept <span class="math inline">\(\beta_0\)</span> is the expected value at the first timepoint and <span class="math inline">\(\beta_1\)</span> captures the change in <span class="math inline">\(y_i\)</span> for the final timepoint. Now <span class="math inline">\(\log(\sigma_{ti})\)</span> has a similar linear model, where <span class="math inline">\(\eta_0\)</span> is the expected log of the standard deviation at the first timepoint and <span class="math inline">\(\eta_1\)</span> captures the change standard deviation for the final timepoint.</p>
+<pre class="r"><code>m18 &lt;-
+  brm(data = small_data_long,
+      bf(y ~ 1 + time, 
+         sigma ~ 1 + time),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<pre class="r"><code>print(m18)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = log 
+## Formula: y ~ 1 + time 
+##          sigma ~ 1 + time
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Population-Level Effects: 
+##                 Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept          -0.15      0.11    -0.38     0.06 1.00    11620     6673
+## sigma_Intercept     0.14      0.07     0.00     0.28 1.00    11090     7442
+## time                1.17      0.16     0.85     1.49 1.00    11137     7818
+## sigma_time          0.01      0.10    -0.18     0.21 1.00    11157     7620
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Even though this model looks very different from the last one, we can wrangle the posterior draws a little to make a similar plot comparing <span class="math inline">\(\sigma\)</span> at the two timepoints.</p>
+<pre class="r"><code>posterior_samples(m18) %&gt;% 
+  mutate(`sigma[time==0]` = exp(b_sigma_Intercept),
+         `sigma[time==1]` = exp(b_sigma_Intercept + b_sigma_time * 1),
+         `sigma[time==1]-sigma[time==0]` = exp(b_sigma_Intercept) - exp(b_sigma_Intercept + b_sigma_time)) %&gt;% 
+  pivot_longer(`sigma[time==0]`:`sigma[time==1]-sigma[time==0]`) %&gt;% 
+  
+  ggplot(aes(x = value, y = name)) + 
+  stat_halfeye(.width = .95) +
+  scale_y_discrete(NULL, labels = ggplot2:::parse_safe) +
+  coord_cartesian(ylim = c(1.5, 3.1)) +
+  xlab(&quot;marginal posterior&quot;) +
+  theme(axis.text.y = element_text(hjust = 0))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-64-1.png" width="384" style="display: block; margin: auto;" /></p>
+<p>Though this model is robust to differences in <span class="math inline">\(\sigma\)</span> based on timepoint, it still ignores systemic differences across participants. The next model tackles that that limitation in spades.</p>
+</div>
+<div id="mathcal-m_19-colon-the-liner-model-with-correlated-random-intercepts-for-mu-and-sigma." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{19} \colon\)</span> The liner model with correlated random intercepts for <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma.\)</span></h4>
+<p>Here we return to the multilevel model framework to accommodate participant-level differences for both <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span>:</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_{ti}, \sigma_{ti}) \\
+\mu_{ti} &amp; = \beta_0 + \beta_1 \text{time}_{ti} + u_{0i}  \\
+\log(\sigma_{ti}) &amp; = \eta_0  + u_{2i} \\
+\begin{bmatrix} u_{0i} \\ u_{2i} \end{bmatrix} &amp; \sim \operatorname{MVNormal} \left (\begin{bmatrix} 0 \\ 0 \end{bmatrix}, \mathbf \Sigma \right) \\
+\mathbf \Sigma &amp; = \mathbf{SRS} \\
+\mathbf S &amp; = \begin{bmatrix} \sigma_0 &amp; 0 \\ 0 &amp; \sigma_2 \end{bmatrix} \\
+\mathbf R &amp; = \begin{bmatrix} 1 &amp; \rho \\ \rho &amp; 1 \end{bmatrix},
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\beta_0\)</span> is the grand mean for the intercepts and <span class="math inline">\(u_{0i}\)</span> are the participant-level deviations around that grand mean. <span class="math inline">\(\beta_1\)</span> is the time slope, which is invariant across all participants in this model. The <span class="math inline">\(\eta_0\)</span> parameter is the grand mean for the log standard deviations and <span class="math inline">\(u_{2i}\)</span> captures the participant-level deviations around that grand mean. In the fourth line, we learn that <span class="math inline">\(u_{0i}\)</span> and <span class="math inline">\(u_{2i}\)</span> are multivariate normal, with a mean vector of two zeros and a variance/covariance matrix <span class="math inline">\(\mathbf \Sigma\)</span>. As is typical within the <strong>brms</strong> framework, we decompose <span class="math inline">\(\mathbf \Sigma\)</span> into a variance matrix <span class="math inline">\(\mathbf S\)</span> and correlation matrix <span class="math inline">\(\mathbf R\)</span>. Of particular interest is the <span class="math inline">\(\rho\)</span> parameter, which captures the correlation in the participant-level intercepts and participant-level standard deviations. Here’s how to fit the model with <strong>brms</strong>.</p>
+<pre class="r"><code>m19 &lt;-
+  brm(data = small_data_long,
+      bf(y ~ 1 + time + (1 |x| id),
+         sigma ~ 1 + (1 |x| id)),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000,
+      control = list(adapt_delta = .9))</code></pre>
+<p>You may have noticed the <code>|x|</code> parts in the <code>formula</code> lines for <code>y</code> and <code>sigma</code>. What that did was tell <strong>brms</strong> we wanted those parameters to be correlated. That is, that’s how we estimated the <span class="math inline">\(\rho\)</span> parameter. There was nothing special about including <code>x</code> between the vertical lines. We could have used any other character. The important thing is that we used the same character in both. Anyway, here’s the model summary.</p>
+<pre class="r"><code>print(m19)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = log 
+## Formula: y ~ 1 + time + (1 | x | id) 
+##          sigma ~ 1 + (1 | x | id)
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 100) 
+##                                Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)                      0.52      0.16     0.14     0.78 1.00     1496     1443
+## sd(sigma_Intercept)                0.11      0.08     0.01     0.29 1.00     3032     4589
+## cor(Intercept,sigma_Intercept)    -0.34      0.49    -0.97     0.80 1.00     5949     6097
+## 
+## Population-Level Effects: 
+##                 Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept          -0.15      0.12    -0.38     0.08 1.00    10102     7923
+## sigma_Intercept     0.02      0.08    -0.13     0.17 1.00     2344     3931
+## time                1.17      0.15     0.88     1.45 1.00    14868     8009
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Once again, <strong>brms</strong> used the log link for <span class="math inline">\(\sigma\)</span>. If you want to see <span class="math inline">\(\eta_0\)</span> in its natural <span class="math inline">\(\sigma\)</span> metric, exponentiate.</p>
+<pre class="r"><code>fixef(m19)[&quot;sigma_Intercept&quot;, c(1, 3:4)] %&gt;% exp()</code></pre>
+<pre><code>##  Estimate      Q2.5     Q97.5 
+## 1.0171275 0.8759026 1.1849572</code></pre>
+<p>The <code>sd(sigma_Intercept)</code> row in the ‘Group-Level Effects’ section shows the variation in those <span class="math inline">\(\log \sigma\)</span>’s. It might be easier to appreciate them in a plot.</p>
+<pre class="r"><code>posterior_samples(m19) %&gt;% 
+  pivot_longer(starts_with(&quot;r_id__sigma&quot;)) %&gt;% 
+  mutate(sigma_i = exp(sd_id__sigma_Intercept + value)) %&gt;% 
+  
+  ggplot(aes(x = sigma_i, y = reorder(name, sigma_i))) +
+  stat_pointinterval(point_interval = mean_qi, .width = .95, size = 1/6) +
+  scale_y_discrete(expression(italic(i)), breaks = NULL) +
+  labs(subtitle = expression(sigma[2]~summarizes~the~variation~across~these),
+       x = expression(sigma[italic(i)]))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-67-1.png" width="336" style="display: block; margin: auto;" /></p>
+<p>In this case, there was not a lot of variation in <span class="math inline">\(\sigma\)</span> across participants. This is because we simulated the data that way. Though it may be hard to model participant-level variances with 2-timepoint data, I have found it comes in handy in real-world data sets based on more measurement occasions.</p>
+<p>Finally, it might be useful to consider our <span class="math inline">\(\rho\)</span> parameter, which suggested a mild negative correlation between the <span class="math inline">\(u_{0i}\)</span> and <span class="math inline">\(u_{2i}\)</span> deviations. Here’s how you might visualize that in a plot.</p>
+<pre class="r"><code>bind_rows(
+  posterior_samples(m19) %&gt;% select(starts_with(&quot;r_id[&quot;)) %&gt;% set_names(1:100),
+  posterior_samples(m19) %&gt;% select(starts_with(&quot;r_id__sigma&quot;) %&gt;% set_names(1:100))
+) %&gt;% 
+  mutate(iter = rep(1:c(n() / 2), times = 2),
+         type = rep(c(&quot;intercept&quot;, &quot;log_sigma&quot;), each = n() / 2)) %&gt;% 
+  pivot_longer(-c(iter, type)) %&gt;% 
+  pivot_wider(names_from = type, values_from = value) %&gt;% 
+  
+  ggplot(aes(x = intercept, y = log_sigma, group = name)) +
+  stat_ellipse(geom = &quot;polygon&quot;, level = .01, alpha = 1/4) +
+  labs(x = expression(italic(u)[0][italic(i)]),
+       y = expression(log(italic(u)[2][italic(i)])))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-68-1.png" width="336" style="display: block; margin: auto;" /></p>
+<p>Each of the ovals is a 1% ellipse of the bivariate posterior for <span class="math inline">\(u_{0i}\)</span> and <span class="math inline">\(\log(u_{2i})\)</span>. Notice how using ellipses helps reveal the differences in the between- and within-person patterns.</p>
+<p>This approach where residual variance parameters vary across participants has its origins in the work of <a href="https://health.uchicago.edu/faculty/donald-hedeker-phd">Donald Hedeker</a> and colleagues <span class="citation">(<a href="#ref-hedekerApplicationMixedeffectsLocation2008" role="doc-biblioref">Hedeker et al., 2008</a>, <a href="#ref-hedekerModelingWithinsubjectVariance2012" role="doc-biblioref">2012</a>)</span>. More recently, <a href="https://twitter.com/rastlab">Philippe Rast</a> and colleagues (particularly graduate student, <a href="wdonald_1985">Donald Williams</a>) have adapted this approach for use within the Stan/<strong>brms</strong> ecosystem <span class="citation">(<a href="#ref-williamsBayesianMultivariateMixedeffects2019a" role="doc-biblioref">Williams, Liu, et al., 2019</a>; <a href="#ref-williamsSurfaceUnearthingWithinperson2019" role="doc-biblioref">Williams, Rouder, et al., 2019</a>; <a href="#ref-williamsPuttingIndividualReliability2019" role="doc-biblioref">Williams, Martin, et al., 2019</a>; <a href="#ref-williamsBayesianNonlinearMixedeffects2019a" role="doc-biblioref">Williams, Zimprich, et al., 2019</a>)</span>.</p>
+</div>
+<div id="mathcal-m_20-colon-the-liner-model-with-a-random-slope-for-mu-and-uncorrelated-random-intercept-for-sigma." class="section level4">
+<h4><span class="math inline">\(\mathcal M_{20} \colon\)</span> The liner model with a random slope for <span class="math inline">\(\mu\)</span> and uncorrelated random intercept for <span class="math inline">\(\sigma\)</span>.</h4>
+<p>Though we can find interesting things when we allow the random components in the <span class="math inline">\(\mu\)</span> and <span class="math inline">\(\sigma\)</span> models, we don’t have to think of them as covarying. Here we fit an extension of the linear model with a random time slope, where we add an orthogonal random intercept for <span class="math inline">\(\sigma\)</span>:</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{ti} &amp; \sim \operatorname{Normal}(\mu_{ti}, \sigma_{ti}) \\
+\mu_{ti} &amp; = \beta_0 + \beta_1 \text{time}_{ti} + u_{1i} \\
+\log(\sigma_{ti}) &amp; = \eta_0  + u_{2i}  \\
+u_{1i} &amp; \sim \operatorname{Normal}(0, \sigma_1) \\
+u_{2i} &amp; \sim \operatorname{Normal}(0, \sigma_2),
+\end{align*}
+\]</span></p>
+<p>where the two random components, <span class="math inline">\(u_{1i}\)</span> and <span class="math inline">\(u_{2i}\)</span>, are now modeled with separate normal distributions, <span class="math inline">\(\operatorname{Normal}(0, \sigma_1)\)</span> and <span class="math inline">\(\operatorname{Normal}(0, \sigma_2)\)</span>.</p>
+<pre class="r"><code>m20 &lt;-
+  brm(data = small_data_long,
+      bf(y ~ 1 + time + (0 + time | id),
+         sigma ~ 1 + (1 | id)),
+      seed = 1,
+      cores = 4, chains = 4, iter = 3500, warmup = 1000)</code></pre>
+<p>Note that in sharp contrast with our syntax for the previous model, this time we did not employ the <code>|x|</code> syntax in the <code>formula</code> lines for <code>y</code> and <code>sigma</code>. By omitting the <code>|x|</code> syntax, we omitted the correlation among those two random effects. Here’s the summary.</p>
+<pre class="r"><code>print(m20)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = log 
+## Formula: y ~ 1 + time + (0 + time | id) 
+##          sigma ~ 1 + (1 | id)
+##    Data: small_data_long (Number of observations: 200) 
+## Samples: 4 chains, each with iter = 3500; warmup = 1000; thin = 1;
+##          total post-warmup samples = 10000
+## 
+## Group-Level Effects: 
+## ~id (Number of levels: 100) 
+##                     Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(time)                0.33      0.21     0.02     0.75 1.00     2031     4346
+## sd(sigma_Intercept)     0.12      0.09     0.00     0.32 1.00     2463     3519
+## 
+## Population-Level Effects: 
+##                 Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept          -0.15      0.11    -0.37     0.07 1.00    13451     7317
+## sigma_Intercept     0.11      0.06    -0.02     0.23 1.00     4612     4412
+## time                1.18      0.16     0.86     1.49 1.00    12600     7054
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>We can see the <span class="math inline">\(\sigma_1\)</span> and <span class="math inline">\(\sigma_2\)</span> summaries in the ‘Group-Level Effects’ section. It’s hard to compare them directly, because one is based on parameters in the log metric. But we can at least get a sense of what these parameters are summarizing by plotting the bivariate posterior for <span class="math inline">\(u_{1i}\)</span> and <span class="math inline">\(\log(u_{2i})\)</span>.</p>
+<pre class="r"><code>bind_rows(
+  posterior_samples(m20) %&gt;% select(starts_with(&quot;r_id[&quot;)) %&gt;% set_names(1:100),
+  posterior_samples(m20) %&gt;% select(starts_with(&quot;r_id__sigma&quot;) %&gt;% set_names(1:100))
+) %&gt;% 
+  mutate(iter = rep(1:c(n() / 2), times = 2),
+         type = rep(c(&quot;slope&quot;, &quot;log_sigma&quot;), each = n() / 2)) %&gt;% 
+  pivot_longer(-c(iter, type)) %&gt;% 
+  pivot_wider(names_from = type, values_from = value) %&gt;% 
+  
+  ggplot(aes(x = slope, y = log_sigma, group = name)) +
+  stat_ellipse(geom = &quot;polygon&quot;, level = .01, alpha = 1/4) +
+  labs(x = expression(italic(u)[1][italic(i)]),
+       y = expression(log(italic(u)[2][italic(i)])))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-70-1.png" width="336" style="display: block; margin: auto;" /></p>
+<p>Notice how, this time, the 1% ellipses suggest no clear association between these two dimensions.</p>
+</div>
+</div>
+</div>
+<div id="next-steps" class="section level2">
+<h2>Next steps</h2>
+<p>As promised, here I recommend some resources for understanding the models in this post.</p>
+<div id="books-focusing-on-longutidinal-data-analysis." class="section level3">
+<h3>Books focusing on longutidinal data analysis.</h3>
+<ul>
+<li><p>My introduction to longitudinal data analysis was through Singer and Willett <span class="citation">(<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003</a>)</span>, <a href="https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968"><em>Applied longitudinal data analysis: Modeling change and event occurrence</em></a>. Their focus was on the multilevel growth model and on survival analysis, primary from a maximum-likelihood frequentist framework. However, they generally avoided 2-timepoint data analysis.</p></li>
+<li><p>Hoffman’s <span class="citation">(<a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">2015</a>)</span> text, <a href="https://www.routledge.com/Longitudinal-Analysis-Modeling-Within-Person-Fluctuation-and-Change/Hoffman/p/book/9780415876025"><em>Longitudinal analysis: Modeling within-person fluctuation and change</em></a> is another thorough introduction to the multilevel growth model, from a frequentist perspective. Hoffman covered 2-timepoint data analysis and variants from the ANOVA family. The text comes with a companion website, <a href="https://www.pilesofvariance.com/">https://www.pilesofvariance.com/</a>, which contains extensive data and code files for reproducing the material.</p></li>
+<li><p>Newsom’s <span class="citation">(<a href="#ref-newsom2015longitudinal" role="doc-biblioref">2015</a>)</span> text, <a href="http://www.longitudinalsem.com/"><em>Longitudinal structural equation modeling: A comprehensive introduction</em></a>, covers longitudinal data analysis from a structural equation modeling (SEM) perspective. Even for those not interested in SEM, his Chapter 4 does a nice job introducing the autoregressive and change-score models. The companion website, <a href="http://www.longitudinalsem.com/">http://www.longitudinalsem.com/</a>, contains data and script files for most of the problems in the text.</p></li>
+</ul>
+</div>
+<div id="books-introducing-regression." class="section level3">
+<h3>Books introducing regression.</h3>
+<ul>
+<li><p>Gelman, Hill, and Vehtari’s <span class="citation">(<a href="#ref-gelmanRegressionOtherStories2020" role="doc-biblioref">2020</a>)</span> <a href="https://www.cambridge.org/core/books/regression-and-other-stories/DD20DD6C9057118581076E54E40C372C"><em>Regression and other stories</em></a> contains a thorough introduction to single-level regression, primarily from a Bayesian framework. The text is not oriented around longitudinal analyses, per se, but it does include several chapters on causal inference. Vehtari hosts a GitHub repo, <a href="https://github.com/avehtari/ROS-Examples">https://github.com/avehtari/ROS-Examples</a>, where you can download the data files and <strong>R</strong> scripts for many of the examples.</p></li>
+<li><p>Both editions of McElreath’s <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>, <a href="#ref-mcelreathStatisticalRethinkingBayesian2015" role="doc-biblioref">2015</a>)</span> <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical rethinking: A Bayesian course with examples in R and Stan</em></a> provide a thorough introduction to Bayesian regression, both single-level and multilevel. McElreath also touched on causal inference and included a few examples of longitudinal data analysis. His text includes extensive examples of <strong>R</strong> code and his website, <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>, contains information about the accompanying statistical software.</p></li>
+</ul>
+</div>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] patchwork_1.1.1 tidybayes_2.3.1 brms_2.15.0     Rcpp_1.0.6      forcats_0.5.1   stringr_1.4.0  
+##  [7] dplyr_1.0.5     purrr_0.3.4     readr_1.4.0     tidyr_1.1.3     tibble_3.1.0    ggplot2_3.3.3  
+## [13] tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6           igraph_1.2.6        
+##   [5] splines_4.0.4        svUnit_1.0.3         crosstalk_1.1.0.1    TH.data_1.0-10      
+##   [9] rstantools_2.1.1     inline_0.3.17        digest_0.6.27        htmltools_0.5.1.1   
+##  [13] rsconnect_0.8.16     fansi_0.4.2          magrittr_2.0.1       modelr_0.1.8        
+##  [17] RcppParallel_5.0.2   matrixStats_0.57.0   xts_0.12.1           sandwich_3.0-0      
+##  [21] prettyunits_1.1.1    colorspace_2.0-0     rvest_0.3.6          ggdist_2.4.0.9000   
+##  [25] haven_2.3.1          xfun_0.22            callr_3.5.1          crayon_1.4.1        
+##  [29] jsonlite_1.7.2       lme4_1.1-25          survival_3.2-10      zoo_1.8-8           
+##  [33] glue_1.4.2           gtable_0.3.0         emmeans_1.5.2-1      V8_3.4.0            
+##  [37] distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.2         abind_1.4-5         
+##  [41] scales_1.1.1         mvtnorm_1.1-1        DBI_1.1.0            miniUI_0.1.1.1      
+##  [45] xtable_1.8-4         stats4_4.0.4         StanHeaders_2.21.0-7 DT_0.16             
+##  [49] htmlwidgets_1.5.2    httr_1.4.2           threejs_0.3.3        arrayhelpers_1.1-0  
+##  [53] ellipsis_0.3.1       farver_2.0.3         pkgconfig_2.0.3      loo_2.4.1           
+##  [57] dbplyr_2.0.0         utf8_1.1.4           labeling_0.4.2       tidyselect_1.1.0    
+##  [61] rlang_0.4.10         reshape2_1.4.4       later_1.1.0.1        munsell_0.5.0       
+##  [65] cellranger_1.1.0     tools_4.0.4          cli_2.3.1            generics_0.1.0      
+##  [69] broom_0.7.5          ggridges_0.5.2       evaluate_0.14        fastmap_1.0.1       
+##  [73] yaml_2.2.1           processx_3.4.5       knitr_1.31           fs_1.5.0            
+##  [77] nlme_3.1-152         mime_0.10            projpred_2.0.2       xml2_1.3.2          
+##  [81] compiler_4.0.4       bayesplot_1.8.0      shinythemes_1.1.2    rstudioapi_0.13     
+##  [85] gamm4_0.2-6          curl_4.3             reprex_0.3.0         statmod_1.4.35      
+##  [89] stringi_1.5.3        highr_0.8            ps_1.6.0             blogdown_1.3        
+##  [93] Brobdingnag_1.2-6    lattice_0.20-41      Matrix_1.3-2         nloptr_1.2.2.2      
+##  [97] markdown_1.1         shinyjs_2.0.0        vctrs_0.3.6          pillar_1.5.1        
+## [101] lifecycle_1.0.0      bridgesampling_1.0-0 estimability_1.3     httpuv_1.5.4        
+## [105] R6_2.5.0             bookdown_0.21        promises_1.1.1       gridExtra_2.3       
+## [109] codetools_0.2-18     boot_1.3-26          colourpicker_1.1.0   MASS_7.3-53         
+## [113] gtools_3.8.2         assertthat_0.2.1     withr_2.4.1          shinystan_2.5.0     
+## [117] multcomp_1.4-16      mgcv_1.8-33          parallel_4.0.4       hms_0.5.3           
+## [121] grid_4.0.4           coda_0.19-4          minqa_1.2.4          rmarkdown_2.7       
+## [125] shiny_1.5.0          lubridate_1.7.9.2    base64enc_0.1-3      dygraphs_1.1.1.6</code></pre>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
+<div id="ref-agrestiFoundationsLinearGeneralized2015" class="csl-entry">
+Agresti, A. (2015). <em>Foundations of linear and generalized linear models</em>. <span>John Wiley &amp; Sons</span>. <a href="https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034">https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034</a>
+</div>
+<div id="ref-Bürkner2021Distributional" class="csl-entry">
+Bürkner, P.-C. (2021a). <em>Estimating distributional models with brms</em>. <a href="https://CRAN.R-project.org/package=brms/vignettes/brms_distreg.html">https://CRAN.R-project.org/package=brms/vignettes/brms_distreg.html</a>
+</div>
+<div id="ref-Bürkner2021Multivariate" class="csl-entry">
+Bürkner, P.-C. (2021b). <em>Estimating multivariate models with brms</em>. <a href="https://CRAN.R-project.org/package=brms/vignettes/brms_multivariate.html">https://CRAN.R-project.org/package=brms/vignettes/brms_multivariate.html</a>
+</div>
+<div id="ref-Bürkner2021Non_linear" class="csl-entry">
+Bürkner, P.-C. (2021c). <em>Estimating non-linear models with brms</em>. <a href="https://CRAN.R-project.org/package=brms/vignettes/brms_nonlinear.html">https://CRAN.R-project.org/package=brms/vignettes/brms_nonlinear.html</a>
+</div>
+<div id="ref-burknerBrmsPackageBayesian2017" class="csl-entry">
+Bürkner, P.-C. (2017). <span class="nocase">brms</span>: <span>An R</span> package for <span>Bayesian</span> multilevel models using <span>Stan</span>. <em>Journal of Statistical Software</em>, <em>80</em>(1), 1–28. <a href="https://doi.org/10.18637/jss.v080.i01">https://doi.org/10.18637/jss.v080.i01</a>
+</div>
+<div id="ref-burknerAdvancedBayesianMultilevel2018" class="csl-entry">
+Bürkner, P.-C. (2018). Advanced <span>Bayesian</span> multilevel modeling with the <span>R</span> package brms. <em>The R Journal</em>, <em>10</em>(1), 395–411. <a href="https://doi.org/10.32614/RJ-2018-017">https://doi.org/10.32614/RJ-2018-017</a>
+</div>
+<div id="ref-R-brms" class="csl-entry">
+Bürkner, P.-C. (2020). <em><span class="nocase">brms</span>: <span>Bayesian</span> regression models using ’<span>Stan</span>’</em>. <a href="https://CRAN.R-project.org/package=brms">https://CRAN.R-project.org/package=brms</a>
+</div>
+<div id="ref-debruineUnderstandingMixedEffects2020" class="csl-entry">
+DeBruine, L. M., &amp; Barr, D. J. (2020). <em>Understanding mixed effects models through data simulation</em>. <a href="https://doi.org/10.1177/2515245920965119">https://doi.org/10.1177/2515245920965119</a>
+</div>
+<div id="ref-gelmanRegressionOtherStories2020" class="csl-entry">
+Gelman, A., Hill, J., &amp; Vehtari, A. (2020). <em>Regression and other stories</em>. <span>Cambridge University Press</span>. <a href="https://doi.org/10.1017/9781139161879">https://doi.org/10.1017/9781139161879</a>
+</div>
+<div id="ref-hedekerApplicationMixedeffectsLocation2008" class="csl-entry">
+Hedeker, D., Mermelstein, R. J., &amp; Demirtas, H. (2008). An application of a mixed-effects location scale model for analysis of ecological momentary assessment (<span>EMA</span>) data. <em>Biometrics</em>, <em>64</em>(2), 627–634. <a href="https://doi.org/10.1111/j.1541-0420.2007.00924.x">https://doi.org/10.1111/j.1541-0420.2007.00924.x</a>
+</div>
+<div id="ref-hedekerModelingWithinsubjectVariance2012" class="csl-entry">
+Hedeker, D., Mermelstein, R. J., &amp; Demirtas, H. (2012). Modeling between- and within-subject variance in ecological momentary assessment (<span>EMA</span>) data using mixed-effects location scale models. <em>Statistics in Medicine</em>, <em>31</em>(27). <a href="https://doi.org/10.1002/sim.5338">https://doi.org/10.1002/sim.5338</a>
+</div>
+<div id="ref-hoffmanLongitudinalAnalysisModeling2015" class="csl-entry">
+Hoffman, L. (2015). <em>Longitudinal analysis: <span>Modeling</span> within-person fluctuation and change</em> (1 edition). <span>Routledge</span>. <a href="https://www.routledge.com/Longitudinal-Analysis-Modeling-Within-Person-Fluctuation-and-Change/Hoffman/p/book/9780415876025">https://www.routledge.com/Longitudinal-Analysis-Modeling-Within-Person-Fluctuation-and-Change/Hoffman/p/book/9780415876025</a>
+</div>
+<div id="ref-R-tidybayes" class="csl-entry">
+Kay, M. (2020). <em><span class="nocase">tidybayes</span>: <span>Tidy</span> data and ’geoms’ for <span>Bayesian</span> models</em>. <a href="https://mjskay.github.io/tidybayes/">https://mjskay.github.io/tidybayes/</a>
+</div>
+<div id="ref-kisbu2013monte" class="csl-entry">
+Kisbu-Sakarya, Y., MacKinnon, D. P., &amp; Aiken, L. S. (2013). A <span>Monte Carlo</span> comparison study of the power of the analysis of covariance, simple difference, and residual change scores in testing two-wave data. <em>Educational and Psychological Measurement</em>, <em>73</em>(1), 47–62. <a href="https://doi.org/10.1177/0013164412450574">https://doi.org/10.1177/0013164412450574</a>
+</div>
+<div id="ref-kurzStatisticalRethinkingSecondEd2020" class="csl-entry">
+Kurz, A. S. (2020). <em>Statistical rethinking with brms, Ggplot2, and the tidyverse: <span>Second</span> edition</em> (version 0.1.1). <a href="https://bookdown.org/content/4857/">https://bookdown.org/content/4857/</a>
+</div>
+<div id="ref-lordStatisticalTheoriesMental1968" class="csl-entry">
+Lord, F. M., &amp; Novick, M. R. (1968). <em>Statistical theories of mental test scores</em>. <span>Addison-Wesley</span>.
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2020" class="csl-entry">
+McElreath, R. (2020). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em> (Second Edition). <span>CRC Press</span>. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2015" class="csl-entry">
+McElreath, R. (2015). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em>. <span>CRC press</span>. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-newsom2015longitudinal" class="csl-entry">
+Newsom, J. T. (2015). <em>Longitudinal structural equation modeling: <span>A</span> comprehensive introduction</em>. <span>Routledge</span>. <a href="http://www.longitudinalsem.com/">http://www.longitudinalsem.com/</a>
+</div>
+<div id="ref-R-patchwork" class="csl-entry">
+Pedersen, T. L. (2019). <em><span class="nocase">patchwork</span>: <span>The</span> composer of plots</em>. <a href="https://CRAN.R-project.org/package=patchwork">https://CRAN.R-project.org/package=patchwork</a>
+</div>
+<div id="ref-R-base" class="csl-entry">
+R Core Team. (2020). <em>R: <span>A</span> language and environment for statistical computing</em>. <span>R Foundation for Statistical Computing</span>. <a href="https://www.R-project.org/">https://www.R-project.org/</a>
+</div>
+<div id="ref-rogosaGrowthCurveApproach1982" class="csl-entry">
+Rogosa, D., Brandt, D., &amp; Zimowski, M. (1982). A growth curve approach to the measurement of change. <em>Psychological Bulletin</em>, <em>92</em>(3), 726–748. <a href="https://doi.org/10.1037/0033-2909.92.3.726">https://doi.org/10.1037/0033-2909.92.3.726</a>
+</div>
+<div id="ref-singerAppliedLongitudinalData2003" class="csl-entry">
+Singer, J. D., &amp; Willett, J. B. (2003). <em>Applied longitudinal data analysis: <span>Modeling</span> change and event occurrence</em>. <span>Oxford University Press, USA</span>. <a href="https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968">https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968</a>
+</div>
+<div id="ref-walkerElementsOfStatisticalModeling2018" class="csl-entry">
+Walker, J. A. (2018). <em>Elements of statistical modeling for experimental biology</em> ("2020–11th–22" ed.). <a href="https://www.middleprofessor.com/files/applied-biostatistics_bookdown/_book/">https://www.middleprofessor.com/files/applied-biostatistics_bookdown/_book/</a>
+</div>
+<div id="ref-R-tidyverse" class="csl-entry">
+Wickham, H. (2019). <em><span class="nocase">tidyverse</span>: <span>Easily</span> install and load the ’tidyverse’</em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>
+</div>
+<div id="ref-wickhamWelcomeTidyverse2019" class="csl-entry">
+Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. <em>Journal of Open Source Software</em>, <em>4</em>(43), 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>
+</div>
+<div id="ref-williamsBayesianMultivariateMixedeffects2019a" class="csl-entry">
+Williams, D. R., Liu, S., Martin, S. R., &amp; Rast, P. (2019). <em>Bayesian multivariate mixed-effects location scale modeling of longitudinal relations among affective traits, states, and physical activity</em>. <a href="https://doi.org/10.31234/osf.io/4kfjp">https://doi.org/10.31234/osf.io/4kfjp</a>
+</div>
+<div id="ref-williamsPuttingIndividualReliability2019" class="csl-entry">
+Williams, D. R., Martin, S. R., &amp; Rast, P. (2019). <em>Putting the individual into reliability: <span>Bayesian</span> testing of homogeneous within-person variance in hierarchical models</em>. <a href="https://doi.org/10.31234/osf.io/hpq7w">https://doi.org/10.31234/osf.io/hpq7w</a>
+</div>
+<div id="ref-williamsSurfaceUnearthingWithinperson2019" class="csl-entry">
+Williams, D. R., Rouder, J., &amp; Rast, P. (2019). <em>Beneath the surface: <span>Unearthing</span> within-<span>Person</span> variability and mean relations with <span>Bayesian</span> mixed models</em>. <a href="https://doi.org/10.31234/osf.io/gwatq">https://doi.org/10.31234/osf.io/gwatq</a>
+</div>
+<div id="ref-williamsBayesianNonlinearMixedeffects2019a" class="csl-entry">
+Williams, D. R., Zimprich, D. R., &amp; Rast, P. (2019). A <span>Bayesian</span> nonlinear mixed-effects location scale model for learning. <em>Behavior Research Methods</em>, <em>51</em>(5), 1968–1986. <a href="https://doi.org/10.3758/s13428-019-01255-9">https://doi.org/10.3758/s13428-019-01255-9</a>
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Throughout this post, my statistical notation will be a blend of sensibilities from <span class="citation"><a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">Singer &amp; Willett</a> (<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003</a>)</span>, <span class="citation"><a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">Hoffman</a> (<a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">2015</a>)</span>, and <span class="citation"><a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">McElreath</a> (<a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>)</span>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>Though I’m no fan of the null-hypothesis significance testing paradigm, it might be helpful to point out if one were to focus on whether zero is within the 95% interval bounds of our <span class="math inline">\(\beta_0\)</span> parameter, you be viewing this model through the lens of the repeated-measures <span class="math inline">\(t\)</span>-test. For more on that connection, see Chapter 3 in <span class="citation"><a href="#ref-newsom2015longitudinal" role="doc-biblioref">Newsom</a> (<a href="#ref-newsom2015longitudinal" role="doc-biblioref">2015</a>)</span>.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>There’s some debate over how to think about the repeated measures ANOVA and what its closest multilevel analogue might be. For a nice collection of perspectives, check out <a href="https://twitter.com/SolomonKurz/status/1342645143082594304">this Twitter thread</a>.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

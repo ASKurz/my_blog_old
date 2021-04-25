@@ -1,0 +1,64 @@
+---
+title: '"How to Survive a Plague": Part 1/$n$ of a premature book report'
+author: A. Solomon Kurz
+date: '2019-02-02'
+slug: ''
+categories: []
+tags:
+  - HIV/AIDS
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-21T14:20:15-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+I've been reading [David France](https://twitter.com/bydavidfrance?lang=en)'s [*How to Survive a Plague: The Inside Story of How Citizens and Science Tamed AIDS*](https://surviveaplague.com). It's a masterwork. And it's devastating. Two months in and I haven't cracked 100 pages. *HSP* is the kind of book I can only take 10--20 pages at a time. But like anything soulful and hard and true, it's worth it.
+
+For example, what do you know about the first baby on record to have died of AIDS?
+
+> In San Francisco [November 1982], Dr. Arthur Ammann was feeling frustrated as he studied the results of a bone marrow test he had ordered on a very sick toddler. As an expert in pediatric immunology who traveled regularly throughout Africa, Ammann thought he'd either seen or read about every immune disorder that cold plague a child… But this little boy baffled him. He was born prematurely on March 3, 1981, with pronounced [jaundice](https://www.mayoclinic.org/diseases-conditions/infant-jaundice/symptoms-causes/syc-20373865), a problem caused by toxins accumulating in the blood. This was not extraordinary, and the standard course of treatment was followed: every ounce of his contaminated blood was replaced with donated supplies. The process was repeated five times over a four-day period, followed by additional infusions of blood products like packed red blood cells and platelets. (p. 71)
+
+Just that alone--fuck.
+
+After the initial bout of treatment, it looked like he was getting better. Dr. Ammann sent him home with his parents.
+
+> But at four months of age his health began to dive. He suffered an [enlarged spleen](https://emedicine.medscape.com/article/958739-overvie) and [liver](https://www.stlouischildrens.org/conditions-treatments/liver-disease). Jaundice returned, followed by [hepatitis](https://www.stanfordchildrens.org/en/topic/default?id=hepatitis-in-children-90-P02517) of no known origin, then [anemia](https://www.aafp.org/afp/2016/0215/p270.html) and diarrhea. Now the little boy was twenty months old and in intensive care. (p. 71)
+
+By mid-1982, gay men, Haitians, and intravenous drug users were known to be at risk for AIDS. But it wasn't yet clear why.
+
+> Ammann suspected an infection in the child’s bone marrow, which would be highly unusual. Test results were even more surprising than he'd imagined. The child’s culture was positive for [*Mycobacterium avium-intracellulare*](https://rarediseases.info.nih.gov/diseases/7123/mycobacterium-avium-complex-infections), the dreaded cause of [wasting syndrome](http://www.aidsinfonet.org/fact_sheets/view/519pml.htm) in adults with AIDS. Recently there had been a number of reports of babies who seemed to inherit the disease at birth from their sick mothers, but that was not the case here. Ammann wrote in his case notes that both parents of his patient were "heterosexual non-Haitians and do not have a history of intravenous drug abuse." He submitted both [parents] to extensive testing, and found no signs of immune deficiency.
+>
+> All he could think was: The blood supply is contaminated. (p. 71, *emphasis* in the original)
+
+As is turned out, gay men were particularly generous blood donors at that time.
+
+> Gay men, he learned, were extremely avid blood donors. In fact, in recent months an unnoticed and massive blood drive had been under way in LA's gay neighborhoods in response to the mounting GRID [i.e., gay-related immune deficiency, as AIDS was known by in the early days] crisis, there. Week after week long lines of men rolled up their sleeves to donate blood, dutifully offering up pint after pint of harm they never dreamed of. (p. 59)
+
+This was the precursor to a 30-year ban on gay men donating blood—which was [overturned in 2015 based on advances in the relevant scientific literature](https://www.cnn.com/2015/12/21/health/fda-gay-men-blood-donation-changes/index.html).
+
+"Pulling the boy's hospital records, he saw that blood donations from twenty-one separate people had been transfused into the child. Their identities were masked" (p. 71). After some efforts, Ammann and his team determined the relevant donor.
+
+> A man in his late forties… He had donated blood in early 1981. His health had remained unremarkable until that October, when he complained of fatigue, swollen lymph glands, and clouded vision in one eye—classic AIDS symptoms. Doctors diagnosed PCP [i.e., [*pneumocystis carinii*](https://www.webmd.com/hiv-aids/guide/aids-hiv-opportunistic-infections-pneumocystis-pcp-pneumonia#1) pneumonia, an inflammation and fluid buildup in the lungs most of us conquer in early childhood] in December, and he was dead nine months later.
+>
+> This was the first irrefutable evidence of transmission through the blood supply.  (p. 72)
+
+Shortly after, Ammann and notified the medical community via the CDC's widely-read [*Morbidity and Mortality Weekly Report*](https://www.cdc.gov/mmwr/index.html) platform. His publication choice was crucial. Had he tried to get published at a more prestigious outlet, such as the *New England Journal of Medicine*, the peer-review process could have held up the message for months or more. Ammann needed to get the message out to practitioners as soon as possible. The publication lag for the *MMWR* was trivial. [Here’s the report](https://www.cdc.gov/mmwr/preview/mmwrhtml/00001203.htm). In an editorial note at the end of the report, we read
+
+> Of the 788 definite AIDS cases among adults reported thus far to CDC, 42 (5.3%) belong to no known risk group (i.e., they are not known to be homosexually active men, intravenous drug abusers, Haitians, or hemophiliacs). Two cases received blood products within 2 years of the onset of their illnesses and are currently under investigation.
+
+Seven hundred and seventy-eight.
+
+According to the World Health Organization, about [37 million people were living with AIDS in 2017](https://www.who.int/gho/hiv/en/).
+
+Shortly after Ammann's piece was published,
+
+> a scrum of journalists burst through the CDC’s door for the first time, including correspondents from countless television networks and affiliates. The attention was long overdue. But with images of bouncing toddlers, the reporters warned America that the gay disease was now killing children. It unleashed a [torrent of anti-gay violence](https://www.nytimes.com/1986/11/23/us/violence-against-homosexuals-rising-groups-seeking-wider-protection-say.html) the likes of which the community had never seen before. (p. 73)
+
+If you find this topic sad and compelling and worth the heartbreak, there's more to come.
+

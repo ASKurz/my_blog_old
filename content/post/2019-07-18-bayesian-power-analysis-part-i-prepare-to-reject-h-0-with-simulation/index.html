@@ -1,0 +1,655 @@
+---
+title: 'Bayesian power analysis: Part I. Prepare to reject $H_0$ with simulation.'
+author: A. Solomon Kurz
+date: '2019-07-18'
+slug: bayesian-power-analysis-part-i
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - power
+  - R
+  - tidyverse
+  - tutorial
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-21T17:33:23-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+bibliography: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/my_blog.bib
+biblio-style: apalike
+csl: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/apa.csl  
+link-citations: yes 
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<div id="version-1.1.0" class="section level2">
+<h2>Version 1.1.0</h2>
+<p>Edited on April 21, 2021, to remove the <code>broom::tidy()</code> portion of the workflow.</p>
+</div>
+<div id="tldr" class="section level2">
+<h2>tl;dr</h2>
+<p>If you’d like to learn how to do Bayesian power calculations using <strong>brms</strong>, stick around for this multi-part blog series. Here with part I, we’ll set the foundation.</p>
+</div>
+<div id="power-is-hard-especially-for-bayesians." class="section level2">
+<h2>Power is hard, especially for Bayesians.</h2>
+<p>Many journals, funding agencies, and dissertation committees require power calculations for your primary analyses. Frequentists have a variety of tools available to perform these calculations (e.g., <a href="https://rpsychologist.com/analytical-and-simulation-based-power-analyses-for-mixed-design-anovas">here</a>). Bayesians, however, have a more difficult time of it. Most of our research questions and data issues are sufficiently complicated that we cannot solve the problems by hand. We need Markov chain Monte Carlo methods to iteratively sample from the posterior to summarize the parameters from our models. Same deal for power. If you’d like to compute the power for a given combination of <span class="math inline">\(N\)</span>, likelihood <span class="math inline">\(p(\text{data} | \theta)\)</span>, and set of priors <span class="math inline">\(p (\theta)\)</span>, you’ll need to simulate.</p>
+<p>It’s been one of my recent career goals to learn how to do this. You know how they say: <em>The best way to learn is to teach</em>. This series of blog posts is the evidence of me learning by teaching. It will be an exploration of what a Bayesian power simulation workflow might look like. The overall statistical framework will be within <strong>R</strong> <span class="citation">(<a href="#ref-R-base" role="doc-biblioref">R Core Team, 2020</a>)</span>, with an emphasis on code style based on the <a href="https://www.tidyverse.org"><strong>tidyverse</strong></a> <span class="citation">(<a href="#ref-R-tidyverse" role="doc-biblioref">Wickham, 2019</a>; <a href="#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>)</span>. We’ll be fitting our Bayesian models with Bürkner’s <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong> package</a> <span class="citation">(<a href="#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">Bürkner, 2017</a>, <a href="#ref-burknerAdvancedBayesianMultilevel2018" role="doc-biblioref">2018</a>, <a href="#ref-R-brms" role="doc-biblioref">2020a</a>)</span>.</p>
+<p>What this series is not, however, is an introduction to statistical power itself. Keep reading if you’re ready to roll up your sleeves, put on your applied hat, and learn how to get things done. If you’re more interested in introductions to power, see the references in the next section.</p>
+</div>
+<div id="i-make-assumptions." class="section level2">
+<h2>I make assumptions.</h2>
+<p>For this series, I’m presuming you are familiar with linear regression, familiar with the basic differences between frequentist and Bayesian approaches to statistics, and have a basic sense of what we mean by statistical power. Here are some resources if you’d like to shore up.</p>
+<ul>
+<li>If you’re unfamiliar with statistical power, Kruschke covered it in chapter 13 of his <span class="citation">(<a href="#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">2015</a>)</span> <a href="http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/">text</a>. You might also check out the <span class="citation">(<a href="#ref-maxwellSampleSizePlanning2008" role="doc-biblioref">2008</a>)</span> <a href="https://www3.nd.edu/~kkelley/publications/articles/Maxwell_Kelley_Rausch_2008.pdf">review paper</a> by Maxwell, Kelley, and Rausch. There’s always, of course, the original work by Cohen <span class="citation">(e.g., <a href="#ref-cohenStatisticalPowerAnalysis1988a" role="doc-biblioref">Cohen, 1988</a>)</span>. You might also like this <a href="https://www.khanacademy.org/math/ap-statistics/tests-significance-ap/error-probabilities-power/v/introduction-to-power-in-significance-tests">Khan Academy video</a>.</li>
+<li>To learn about Bayesian regression, I recommend the introductory text books by either McElreath <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>, <a href="#ref-mcelreathStatisticalRethinkingBayesian2015" role="doc-biblioref">2015</a>)</span> or <span class="citation"><a href="#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">Kruschke</a> (<a href="#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">2015</a>)</span>. Both authors host blogs (<a href="http://doingbayesiandataanalysis.blogspot.com">here</a> and <a href="http://elevanth.org/blog/">here</a>, respectively). If you go with McElreath, do check out his <a href="https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists">online lectures</a> and my <span class="citation">(<a href="#ref-kurzStatisticalRethinkingBrms2020" role="doc-biblioref">2020a</a>, <a href="#ref-kurzStatisticalRethinkingSecondEd2020" role="doc-biblioref">2020c</a>)</span> ebooks translating his text to <strong>brms</strong> and <strong>tidyverse</strong> code. I have an ebook for Kruschke’s text <span class="citation">(<a href="#ref-kurzDoingBayesianData2020" role="doc-biblioref">Kurz, 2020b</a>)</span>, too.</li>
+<li>For even more <strong>brms</strong>-related resources, you can find vignettes and documentation at <a href="https://cran.r-project.org/package=brms/index.html">https://cran.r-project.org/package=brms/index.html</a>.</li>
+<li>For <strong>tidyverse</strong> introductions, your best bets are Grolemund and Wickham’s <span class="citation">(<a href="#ref-grolemundDataScience2017" role="doc-biblioref">2017</a>)</span> <a href="https://r4ds.had.co.nz"><em>R for data science</em></a> and Wickham’s <span class="citation">(<a href="#ref-wickhamTidyverseStyleGuide2020" role="doc-biblioref">2020</a>)</span> <a href="https://style.tidyverse.org"><em>The tidyverse style guide</em></a>.</li>
+<li>We’ll be simulating data. If that’s new to you, both Kruschke and McElreath cover that a little in their texts. You can find nice online tutorials <a href="https://debruine.github.io/tutorials/sim-data.html">here</a> and <a href="https://aosmith.rbind.io/2018/08/29/getting-started-simulating-data/">here</a>, too.</li>
+<li>We’ll also be making a couple custom functions. If that’s new, you might check out <a href="https://r4ds.had.co.nz/functions.html"><em>R4DS</em>, chapter 19</a> or <a href="https://bookdown.org/rdpeng/rprogdatascience/functions.html">chapter 14</a> of Roger Peng’s <span class="citation">(<a href="#ref-pengProgrammingDataScience2019" role="doc-biblioref">2019</a>)</span> <em>R Programming for Data Science</em>.</li>
+</ul>
+</div>
+<div id="we-need-to-warm-up-before-jumping-into-power." class="section level2">
+<h2>We need to warm up before jumping into power.</h2>
+<p>Let’s load our primary packages. The <strong>tidyverse</strong> helps organize data and we model with <strong>brms</strong>.</p>
+<pre class="r"><code>library(tidyverse)
+library(brms)</code></pre>
+<p>Consider a case where you have some dependent variable <span class="math inline">\(Y\)</span> that you’d like to compare between two groups, which we’ll call treatment and control. Here we presume <span class="math inline">\(Y\)</span> is continuous and, for the sake of simplicity, is in a standardized metric for the control condition. Letting <span class="math inline">\(c\)</span> stand for control and <span class="math inline">\(i\)</span> index the data row for a given case, we might write that as <span class="math inline">\(y_{i, c} \sim \operatorname{Normal} (0, 1)\)</span>. The mean for our treatment condition is 0.5, with the standard deviation still in the standardized metric. In the social sciences a standardized mean difference of 0.5 would typically be considered a medium effect size. Here’s what that’d look like.</p>
+<pre class="r"><code># set our theme because, though I love the default ggplot theme, I hate gridlines
+theme_set(theme_grey() +
+            theme(panel.grid = element_blank()))
+
+# define the means
+mu_c &lt;- 0
+mu_t &lt;- 0.5
+
+# set up the data
+tibble(x = seq(from = -4, to = 5, by = .01)) %&gt;%
+  mutate(c = dnorm(x, mean = mu_c, sd = 1),
+         t = dnorm(x, mean = mu_t, sd = 1)) %&gt;% 
+  
+  # plot
+  ggplot(aes(x = x)) +
+  geom_area(aes(y = c),
+            size = 0, alpha = 1/3, fill = &quot;grey25&quot;) +
+  geom_area(aes(y = t),
+            size = 0, alpha = 1/3, fill = &quot;blue2&quot;) +
+ annotate(geom = &quot;text&quot;,
+           x = c(-.5, 1), y = .385,
+           label = c(&quot;control&quot;, &quot;treatment&quot;),
+           hjust = 1:0,
+           size = 5) +
+  scale_x_continuous(NULL, breaks = -4:5) +
+  scale_y_continuous(NULL, breaks = NULL) +
+  scale_color_manual(values = c(&quot;grey25&quot;, &quot;blue2&quot;))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" width="576" /></p>
+<p>Sure, those distributions have a lot of overlap. But their means are clearly different and we’d like to make sure we plan on collecting enough data to do a good job showing that. A power analysis will help.</p>
+<p>Within the conventional frequentist paradigm, power is the probability of rejecting the null hypothesis <span class="math inline">\(H_0\)</span> in favor of the alternative hypothesis <span class="math inline">\(H_1\)</span>, given the alternative hypothesis is “true.” In this case, the typical null hypothesis is</p>
+<p><span class="math display">\[H_0\text{: } \mu_c = \mu_t,\]</span></p>
+<p>or put differently,</p>
+<p><span class="math display">\[
+H_0\text{: } \mu_t - \mu_c = 0.
+\]</span></p>
+<p>And the alternative hypothesis is often just</p>
+<p><span class="math display">\[H_1\text{: } \mu_c \neq \mu_t,\]</span></p>
+<p>or otherwise put,</p>
+<p><span class="math display">\[
+H_1\text{: } \mu_t - \mu_c \neq 0.
+\]</span></p>
+<p>Within the regression framework, we’ll be comparing <span class="math inline">\(\mu\)</span>s using the formula</p>
+<p><span class="math display">\[
+\begin{align*}
+y_i &amp; \sim \operatorname{Normal}(\mu_i, \sigma) \\
+\mu_i &amp; = \beta_0 + \beta_1 \text{treatment}_i,
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\text{treatment}\)</span> is a dummy variable coded 0 = control 1 = treatment and varies across cases indexed by <span class="math inline">\(i\)</span>. In this setup, <span class="math inline">\(\beta_0\)</span> is the estimate for <span class="math inline">\(\mu_c\)</span> and <span class="math inline">\(\beta_1\)</span> is the estimate of the difference between condition means, <span class="math inline">\(\mu_t - \mu_c\)</span>. Thus our focal parameter, the one we care about the most in our power analysis, will be <span class="math inline">\(\beta_1\)</span>.</p>
+<p>Within the frequentist paradigm, we typically compare these hypotheses using a <span class="math inline">\(p\)</span>-value for <span class="math inline">\(H_0\)</span> with the critical value, <span class="math inline">\(\alpha\)</span>, set to .05. Thus, power is the probability we’ll have <span class="math inline">\(p &lt; .05\)</span> when it is indeed the case that <span class="math inline">\(\mu_c \neq \mu_t\)</span>. We won’t be computing <span class="math inline">\(p\)</span>-values in this project, but we will use 95% intervals. Recall that the result of a Bayesian analysis, the posterior distribution, is the probability of the parameters, given the data <span class="math inline">\(p (\theta | \text{data})\)</span>. With our 95% Bayesian credible intervals, we’ll be able to describe the parameter space over which our estimate of <span class="math inline">\(\mu_t - \mu_c\)</span> is 95% probable. That is, for our power analysis, we’re interested in the probability our 95% credible intervals for <span class="math inline">\(\beta_1\)</span> contain zero within their bounds when we know a priori <span class="math inline">\(\mu_c \neq \mu_t\)</span>.</p>
+<p>The reason we know <span class="math inline">\(\mu_c \neq \mu_t\)</span> is because we’ll be simulating the data that way. What our power analysis will help us determine is how many cases we’ll need to achieve a predetermined level of power. The conventional threshold is .8.</p>
+<div id="dry-run-number-1." class="section level3">
+<h3>Dry run number 1.</h3>
+<p>To make this all concrete, let’s start with a simple example. We’ll simulate a single set of data, fit a Bayesian regression model, and examine the results for the critical parameter <span class="math inline">\(\beta_1\)</span>. For the sake of simplicity, let’s keep our two groups, treatment and control, the same size. We’ll start with <span class="math inline">\(n = 50\)</span> for each.</p>
+<pre class="r"><code>n &lt;- 50</code></pre>
+<p>We already decided above that</p>
+<p><span class="math display">\[
+\begin{align*}
+y_{i, c} &amp; \sim \operatorname{Normal}(0, 1) \text{ and} \\
+y_{i, t} &amp; \sim \operatorname{Normal}(0.5, 1).
+\end{align*}
+\]</span></p>
+<p>Here’s how we might simulate data along those lines.</p>
+<pre class="r"><code>set.seed(1)
+
+d &lt;-
+  tibble(group = rep(c(&quot;control&quot;, &quot;treatment&quot;), each = n)) %&gt;% 
+  mutate(treatment = ifelse(group == &quot;control&quot;, 0, 1),
+         y         = ifelse(group == &quot;control&quot;, 
+                            rnorm(n, mean = mu_c, sd = 1),
+                            rnorm(n, mean = mu_t, sd = 1)))
+
+glimpse(d)</code></pre>
+<pre><code>## Rows: 100
+## Columns: 3
+## $ group     &lt;chr&gt; &quot;control&quot;, &quot;control&quot;, &quot;control&quot;, &quot;control&quot;, &quot;control&quot;, &quot;cont…
+## $ treatment &lt;dbl&gt; 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, …
+## $ y         &lt;dbl&gt; -0.62645381, 0.18364332, -0.83562861, 1.59528080, 0.32950777…</code></pre>
+<p>In case it wasn’t clear, the two variables <code>group</code> and <code>treatment</code> are redundant. Whereas the former is composed of names, the latter is the dummy-variable equivalent (i.e., control = 0, treatment = 1). The main event was how we used the <code>rnorm()</code> function to simulate the normally-distributed values for <code>y</code>.</p>
+<p>Before we fit our model, we need to decide on priors. To give us ideas, here are the <strong>brms</strong> defaults for our model and data.</p>
+<pre class="r"><code>get_prior(data = d,
+          family = gaussian,
+          y ~ 0 + Intercept + treatment)</code></pre>
+<pre><code>##                 prior class      coef group resp dpar nlpar bound       source
+##                (flat)     b                                            default
+##                (flat)     b Intercept                             (vectorized)
+##                (flat)     b treatment                             (vectorized)
+##  student_t(3, 0, 2.5) sigma                                            default</code></pre>
+<p>A few things: Notice that here we’re using the <code>0 + Intercept</code> syntax. This is because <strong>brms</strong> handles the priors for the default intercept under the presumption you’ve mean-centered all your predictor variables. However, since our <code>treatment</code> variable is a dummy, that assumption won’t fly. The <code>0 + Intercept</code> allows us to treat the model intercept as just another <span class="math inline">\(\beta\)</span> parameter, which makes no assumptions about centering. Along those lines, you’ll notice <strong>brms</strong> currently defaults to flat priors for the <span class="math inline">\(\beta\)</span> parameters (i.e., those for which <code>class = b</code>). And finally, the default prior on <span class="math inline">\(\sigma\)</span> is moderately wide <code>student_t(3, 0, 2.5)</code>. By default, <strong>brms</strong> also sets the left bounds for <span class="math inline">\(\sigma\)</span> parameters at zero, making that a folded-<span class="math inline">\(t\)</span> distribution. If you’re confused by these details, spend some time with the <a href="https://cran.r-project.org/package=brms/brms.pdf"><strong>brms</strong> reference manual</a> <span class="citation">(<a href="#ref-brms2020RM" role="doc-biblioref">Bürkner, 2020b</a>)</span>, particularly the <code>brm</code> and <code>brmsformula</code> sections.</p>
+<p>In this project, we’ll be primarily using two kinds of priors: default flat priors and weakly-regularizing priors. Hopefully flat priors are self-explanatory. They let the likelihood (data) dominate the posterior and tend to produce results similar to those from frequentist estimators.</p>
+<p>As for weakly-regularizing priors, McElreath covered them in his text. They’re mentioned a bit in the <strong>Stan</strong> team’s <a href="https://github.com/stan-dev/stan/wiki/Prior-Choice-Recommendations"><em>Prior Choice Recommendations</em></a> wiki, and you can learn even more from Gelman, Simpson, and Betancourt’s <span class="citation">(<a href="#ref-gelmanPriorCanOften2017" role="doc-biblioref">2017</a>)</span> <a href="http://www.stat.columbia.edu/~gelman/research/published/entropy-19-00555-v2.pdf"><em>The prior can only be understood in the context of the likelihood</em></a>. These priors aren’t strongly informative and aren’t really representative of our research hypotheses. But they’re not as absurd as flat priors, either. Rather, with just a little bit of knowledge about the data, these priors are set to keep the MCMC chains on target. Since our <code>y</code> variable has a mean near zero and a standard deviation near one and since our sole predictor, <code>treatment</code> is a dummy, setting <span class="math inline">\(\operatorname{Normal}(0, 2)\)</span> as the prior for both <span class="math inline">\(\beta\)</span> parameters might be a good place to start. The prior is permissive enough that it will let likelihood dominate the posterior, but it also rules out ridiculous parts of the parameter space (e.g., a standardized mean difference of 20, an intercept of -93). And since we know the data are on the unit scale, we might just center our folded-Student-<span class="math inline">\(t\)</span> prior on one and add a gentle scale setting of one.</p>
+<p>Feel free to disagree and use your own priors. The great thing about priors is that they can be proposed, defended, criticized and improved. The point is to settle on the priors you can defend with written reasons. Select ones you’d feel comfortable defending to a skeptical reviewer.</p>
+<p>Here’s how we might fit the model.</p>
+<pre class="r"><code>fit &lt;-
+  brm(data = d,
+      family = gaussian,
+      y ~ 0 + Intercept + treatment,
+      prior = c(prior(normal(0, 2), class = b),
+                prior(student_t(3, 1, 1), class = sigma)),
+      seed = 1)</code></pre>
+<p>Before we look at the summary, we might check the chains in a trace plot. We’re looking for “stuck” chains that don’t appear to come from a normal distribution (the chains are a profile-like view rather than histogram, allowing for inspection of dependence between samples).</p>
+<pre class="r"><code>plot(fit)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="768" /></p>
+<p>Yep, the chains all look good. Here’s the parameter summary.</p>
+<pre class="r"><code>print(fit)</code></pre>
+<pre><code>##  Family: gaussian 
+##   Links: mu = identity; sigma = identity 
+## Formula: y ~ 0 + Intercept + treatment 
+##    Data: d (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     0.10      0.13    -0.16     0.36 1.00     2094     2048
+## treatment     0.51      0.18     0.16     0.90 1.00     2079     1989
+## 
+## Family Specific Parameters: 
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.92      0.07     0.80     1.06 1.00     2684     2122
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>The 95% credible intervals for our <span class="math inline">\(\beta_1\)</span> parameter, termed <code>treatment</code> in the output, are well above zero.</p>
+<p>Another way to look at the parameter summary is with the <code>brms::fixef()</code> function.</p>
+<pre class="r"><code>fixef(fit)</code></pre>
+<pre><code>##            Estimate Est.Error       Q2.5     Q97.5
+## Intercept 0.1033326 0.1312632 -0.1556192 0.3640170
+## treatment 0.5142275 0.1847559  0.1587896 0.8976941</code></pre>
+</div>
+<div id="you-can-reuse-a-fit." class="section level3">
+<h3>You can reuse a fit.</h3>
+<p>Especially with simple models like this, a lot of the time we spend waiting for <code>brms::brm()</code> to return the model is wrapped up in compilation. This is because <strong>brms</strong> is a collection of user-friendly functions designed to fit models with <a href="https://mc-stan.org"><strong>Stan</strong></a> <span class="citation">(<a href="#ref-standevelopmentteamRStanInterfaceStan2020" role="doc-biblioref">Stan Development Team, 2020</a>, <a href="#ref-standevelopmentteamStanReferenceManual2021" role="doc-biblioref">2021a</a>, <a href="#ref-standevelopmentteamStanUserGuide2021" role="doc-biblioref">2021b</a>)</span>. With each new model, <code>brm()</code> translates your model into <strong>Stan</strong> code, which then gets translated to C++ and is compiled afterwards (see <a href="https://cran.r-project.org/package=brms/vignettes/brms_overview.pdf">here</a> or <a href="https://cran.r-project.org/package=brms/brms.pdf">here</a>). However, we can use the <code>update()</code> function to update a previously-compiled fit object with new data. This cuts out the compilation time and allows us to get directly to sampling. Here’s how to do it.</p>
+<pre class="r"><code># set a new seed
+set.seed(2)
+
+# simulate new data based on that new seed
+d &lt;-
+  tibble(group = rep(c(&quot;control&quot;, &quot;treatment&quot;), each = n)) %&gt;% 
+  mutate(treatment = ifelse(group == &quot;control&quot;, 0, 1),
+         y         = ifelse(group == &quot;control&quot;, 
+                            rnorm(n, mean = mu_c, sd = 1),
+                            rnorm(n, mean = mu_t, sd = 1)))
+
+updated_fit &lt;-
+  update(fit,
+         newdata = d,
+         seed = 2)</code></pre>
+<p>Behold the <code>fixef()</code> parameter summary for our updated model.</p>
+<pre class="r"><code>fixef(updated_fit)</code></pre>
+<pre><code>##             Estimate Est.Error       Q2.5     Q97.5
+## Intercept 0.06410605 0.1692172 -0.2700568 0.3995847
+## treatment 0.30654690 0.2387028 -0.1434469 0.7815116</code></pre>
+<p>Well how about that? In this case, our 95% credible intervals for the <span class="math inline">\(\beta_1\)</span> <code>treatment</code> coefficient did include zero within their bounds. Though the posterior mean, 0.30, is still well away from zero, here we’d fail to reject <span class="math inline">\(H_0\)</span> at the conventional level. This is why we simulate.</p>
+<p>To recap, we’ve</p>
+<ol style="list-style-type: lower-alpha">
+<li>determined our primary data type,</li>
+<li>cast our research question in terms of a regression model,</li>
+<li>identified the parameter of interest,</li>
+<li>settled on defensible priors,</li>
+<li>picked an initial sample size,</li>
+<li>fit an initial model with a single simulated data set, and</li>
+<li>practiced reusing that fit with <code>update()</code>.</li>
+</ol>
+<p>We’re more than half way there! It’s time to do our first power simulation.</p>
+</div>
+</div>
+<div id="simulate-to-determine-power." class="section level2">
+<h2>Simulate to determine power.</h2>
+<p>In this post, we’ll play with three ways to do a Bayesian power simulation. They’ll all be similar, but hopefully you’ll learn a bit as we transition from one to the next. Though if you’re impatient and all this seems remedial, you could probably just skip down to the final example, <a href="#version-3-still-talking-about-memory-we-can-be-even-stingier.">Version 3</a>.</p>
+<div id="version-1-lets-introduce-making-a-custom-model-fitting-function." class="section level3">
+<h3>Version 1: Let’s introduce making a custom model-fitting function.</h3>
+<p>For our power analysis, we’ll need to simulate a large number of data sets, each of which we’ll fit a model to. Here we’ll make a custom function, <code>sim_d()</code>, that will simulate new data sets just like before. Our function will have two parameters: we’ll set our seeds with <code>seed</code> and determine how many cases we’d like per group with <code>n</code>.</p>
+<pre class="r"><code>sim_d &lt;- function(seed, n) {
+  
+  mu_t &lt;- .5
+  mu_c &lt;- 0
+
+  set.seed(seed)
+  
+  tibble(group = rep(c(&quot;control&quot;, &quot;treatment&quot;), each = n)) %&gt;% 
+  mutate(treatment = ifelse(group == &quot;control&quot;, 0, 1),
+         y         = ifelse(group == &quot;control&quot;, 
+                            rnorm(n, mean = mu_c, sd = 1),
+                            rnorm(n, mean = mu_t, sd = 1)))
+}</code></pre>
+<p>Here’s a quick example of how our function works.</p>
+<pre class="r"><code>sim_d(seed = 123, n = 2)</code></pre>
+<pre><code>## # A tibble: 4 x 3
+##   group     treatment      y
+##   &lt;chr&gt;         &lt;dbl&gt;  &lt;dbl&gt;
+## 1 control           0 -0.560
+## 2 control           0 -0.230
+## 3 treatment         1  2.06 
+## 4 treatment         1  0.571</code></pre>
+<p>Now we’re ready to get down to business. We’re going to be saving our simulation results in a nested data frame, <code>s</code>. Initially, <code>s</code> will have one column of <code>seed</code> values. These will serve a dual function. First, they are the values we’ll be feeding into the <code>seed</code> argument of our custom data-generating function, <code>sim_d()</code>. Second, since the <code>seed</code> values serially increase, they also stand in as iteration indexes.</p>
+<p>For our second step, we add the data simulations and save them in a nested column, <code>d</code>. In the first argument of the <code>purrr::map()</code> function, we indicate we want to iterate over the values in <code>seed</code>. In the second argument, we indicate we want to serially plug those <code>seed</code> values into the first argument within the <code>sim_d()</code> function. That argument, recall, is the well-named <code>seed</code> argument. With the final argument in <code>map()</code>, <code>n = 50</code>, we hard code 50 into the <code>n</code> argument of <code>sim_d()</code>.</p>
+<p>For the third step, we expand our <code>purrr::map()</code> skills from above to <code>purrr::map2()</code>, which allows us to iteratively insert two arguments into a function. Within this paradigm, the two arguments are generically termed <code>.x</code> and <code>.y</code>. Thus our approach will be <code>.x = d, .y = seed</code>. For our function, we specify <code>~update(fit, newdata = .x, seed = .y)</code>. Thus we’ll be iteratively inserting our simulated <code>d</code> data into the <code>newdata</code> argument and will be simultaneously inserting our <code>seed</code> values into the <code>seed</code> argument.</p>
+<p>Also notice that the number of iterations we’ll be working with is determined by the number of rows in the <code>seed</code> column. We are defining that number as <code>n_sim</code>. Since this is just a blog post, I’m going to take it easy and use 100. But if this was a real power analysis for one of your projects, something like 1,000 would be better.</p>
+<p>Finally, you don’t have to do this, but I’m timing my simulation by saving <code>Sys.time()</code> values at the beginning and end of the simulation.</p>
+<pre class="r"><code># how many simulations would you like?
+n_sim &lt;- 100
+
+# this will help us track time
+t1 &lt;- Sys.time()
+
+# here&#39;s the main event!
+s &lt;-
+  tibble(seed = 1:n_sim) %&gt;% 
+  mutate(d = map(seed, sim_d, n = 50)) %&gt;% 
+  mutate(fit = map2(d, seed, ~update(fit, newdata = .x, seed = .y)))
+
+t2 &lt;- Sys.time()</code></pre>
+<p>The entire simulation took just about a minute on my <a href="https://twitter.com/SolomonKurz/status/1250193047096299520">new laptop</a>.</p>
+<pre class="r"><code>t2 - t1</code></pre>
+<pre><code>## Time difference of 44.20048 secs</code></pre>
+<p>Your mileage may vary.</p>
+<p>Let’s take a look at what we’ve done.</p>
+<pre class="r"><code>head(s)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##    seed d                  fit      
+##   &lt;int&gt; &lt;list&gt;             &lt;list&gt;   
+## 1     1 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt;
+## 2     2 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt;
+## 3     3 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt;
+## 4     4 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt;
+## 5     5 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt;
+## 6     6 &lt;tibble [100 × 3]&gt; &lt;brmsfit&gt;</code></pre>
+<p>In our 100-row nested tibble, we have all our simulated data sets in the <code>d</code> column and all of our <strong>brms</strong> fit objects nested in the <code>fit</code> column. Next we’ll use <code>fixef()</code> and a little wrangling to extract the parameter of interest, <code>treatment</code> (i.e., <span class="math inline">\(\beta_1\)</span>), from each simulation. We’ll save the results as <code>parameters</code>.</p>
+<pre class="r"><code>parameters &lt;-
+  s %&gt;% 
+  mutate(treatment = map(fit, ~ fixef(.) %&gt;% 
+                           data.frame() %&gt;% 
+                           rownames_to_column(&quot;parameter&quot;))) %&gt;% 
+  unnest(treatment)
+
+parameters %&gt;% 
+  select(-d, -fit) %&gt;% 
+  filter(parameter == &quot;treatment&quot;) %&gt;% 
+  head()</code></pre>
+<pre><code>## # A tibble: 6 x 6
+##    seed parameter Estimate Est.Error    Q2.5 Q97.5
+##   &lt;int&gt; &lt;chr&gt;        &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
+## 1     1 treatment    0.514     0.185  0.159  0.898
+## 2     2 treatment    0.307     0.239 -0.143  0.782
+## 3     3 treatment    0.643     0.171  0.310  0.975
+## 4     4 treatment    0.224     0.182 -0.128  0.574
+## 5     5 treatment    0.429     0.189  0.0596 0.792
+## 6     6 treatment    0.304     0.208 -0.114  0.711</code></pre>
+<p>As an aside, I know I’m moving kinda fast with all this wacky <code>purrr::map()</code>/<code>purrr::map2()</code> stuff. If you’re new to using the <strong>tidyverse</strong> for iterating and saving the results in nested data structures, I recommend fixing an adult beverage and cozying up with Hadley Wickham’s presentation, <a href="https://www.youtube.com/watch?v=rz3_FDVt9eg"><em>Managing many models</em></a>. And if you really hate it, both Kruschke and McElreath texts contain many examples of how to iterate in a more base <strong>R</strong> sort of way.</p>
+<p>Anyway, here’s what those 100 <span class="math inline">\(\beta_1\)</span> summaries look like in bulk.</p>
+<pre class="r"><code>parameters %&gt;% 
+  filter(parameter == &quot;treatment&quot;) %&gt;% 
+  
+  ggplot(aes(x = seed, y = Estimate, ymin = Q2.5, ymax = Q97.5)) +
+  geom_hline(yintercept = c(0, .5), color = &quot;white&quot;) +
+  geom_pointrange(fatten = 1/2) +
+  labs(x = &quot;seed (i.e., simulation index)&quot;,
+       y = expression(beta[1]))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-15-1.png" width="768" /></p>
+<p>The horizontal lines show the idealized effect size (0.5) and the null hypothesis (0). Already, it’s apparent that most of our intervals indicate there’s more than a 95% probability the null hypothesis is not credible. Several do. Here’s how to quantify that.</p>
+<pre class="r"><code>parameters %&gt;% 
+  filter(parameter == &quot;treatment&quot;) %&gt;% 
+  mutate(check = ifelse(Q2.5 &gt; 0, 1, 0)) %&gt;% 
+  summarise(power = mean(check))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   power
+##   &lt;dbl&gt;
+## 1  0.66</code></pre>
+<p>With the second <code>mutate()</code> line, we used a logical statement within <code>ifelse()</code> to code all instances where the lower limit of the 95% interval (<code>Q2.5</code>) was greater than 0 as a 1, with the rest as 0. That left us with a vector of 1’s and 0’s, which we saved as <code>check</code>. In the <code>summarise()</code> line, we took the mean of that column, which returned our Bayesian power estimate.</p>
+<p>That is, in 66 of our 100 simulations, an <span class="math inline">\(n = 50\)</span> per group was enough to produce a 95% Bayesian credible interval that did not straddle 0.</p>
+<p>I should probably point out that a 95% interval for which <code>Q97.5 &lt; 0</code> would have also been consistent with the alternative hypothesis of <span class="math inline">\(\mu_c \neq \mu_t\)</span>. However, I didn’t bother to work that option into the definition of our <code>check</code> variable because I knew from the outset that that would be a highly unlikely result. But if you’d like to work more rigor into your checks, by all means do.</p>
+<p>And if you’ve gotten this far and have been following along with code of your own, congratulations! You did it! You’ve estimated the power of a Bayesian model with a given <span class="math inline">\(n\)</span>. Now let’s refine our approach.</p>
+</div>
+<div id="version-2-we-might-should-be-more-careful-with-memory." class="section level3">
+<h3>Version 2: We might should be more careful with memory.</h3>
+<p>I really like it that our <code>s</code> object contains all our <code>brm()</code> fits. It makes it really handy to do global diagnostics like making sure our <span class="math inline">\(\widehat R\)</span> values are all within a respectable range.</p>
+<pre class="r"><code>s %&gt;% 
+  mutate(rhat = map(fit, rhat)) %&gt;% 
+  unnest(rhat) %&gt;% 
+  
+  ggplot(aes(x = rhat)) +
+  geom_histogram(bins = 20)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" width="288" /></p>
+<p>Man those <span class="math inline">\(\widehat R\)</span> values look sweet. It’s great to have a workflow that lets you check them. But holding on to all those fits can take up a lot of memory. If the only thing you’re interested in are the parameter summaries, a better approach might be to do the model refitting and parameter extraction in one step. That way you only save the parameter summaries. Here’s how you might do that.</p>
+<pre class="r"><code>t3 &lt;- Sys.time()
+
+s2 &lt;-
+  tibble(seed = 1:n_sim) %&gt;% 
+  mutate(d = map(seed, sim_d, n = 50)) %&gt;% 
+  # here&#39;s the new part
+  mutate(b1 = map2(d, seed, ~update(fit, newdata = .x, seed = .y) %&gt;% 
+                     fixef() %&gt;% 
+                     data.frame() %&gt;% 
+                     rownames_to_column(&quot;parameter&quot;) %&gt;% 
+                     filter(parameter == &quot;treatment&quot;)))
+
+t4 &lt;- Sys.time()</code></pre>
+<p>Like before, this only about a minute.</p>
+<pre class="r"><code>t4 - t3</code></pre>
+<pre><code>## Time difference of 48.12622 secs</code></pre>
+<p>As a point of comparison, here are the sizes of the results from our first approach to those from the second.</p>
+<pre class="r"><code>object.size(s)</code></pre>
+<pre><code>## 79822320 bytes</code></pre>
+<pre class="r"><code>object.size(s2)</code></pre>
+<pre><code>## 503120 bytes</code></pre>
+<p>That’s a big difference. Hopefully you get the idea. With more complicated models and 10+ times the number of simulations, size will eventually matter.</p>
+<p>Anyway, here are the results.</p>
+<pre class="r"><code>s2 %&gt;% 
+  unnest(b1) %&gt;% 
+
+  ggplot(aes(x = seed, y = Estimate, ymin = Q2.5, ymax = Q97.5)) +
+  geom_hline(yintercept = c(0, .5), color = &quot;white&quot;) +
+  geom_pointrange(fatten = 1/2) +
+  labs(x = &quot;seed (i.e., simulation index)&quot;,
+       y = expression(beta[1]))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-20-1.png" width="768" /></p>
+<p>Same parameter summaries, lower memory burden.</p>
+</div>
+<div id="version-3-still-talking-about-memory-we-can-be-even-stingier." class="section level3">
+<h3>Version 3: Still talking about memory, we can be even stingier.</h3>
+<p>So far, both of our simulation attempts resulted in our saving the simulated data sets. It’s a really nice option if you ever want to go back and take a look at those simulated data. For example, you might want to inspect a random subset of the data simulations with box plots.</p>
+<pre class="r"><code>set.seed(1)
+
+s2 %&gt;% 
+  sample_n(12) %&gt;% 
+  unnest(d) %&gt;% 
+  
+  ggplot(aes(x = group, y = y)) +
+  geom_boxplot(aes(fill = group), 
+               alpha = 2/3, show.legend = F) +
+  scale_fill_manual(values = c(&quot;grey25&quot;, &quot;blue2&quot;)) +
+  xlab(NULL) +
+  facet_wrap(~ seed)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-21-1.png" width="576" /></p>
+<p>In this case, it’s no big deal if we keep the data around or not. The data sets are fairly small and we’re only simulating 100 of them. But in cases where the data are larger and you’re doing thousands of simulations, keeping the data could become a memory drain.</p>
+<p>If you’re willing to forgo the luxury of inspecting your data simulations, it might make sense to run our power analysis in a way that avoids saving them. One way to do so would be to just wrap the data simulation and model fitting all in one function. We’ll call it <code>sim_d_and_fit()</code>.</p>
+<pre class="r"><code>sim_d_and_fit &lt;- function(seed, n) {
+  
+  mu_t &lt;- .5
+  mu_c &lt;- 0
+  
+  set.seed(seed)
+  
+  d &lt;-
+    tibble(group     = rep(c(&quot;control&quot;, &quot;treatment&quot;), each = n)) %&gt;% 
+    mutate(treatment = ifelse(group == &quot;control&quot;, 0, 1),
+           y         = ifelse(group == &quot;control&quot;, 
+                              rnorm(n, mean = mu_c, sd = 1),
+                              rnorm(n, mean = mu_t, sd = 1)))
+  
+  update(fit,
+         newdata = d, 
+         seed = seed) %&gt;% 
+    fixef() %&gt;% 
+    data.frame() %&gt;% 
+    rownames_to_column(&quot;parameter&quot;) %&gt;% 
+    filter(parameter == &quot;treatment&quot;)
+}</code></pre>
+<p>Now iterate 100 times once more.</p>
+<pre class="r"><code>t5 &lt;- Sys.time()
+
+s3 &lt;-
+  tibble(seed = 1:n_sim) %&gt;% 
+  mutate(b1 = map(seed, sim_d_and_fit, n = 50)) %&gt;% 
+  unnest(b1)
+
+t6 &lt;- Sys.time()</code></pre>
+<p>That was pretty quick.</p>
+<pre class="r"><code>t6 - t5</code></pre>
+<pre><code>## Time difference of 48.48654 secs</code></pre>
+<p>Here’s what it returned.</p>
+<pre class="r"><code>head(s3)</code></pre>
+<pre><code>## # A tibble: 6 x 6
+##    seed parameter Estimate Est.Error    Q2.5 Q97.5
+##   &lt;int&gt; &lt;chr&gt;        &lt;dbl&gt;     &lt;dbl&gt;   &lt;dbl&gt; &lt;dbl&gt;
+## 1     1 treatment    0.514     0.185  0.159  0.898
+## 2     2 treatment    0.307     0.239 -0.143  0.782
+## 3     3 treatment    0.643     0.171  0.310  0.975
+## 4     4 treatment    0.224     0.182 -0.128  0.574
+## 5     5 treatment    0.429     0.189  0.0596 0.792
+## 6     6 treatment    0.304     0.208 -0.114  0.711</code></pre>
+<p>By wrapping our data simulation, model fitting, and parameter extraction steps all in one function, we simplified the output such that we’re no longer holding on to the data simulations or the <strong>brms</strong> fit objects. We just have the parameter summaries and the <code>seed</code>, making the product even smaller.</p>
+<pre class="r"><code>tibble(object = c(&quot;s&quot;, &quot;s2&quot;, &quot;s3&quot;)) %&gt;% 
+  mutate(bytes = map_dbl(object, ~get(.) %&gt;% object.size()))</code></pre>
+<pre><code>## # A tibble: 3 x 2
+##   object    bytes
+##   &lt;chr&gt;     &lt;dbl&gt;
+## 1 s      79822320
+## 2 s2       503120
+## 3 s3         5952</code></pre>
+<p>But the primary results are the same.</p>
+<pre class="r"><code>s3 %&gt;% 
+  ggplot(aes(x = seed, y = Estimate, ymin = Q2.5, ymax = Q97.5)) +
+  geom_hline(yintercept = c(0, .5), color = &quot;white&quot;) +
+  geom_pointrange(fatten = 1/2) +
+  labs(x = &quot;seed (i.e., simulation index)&quot;,
+       y = expression(beta[1]))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-26-1.png" width="768" /></p>
+<p>We still get the same power estimate, too.</p>
+<pre class="r"><code>s3 %&gt;% 
+  mutate(check = ifelse(Q2.5 &gt; 0, 1, 0)) %&gt;% 
+  summarise(power = mean(check))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   power
+##   &lt;dbl&gt;
+## 1  0.66</code></pre>
+</div>
+</div>
+<div id="next-steps" class="section level2">
+<h2>Next steps</h2>
+<p><em>But my goal was to figure out what <span class="math inline">\(n\)</span> will get me power of .8 or more!</em>, you say. Fair enough. Try increasing <code>n</code> to 65 or something.</p>
+<p>If that seems unsatisfying, welcome to the world of simulation. Since our Bayesian models are complicated, we don’t have the luxury of plugging a few values into some quick power formula. Just as simulation is an iterative process, determining on the right values to simulate over might well be an iterative process, too.</p>
+</div>
+<div id="wrap-up" class="section level2">
+<h2>Wrap-up</h2>
+<p>Anyway, that’s the essence of the <strong>brms/tidyverse</strong> workflow for Bayesian power analysis. You follow these steps:</p>
+<ol style="list-style-type: decimal">
+<li>Determine your primary data type.</li>
+<li>Determine your primary regression model and parameter(s) of interest.</li>
+<li>Pick defensible priors for all parameters–the kinds of priors you intend to use once you have the real data in hand.</li>
+<li>Select a sample size.</li>
+<li>Fit an initial model and save the fit object.</li>
+<li>Simulate some large number of data sets all following your prechosen form and use the <code>update()</code> function to iteratively fit the models.</li>
+<li>Extract the parameter(s) of interest.</li>
+<li>Summarize.</li>
+</ol>
+<p>In addition, we played with a few approaches based on logistical concerns like memory. In the next post, <a href="https://solomonkurz.netlify.app/post/bayesian-power-analysis-part-ii/">part II</a>, we’ll see how the precision-oriented approach to sample-size planning is a viable alternative to power focused on rejecting null hypotheses.</p>
+</div>
+<div id="i-had-help." class="section level2">
+<h2>I had help.</h2>
+<p>Special thanks to Christopher Peters (<a href="https://github.com/statwonk">@statwonk</a>) for the helpful edits and suggestions.</p>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] brms_2.15.0     Rcpp_1.0.6      forcats_0.5.1   stringr_1.4.0  
+##  [5] dplyr_1.0.5     purrr_0.3.4     readr_1.4.0     tidyr_1.1.3    
+##  [9] tibble_3.1.0    ggplot2_3.3.3   tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6          
+##   [4] igraph_1.2.6         splines_4.0.4        crosstalk_1.1.0.1   
+##   [7] TH.data_1.0-10       rstantools_2.1.1     inline_0.3.17       
+##  [10] digest_0.6.27        htmltools_0.5.1.1    rsconnect_0.8.16    
+##  [13] fansi_0.4.2          magrittr_2.0.1       modelr_0.1.8        
+##  [16] RcppParallel_5.0.2   matrixStats_0.57.0   xts_0.12.1          
+##  [19] sandwich_3.0-0       prettyunits_1.1.1    colorspace_2.0-0    
+##  [22] rvest_0.3.6          haven_2.3.1          xfun_0.22           
+##  [25] callr_3.5.1          crayon_1.4.1         jsonlite_1.7.2      
+##  [28] lme4_1.1-25          survival_3.2-10      zoo_1.8-8           
+##  [31] glue_1.4.2           gtable_0.3.0         emmeans_1.5.2-1     
+##  [34] V8_3.4.0             pkgbuild_1.2.0       rstan_2.21.2        
+##  [37] abind_1.4-5          scales_1.1.1         mvtnorm_1.1-1       
+##  [40] DBI_1.1.0            miniUI_0.1.1.1       xtable_1.8-4        
+##  [43] stats4_4.0.4         StanHeaders_2.21.0-7 DT_0.16             
+##  [46] htmlwidgets_1.5.2    httr_1.4.2           threejs_0.3.3       
+##  [49] ellipsis_0.3.1       pkgconfig_2.0.3      loo_2.4.1           
+##  [52] farver_2.0.3         dbplyr_2.0.0         utf8_1.1.4          
+##  [55] tidyselect_1.1.0     labeling_0.4.2       rlang_0.4.10        
+##  [58] reshape2_1.4.4       later_1.1.0.1        munsell_0.5.0       
+##  [61] cellranger_1.1.0     tools_4.0.4          cli_2.3.1           
+##  [64] generics_0.1.0       broom_0.7.5          ggridges_0.5.2      
+##  [67] evaluate_0.14        fastmap_1.0.1        yaml_2.2.1          
+##  [70] processx_3.4.5       knitr_1.31           fs_1.5.0            
+##  [73] nlme_3.1-152         mime_0.10            projpred_2.0.2      
+##  [76] xml2_1.3.2           compiler_4.0.4       bayesplot_1.8.0     
+##  [79] shinythemes_1.1.2    rstudioapi_0.13      gamm4_0.2-6         
+##  [82] curl_4.3             reprex_0.3.0         statmod_1.4.35      
+##  [85] stringi_1.5.3        highr_0.8            ps_1.6.0            
+##  [88] blogdown_1.3         Brobdingnag_1.2-6    lattice_0.20-41     
+##  [91] Matrix_1.3-2         nloptr_1.2.2.2       markdown_1.1        
+##  [94] shinyjs_2.0.0        vctrs_0.3.6          pillar_1.5.1        
+##  [97] lifecycle_1.0.0      bridgesampling_1.0-0 estimability_1.3    
+## [100] httpuv_1.5.4         R6_2.5.0             bookdown_0.21       
+## [103] promises_1.1.1       gridExtra_2.3        codetools_0.2-18    
+## [106] boot_1.3-26          colourpicker_1.1.0   MASS_7.3-53         
+## [109] gtools_3.8.2         assertthat_0.2.1     withr_2.4.1         
+## [112] shinystan_2.5.0      multcomp_1.4-16      mgcv_1.8-33         
+## [115] parallel_4.0.4       hms_0.5.3            grid_4.0.4          
+## [118] coda_0.19-4          minqa_1.2.4          rmarkdown_2.7       
+## [121] shiny_1.5.0          lubridate_1.7.9.2    base64enc_0.1-3     
+## [124] dygraphs_1.1.1.6</code></pre>
+<pre class="r"><code># for the hard-core scrollers:
+# if you increase n to 65, the power becomes about .85
+n_sim &lt;- 100
+
+t7 &lt;- Sys.time()
+
+s4 &lt;-
+  tibble(seed = 1:n_sim) %&gt;% 
+  mutate(b1 = map(seed, sim_d_and_fit, n = 65))
+
+t8 &lt;- Sys.time()
+
+t8 - t7
+
+object.size(s4)
+
+s4 %&gt;% 
+  unnest(b1) %&gt;% 
+  mutate(check = ifelse(Q2.5 &gt; 0, 1, 0)) %&gt;% 
+  summarise(power = mean(check))</code></pre>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
+<div id="ref-burknerBrmsPackageBayesian2017" class="csl-entry">
+Bürkner, P.-C. (2017). <span class="nocase">brms</span>: <span>An R</span> package for <span>Bayesian</span> multilevel models using <span>Stan</span>. <em>Journal of Statistical Software</em>, <em>80</em>(1), 1–28. <a href="https://doi.org/10.18637/jss.v080.i01">https://doi.org/10.18637/jss.v080.i01</a>
+</div>
+<div id="ref-burknerAdvancedBayesianMultilevel2018" class="csl-entry">
+Bürkner, P.-C. (2018). Advanced <span>Bayesian</span> multilevel modeling with the <span>R</span> package brms. <em>The R Journal</em>, <em>10</em>(1), 395–411. <a href="https://doi.org/10.32614/RJ-2018-017">https://doi.org/10.32614/RJ-2018-017</a>
+</div>
+<div id="ref-R-brms" class="csl-entry">
+Bürkner, P.-C. (2020a). <em><span class="nocase">brms</span>: <span>Bayesian</span> regression models using ’<span>Stan</span>’</em>. <a href="https://CRAN.R-project.org/package=brms">https://CRAN.R-project.org/package=brms</a>
+</div>
+<div id="ref-brms2020RM" class="csl-entry">
+Bürkner, P.-C. (2020b). <em><span class="nocase">brms</span> reference manual, <span>Version</span> 2.14.4</em>. <a href="https://CRAN.R-project.org/package=brms/brms.pdf">https://CRAN.R-project.org/package=brms/brms.pdf</a>
+</div>
+<div id="ref-cohenStatisticalPowerAnalysis1988a" class="csl-entry">
+Cohen, J. (1988). <em>Statistical power analysis for the behavioral sciences</em>. <span>L. Erlbaum Associates</span>. <a href="https://www.worldcat.org/title/statistical-power-analysis-for-the-behavioral-sciences/oclc/17877467">https://www.worldcat.org/title/statistical-power-analysis-for-the-behavioral-sciences/oclc/17877467</a>
+</div>
+<div id="ref-gelmanPriorCanOften2017" class="csl-entry">
+Gelman, A., Simpson, D., &amp; Betancourt, M. (2017). The prior can often only be understood in the context of the likelihood. <em>Entropy</em>, <em>19</em>(10), 555. <a href="https://doi.org/10.3390/e19100555">https://doi.org/10.3390/e19100555</a>
+</div>
+<div id="ref-grolemundDataScience2017" class="csl-entry">
+Grolemund, G., &amp; Wickham, H. (2017). <em>R for data science</em>. <span>O’Reilly</span>. <a href="https://r4ds.had.co.nz">https://r4ds.had.co.nz</a>
+</div>
+<div id="ref-kruschkeDoingBayesianData2015" class="csl-entry">
+Kruschke, J. K. (2015). <em>Doing <span>Bayesian</span> data analysis: <span>A</span> tutorial with <span>R</span>, <span>JAGS</span>, and <span>Stan</span></em>. <span>Academic Press</span>. <a href="https://sites.google.com/site/doingbayesiandataanalysis/">https://sites.google.com/site/doingbayesiandataanalysis/</a>
+</div>
+<div id="ref-kurzStatisticalRethinkingBrms2020" class="csl-entry">
+Kurz, A. S. (2020a). <em>Statistical rethinking with brms, <span class="nocase">ggplot2</span>, and the tidyverse</em> (version 1.2.0). <a href="https://doi.org/10.5281/zenodo.3693202">https://doi.org/10.5281/zenodo.3693202</a>
+</div>
+<div id="ref-kurzDoingBayesianData2020" class="csl-entry">
+Kurz, A. S. (2020b). <em>Doing <span>Bayesian</span> data analysis in brms and the tidyverse</em> (version 0.3.0). <a href="https://bookdown.org/content/3686/">https://bookdown.org/content/3686/</a>
+</div>
+<div id="ref-kurzStatisticalRethinkingSecondEd2020" class="csl-entry">
+Kurz, A. S. (2020c). <em>Statistical rethinking with brms, Ggplot2, and the tidyverse: <span>Second</span> edition</em> (version 0.1.1). <a href="https://bookdown.org/content/4857/">https://bookdown.org/content/4857/</a>
+</div>
+<div id="ref-maxwellSampleSizePlanning2008" class="csl-entry">
+Maxwell, S. E., Kelley, K., &amp; Rausch, J. R. (2008). Sample size planning for statistical power and accuracy in parameter estimation. <em>Annual Review of Psychology</em>, <em>59</em>(1), 537–563. <a href="https://doi.org/10.1146/annurev.psych.59.103006.093735">https://doi.org/10.1146/annurev.psych.59.103006.093735</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2020" class="csl-entry">
+McElreath, R. (2020). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em> (Second Edition). <span>CRC Press</span>. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2015" class="csl-entry">
+McElreath, R. (2015). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em>. <span>CRC press</span>. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-pengProgrammingDataScience2019" class="csl-entry">
+Peng, R. D. (2019). <em>R programming for data science</em>. <a href="https://bookdown.org/rdpeng/rprogdatascience/">https://bookdown.org/rdpeng/rprogdatascience/</a>
+</div>
+<div id="ref-R-base" class="csl-entry">
+R Core Team. (2020). <em>R: <span>A</span> language and environment for statistical computing</em>. <span>R Foundation for Statistical Computing</span>. <a href="https://www.R-project.org/">https://www.R-project.org/</a>
+</div>
+<div id="ref-standevelopmentteamRStanInterfaceStan2020" class="csl-entry">
+Stan Development Team. (2020). <em><span>RStan</span>: The <span>R</span> interface to <span>Stan</span></em>. <a href="https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html">https://cran.r-project.org/web/packages/rstan/vignettes/rstan.html</a>
+</div>
+<div id="ref-standevelopmentteamStanReferenceManual2021" class="csl-entry">
+Stan Development Team. (2021a). <em>Stan reference manual, <span>Version</span> 2.26</em>. <a href="https://mc-stan.org/docs/2_26/reference-manual/">https://mc-stan.org/docs/2_26/reference-manual/</a>
+</div>
+<div id="ref-standevelopmentteamStanUserGuide2021" class="csl-entry">
+Stan Development Team. (2021b). <em>Stan user’s guide, <span>Version</span> 2.26</em>. <a href="https://mc-stan.org/docs/2_26/stan-users-guide/index.html">https://mc-stan.org/docs/2_26/stan-users-guide/index.html</a>
+</div>
+<div id="ref-R-tidyverse" class="csl-entry">
+Wickham, H. (2019). <em><span class="nocase">tidyverse</span>: <span>Easily</span> install and load the ’tidyverse’</em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>
+</div>
+<div id="ref-wickhamTidyverseStyleGuide2020" class="csl-entry">
+Wickham, H. (2020). <em>The tidyverse style guide</em>. <a href="https://style.tidyverse.org/">https://style.tidyverse.org/</a>
+</div>
+<div id="ref-wickhamWelcomeTidyverse2019" class="csl-entry">
+Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. <em>Journal of Open Source Software</em>, <em>4</em>(43), 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>
+</div>
+</div>
+</div>

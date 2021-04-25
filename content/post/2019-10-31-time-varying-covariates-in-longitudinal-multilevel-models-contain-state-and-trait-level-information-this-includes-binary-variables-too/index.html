@@ -1,0 +1,391 @@
+---
+title: "Time-varying covariates in longitudinal multilevel models contain state- and trait-level information: This includes binary variables, too"
+author: A. Solomon Kurz
+date: '2019-10-31'
+slug: ''
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - multilevel
+  - R
+  - tutorial
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-22T09:45:38-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<div id="tldr" class="section level2">
+<h2>tl;dr</h2>
+<p>When you have a time-varying covariate you’d like to add to a multilevel growth model, it’s important to break that variable into two. One part of the variable will account for within-person variation. The other part will account for between person variation. Keep reading to learn how you might do so when your time-varying covariate is binary.</p>
+</div>
+<div id="i-assume-things." class="section level2">
+<h2>I assume things.</h2>
+<p>For this post, I’m presuming you are familiar with longitudinal multilevel models and vaguely familiar with the basic differences between frequentist and Bayesian statistics. All code in is <a href="https://www.r-project.org/about.html"><strong>R</strong></a>, with a heavy use of the <a href="https://www.tidyverse.org"><strong>tidyverse</strong></a>–which you might learn a lot about <a href="http://r4ds.had.co.nz">here</a>, especially <a href="http://r4ds.had.co.nz/transform.html">chapter 5</a>–, and the <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong> package</a> for Bayesian regression.</p>
+</div>
+<div id="context" class="section level2">
+<h2>Context</h2>
+<p>In my applied work, one of my collaborators collects longitudinal behavioral data. They are in the habit of analyzing their focal dependent variables (DVs) with variants of the longitudinal multilevel model, which is great. Though they often collect their primary independent variables (IVs) at all time points, they typically default to only using the baseline values for their IVs to predict the random intercepts and slopes of the focal DVs.</p>
+<p>It seems like we’re making inefficient use of the data. At first I figured we’d just use the IVs at all time points, which would be treating them as time-varying covariates. But time varying covariates don’t allow one to predict variation in the random intercepts and slopes, which I and my collaborator would like to do. So while using the IVs at all time points as time-varying covariates makes use of more of the available data, it requires us to trade one substantive focus for another, which seems frustrating.</p>
+<p>After low-key chewing on this for a while, I recalled that it’s possible to decompose time-varying covariates into measures of traits and states. Consider the simple case where your time-varying covariate, <span class="math inline">\(x_{ij}\)</span> is continuous. In this notation, the <span class="math inline">\(x\)</span> values vary across persons <span class="math inline">\(i\)</span> and time points <span class="math inline">\(j\)</span>. If we compute the person level mean, <span class="math inline">\(\overline x_i\)</span>, that would be a time-invariant covariate and would, conceptually, be a measure of a person’s trait level for <span class="math inline">\(x\)</span>. Even if you do this, it’s still okay to include both <span class="math inline">\(\overline x_i\)</span> and <span class="math inline">\(x_{ij}\)</span> in the model equation. The former would be the time-<em>invariant</em> covariate that might predict the variation in the random intercepts and slopes. The latter would still serve as a time-<em>varying</em> covariate that might account for the within-person variation in the DV over time.</p>
+<p>There, of course, are technicalities about how one might center <span class="math inline">\(\overline x_i\)</span> and <span class="math inline">\(x_{ij}\)</span> that one should carefully consider for these kinds of models. <a href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.928.9848&amp;rep=rep1&amp;type=pdf">Enders &amp; Tofighi (2007)</a> covered the issue from a cross-sectional perspective. <a href="http://www.pilesofvariance.com/index.html">Hoffman (2015)</a> covered it from a longitudinal perspective. But in the grand scheme of things, those are small potatoes. The main deal is that I can use our IVs as both time-varying and time-invariant predictors.</p>
+<p>I was pretty excited once I remembered all this.</p>
+<p>But then I realized that some of my collaborator’s IVs are binary, which initially seemed baffling, to me. Would it be sensible to compute <span class="math inline">\(\overline x_i\)</span> for a binary time-varying covariate? What would that mean for the time-varying version of the variable? So I did what any responsible postdoctoral researcher would do. I posed the issue on Twitter.</p>
+<p>{{% tweet "1188185892332150789" %}}</p>
+<p>My initial thoughts on the topic were a little confused. I wasn’t differentiating well between issues about the variance decomposition and centering and I’m a little embarrassed over that gaff. But I’m still glad I posed the question to Twitter. My virtual colleagues came through in spades! In particular, I’d like to give major shout outs to Andrea Howard (<a href="https://twitter.com/DrAndreaHoward">@DrAndreaHoward</a>), Mattan Ben-Shachar (<a href="https://twitter.com/mattansb">@mattansb</a>), and Aidan Wright (<a href="https://twitter.com/aidangcw">@aidangcw</a>), who collectively pointed me to the solution. It was detailed in the references I listed, above: Enders &amp; Tofighi (2007) and Hoffman (2015). Thank you, all!</p>
+<p>Here’s the deal: Yes, you simply take the person-level means for the binary covariate <span class="math inline">\(x\)</span>. That will create a vector of time-invariant IVs ranging continuously from 0 to 1. They’ll be in a probability metric and they conceptually index a person’s probability of endorsing 1 over time. It’s basically the same as a batting average in baseball. You are at liberty to leave the time-invariant covariate in this metric, or you could center it by standardizing or some other sensible transformation. As for the state version of the IV, <span class="math inline">\(x_{ij}\)</span>, you’d just leave it exactly as it is. [There are other ways to code binary data, such as effects coding. I’m not a fan and will not be covering that in detail, here. But yes, you could recode your time-varying binary covariate that way, too.]</p>
+</div>
+<div id="break-out-the-data" class="section level2">
+<h2>Break out the data</h2>
+<p>We should practice this with some data. I’ve been chipping away at working through Singer and Willett’s classic (2003) text, <a href="https://www.oxfordscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968"><em>Applied longitudinal data analysis: Modeling change and event occurrence</em></a> with <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong></a> and <a href="https://www.tidyverse.org/"><strong>tidyverse</strong></a> code. You can find the working files in this <a href="https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse">GitHub repository</a>. In chapter 5, Singer and Willett worked through a series of examples with a data set with a continuous DV and a binary IV. Here are those data.</p>
+<pre class="r"><code>library(tidyverse)
+
+d &lt;- read_csv(&quot;https://raw.githubusercontent.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse/master/data/unemployment_pp.csv&quot;)
+
+glimpse(d)</code></pre>
+<pre><code>## Rows: 674
+## Columns: 4
+## $ id     &lt;dbl&gt; 103, 103, 103, 641, 641, 641, 741, 846, 846, 846, 937, 937, 111…
+## $ months &lt;dbl&gt; 1.149897, 5.946612, 12.911704, 0.788501, 4.862423, 11.827515, 1…
+## $ cesd   &lt;dbl&gt; 25, 16, 33, 27, 7, 25, 40, 2, 22, 0, 3, 8, 3, 0, 5, 7, 18, 26, …
+## $ unemp  &lt;dbl&gt; 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, …</code></pre>
+<div id="set-the-stage-with-descriptive-plots." class="section level3">
+<h3>Set the stage with descriptive plots.</h3>
+<p>The focal DV is <code>cesd</code>, a continuous variable measuring depression. Singer and Willett (2003):</p>
+<blockquote>
+<p>Each time participants completed the Center for Epidemiologic Studies’ Depression (CES-D) scale (<a href="https://journals.sagepub.com/doi/abs/10.1177/014662167700100306?casa_token=igspo7W_9SUAAAAA%3AhnRVqiDEM-b6nNh_-8VQ6tx1PukP8nsqyo4yd4m_inspjhH-3aeShEGodUxux8GuInG9AYbP1D2GLA&amp;journalCode=apma">Radloff, 1977</a>), which asks them to rate, on a four-point scale, the frequency with which they experience each of the 20 depressive symptoms. The CES-D scores can vary from a low or 0 for someone with no symptoms to a high of 80 for someone in serious distress. (p. 161)</p>
+</blockquote>
+<p>Here’s what the <code>cesd</code> scores look like, collapsing over time.</p>
+<pre class="r"><code>theme_set(theme_gray() +
+            theme(panel.grid = element_blank()))
+
+d %&gt;% 
+  ggplot(aes(x = cesd)) +
+  geom_histogram(fill = &quot;grey50&quot;, binwidth = 1) +
+  scale_y_continuous(NULL, breaks = NULL)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="384" /></p>
+<p>Since these are longutdnial data, our fundamental IV is a measure of time. That’s captured in the <code>months</code> column. Most participants have data on just three occasions and the <code>months</code> values range from about 0 to 15.</p>
+<pre class="r"><code>d %&gt;% 
+  ggplot(aes(x = months)) +
+  geom_histogram(fill = &quot;grey50&quot;, binwidth = 1) +
+  scale_y_continuous(NULL, breaks = NULL)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-4-1.png" width="384" /></p>
+<p>The main research question we’ll be addressing is: <em>What do participants’ <code>cesd</code> scores look like over time and to what extent does their employment/unemployment status help explain their depression?</em> So our substantive IV of interest is <code>unemp</code>, which is coded 0 = employed and 1 = unemployed. Since participants were recruited from local unemployment offices, everyone started off as <code>unemp == 1</code>. The values varied after that. Here’s a look at the data from a random sample of 25 of the participants.</p>
+<pre class="r"><code># this makes `sample_n()` reproducible
+set.seed(5)
+
+# wrangle the data a little
+d %&gt;% 
+  nest(data = c(months, cesd, unemp)) %&gt;% 
+  sample_n(size = 25) %&gt;% 
+  unnest(data) %&gt;% 
+  mutate(id = str_c(&quot;id: &quot;, id),
+         e  = if_else(unemp == 0, &quot;employed&quot;, &quot;unemployed&quot;)) %&gt;% 
+  
+  # plot
+  ggplot(aes(x = months, y = cesd)) +
+  geom_line(aes(group = id),
+            size = 1/4) +
+  geom_point(aes(color = e),
+             size = 7/4) +
+  scale_color_manual(NULL, values = c(&quot;blue3&quot;, &quot;red3&quot;)) +
+  theme(panel.grid      = element_blank(),
+        legend.position = &quot;top&quot;) +
+  facet_wrap(~id, nrow = 5)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="576" /></p>
+</div>
+<div id="embrace-the-hate." class="section level3">
+<h3>Embrace the hate.</h3>
+<p>To be honest, I kinda hate these data. There are too few measurement occasions within participants for my liking and the assessment schedule just seems bazar. As we’ll see in a bit, these data are also un-ideal to address exactly the kinds of models this blog is centered on.</p>
+<p>Yet it’s for just these reasons I love these data. Real-world data analysis is ugly. The data are never what you want or expected them to be. So it seems the data we use in our educational materials should be equally terrible.</p>
+<p>Much like we do for our most meaningful relationships, let’s embrace our hate/love ambivalence for our data with wide-open eyes and tender hearts. 🖤</p>
+</div>
+<div id="time-to-model." class="section level3">
+<h3>Time to model.</h3>
+<p>Following Singer and Willett, we can define our first model using a level-1/level-2 specification. The level-1 model would be</p>
+<p><span class="math display">\[
+\text{cesd}_{ij} = \pi_{0i} + \pi_{1i} \text{months}_{ij} + \pi_{2i} \text{unemp}_{ij} + \epsilon_{ij},
+\]</span></p>
+<p>where <span class="math inline">\(\pi_{0i}\)</span> is the intercept, <span class="math inline">\(\pi_{1i}\)</span> is the effect of <code>months</code> on <code>cesd</code>, and <span class="math inline">\(\pi_{2i}\)</span> is the effect of <code>unemp</code> on <code>cesd</code>. The final term, <span class="math inline">\(\epsilon_{ij}\)</span>, is the within-person variation not accounted for by the model–sometimes called error or residual variance. Our <span class="math inline">\(\epsilon_{ij}\)</span> term follows the usual distribution of</p>
+<p><span class="math display">\[
+\epsilon_{ij} \sim \operatorname{Normal} (0, \sigma_\epsilon),
+\]</span></p>
+<p>which, in words, means that the within-person variance estimates are normally distributed with a mean of zero and a standard deviation that’s estimated from the data. The corresponding level-2 model follows the form</p>
+<p><span class="math display">\[\begin{align*}
+\pi_{0i} &amp; = \gamma_{00} + \zeta_{0i} \\
+\pi_{1i} &amp; = \gamma_{10} + \zeta_{1i} \\
+\pi_{2i} &amp; = \gamma_{20},
+\end{align*}\]</span></p>
+<p>where <span class="math inline">\(\gamma_{00}\)</span> is the grand mean for the intercept, which varies by person, as captured by the level-2 variance term <span class="math inline">\(\zeta_{0i}\)</span>. Similarly, <span class="math inline">\(\gamma_{10}\)</span> is the grand mean for the effect of <code>months</code>, which varies by person, as captured by the second level-2 variance term <span class="math inline">\(\zeta_{1i}\)</span>. With this parameterization, it turns out <span class="math inline">\(\pi_{2i}\)</span> does not vary by person and so its <span class="math inline">\(\gamma_{20}\)</span> terms does not get a corresponding level-2 variance coefficient. If we wanted the effects of the time-varying covariate <code>unemp</code> to vary across individuals, we’d expand the definition of <span class="math inline">\(\pi_{2i}\)</span> to be</p>
+<p><span class="math display">\[
+\pi_{2i} = \gamma_{20} + \zeta_{2i}.
+\]</span></p>
+<p>Within our <strong>brms</strong> paradigm, the two level-2 variance parameters follow the form</p>
+<p><span class="math display">\[\begin{align*}
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} \\
+\end{bmatrix} &amp; \sim \operatorname{Normal} 
+\left ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}&#39;
+\right ), \text{where} \\
+
+\mathbf{D}    &amp; = \begin{bmatrix} \sigma_0 &amp; 0 \\ 0 &amp; \sigma_1 \end{bmatrix} \text{and} \\
+
+\mathbf{\Omega}  &amp; = \begin{bmatrix} 1 &amp; \rho_{01} \\ \rho_{01} &amp; 1 \end{bmatrix}.
+
+\end{align*}\]</span></p>
+<p>I’ll be using a weakly-regularizing approach for the model priors in this post. I detail how I came to these in the <a href="https://github.com/ASKurz/Applied-Longitudinal-Data-Analysis-with-brms-and-the-tidyverse/blob/master/05.md">Chapter 5 file from my GitHub repo</a>. If you check that file, you’ll see this model is a simplified version of <code>fit10</code>. Here are our priors:</p>
+<p><span class="math display">\[\begin{align*}
+\gamma_{00}     &amp; \sim \operatorname{Normal}(14.5, 20) \\
+\gamma_{10} \text{ and }  \gamma_{20}  &amp; \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \sigma_0,  \text{ and } \sigma_1 &amp; \sim \operatorname{Student-t} (3, 0, 10) \\
+\Omega          &amp; \sim \operatorname{LKJ} (4).
+\end{align*}\]</span></p>
+<p>Feel free to explore different priors on your own. But now we’re done spelling our our first model, it’s time to fire up our main statistical package, <strong>brms</strong>.</p>
+<pre class="r"><code>library(brms)</code></pre>
+<p>We can fit the model with <code>brms::brm()</code>, like so.</p>
+<pre class="r"><code>fit1 &lt;-
+  brm(data = d, 
+      family = gaussian,
+      cesd ~ 0 + intercept + months + unemp + (1 + months | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = &quot;intercept&quot;),
+                prior(normal(0, 10),    class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      control = list(adapt_delta = .95),
+      seed = 5)</code></pre>
+<p>Before we explore the results from this model, we should point out that we only included <code>unemp</code> as a level-1 time-varying predictor. As Hoffman pointed out in her (2015) text, the flaw in this approach is that</p>
+<blockquote>
+<p><em>time-varying predictors contain both between-person and within-person information</em>…</p>
+<p>[Thus,] time-varying predictors will need to be represented by two separate predictors that distinguish their between-person and within-person sources of variance in order to properly distinguish their potential between-person and within-person effects on a longitudinal outcome. (pp. 329, 333, <em>emphasis</em> in the original)</p>
+</blockquote>
+<p>The simplest way to separate the between-person variance in <code>unemp</code> from the pure within-person variation is to compute a new variable capturing <span class="math inline">\(\overline{\text{unemp}}_i\)</span>, the person-level means for their unemployment status. Here we compute that variable, which we’ll call <code>unemp_id_mu</code>.</p>
+<pre class="r"><code>d &lt;-
+  d %&gt;% 
+  group_by(id) %&gt;% 
+  mutate(unemp_id_mu = mean(unemp)) %&gt;% 
+  ungroup()
+
+head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 5
+##      id months  cesd unemp unemp_id_mu
+##   &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;       &lt;dbl&gt;
+## 1   103  1.15     25     1       1    
+## 2   103  5.95     16     1       1    
+## 3   103 12.9      33     1       1    
+## 4   641  0.789    27     1       0.333
+## 5   641  4.86      7     0       0.333
+## 6   641 11.8      25     0       0.333</code></pre>
+<p>Because <code>umemp</code> is binary, <span class="math inline">\(\overline{\text{unemp}}_i\)</span> can only take on values ranging from 0 to 1. Here are the unique values we have for <code>unemp_id_mu</code>.</p>
+<pre class="r"><code>d %&gt;% 
+  distinct(unemp_id_mu)</code></pre>
+<pre><code>## # A tibble: 4 x 1
+##   unemp_id_mu
+##         &lt;dbl&gt;
+## 1       1    
+## 2       0.333
+## 3       0.667
+## 4       0.5</code></pre>
+<p>Because each participant’s <span class="math inline">\(\overline{\text{unemp}}_i\)</span> was based on 3 or fewer measurement occasions, basic algebra limited the variability in our <code>unemp_id_mu</code> values. You’ll also note that there were no 0s. This, recall, is because participants were recruited at local unemployment offices, leaving all participants with at least one starting value of <code>unemp == 1</code>.</p>
+<p>We should rehearse how we might interpret the <code>unemp_id_mu</code> values. First recall they are considered level-2 variables; they are between-participant variables. Since they are averages of binary data, they are in a probability metric. In this instance, they are each participants overall probability of being unemployed–their trait-level propensity toward unemployment. No doubt these values would be more reliable if they were computed from data on a greater number of assessment occasions. But with three measurement occasions, we at least have a sense of stability.</p>
+<p>Since our new <span class="math inline">\(\overline{\text{unemp}}_i\)</span> variable is a level-2 predictor, the level-1 equation for our next model is the same as before:</p>
+<p><span class="math display">\[
+\text{cesd}_{ij} = \pi_{0i} + \pi_{1i} \text{months}_{ij} + \pi_{2i} \text{unemp}_{ij} + \epsilon_{ij}.
+\]</span></p>
+<p>However, there are two new terms in our level-2 model,</p>
+<p><span class="math display">\[\begin{align*}
+\pi_{0i} &amp; = \gamma_{00} + \gamma_{01} (\overline{\text{unemp}}_i) + \zeta_{0i} \\
+\pi_{1i} &amp; = \gamma_{10} + \gamma_{11} (\overline{\text{unemp}}_i) + \zeta_{1i} \\
+\pi_{2i} &amp; = \gamma_{20},
+\end{align*}\]</span></p>
+<p>which is meant to convey that <span class="math inline">\(\overline{\text{unemp}}_i\)</span> is allowed to explain variability in both initial status on CES-D scores (i.e., the random intercepts) and change in CES-D scores over time (i.e., the random <code>months</code> slopes). Our variance parameters are all the same:</p>
+<p><span class="math display">\[\begin{align*}
+\epsilon_{ij} &amp; \sim \operatorname{Normal} (0, \sigma_\epsilon) \text{ and} \\
+\begin{bmatrix} 
+\zeta_{0i} \\ \zeta_{1i} \\
+\end{bmatrix} &amp; \sim \operatorname{Normal} 
+\left ( 
+\begin{bmatrix} 0 \\ 0 \end{bmatrix},
+\mathbf{D} \mathbf{\Omega} \mathbf{D}&#39;
+\right ), \text{where} \\
+
+\mathbf{D}    &amp; = \begin{bmatrix} \sigma_0 &amp; 0 \\ 0 &amp; \sigma_1 \end{bmatrix} \text{and} \\
+
+\mathbf{\Omega}  &amp; = \begin{bmatrix} 1 &amp; \rho_{01} \\ \rho_{01} &amp; 1 \end{bmatrix}.
+
+\end{align*}\]</span></p>
+<p>Our priors also follow the same basic specification as before:</p>
+<p><span class="math display">\[\begin{align*}
+\gamma_{00}     &amp; \sim \operatorname{Normal}(14.5, 20) \\
+\gamma_{01}, \gamma_{10}, \gamma_{11}, \text{ and }  \gamma_{20}  &amp; \sim \operatorname{Normal}(0, 10) \\
+\sigma_\epsilon, \sigma_0,  \text{ and } \sigma_1 &amp; \sim \operatorname{Student-t} (3, 0, 10) \\
+\Omega          &amp; \sim \operatorname{LKJ} (4).
+\end{align*}\]</span></p>
+<p>Note, however, that the inclusion of our new level-2 predictor, <span class="math inline">\((\overline{\text{unemp}}_i)\)</span>, changes the meaning of the intercept, <span class="math inline">\(\gamma_{00}\)</span>. The intercept is now the expected value for a person for whom <code>unemp_id_mu == 0</code> at the start of the study (i.e., <code>months == 0</code>). I still think our intercept prior from the first model is fine for this example. But do think carefully about the priors you use in your real-world data analyses.</p>
+<p>Here’s how to fit the udpdate model with <strong>brms</strong>.</p>
+<pre class="r"><code>fit2 &lt;-
+  brm(data = d, 
+      family = gaussian,
+      cesd ~ 0 + intercept + months + unemp + unemp_id_mu + unemp_id_mu:months + (1 + months | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = &quot;intercept&quot;),
+                prior(normal(0, 10),    class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      seed = 5)</code></pre>
+<p>We should fit one more model before we look at the parameters. If you were paying close attention, above, you may have noticed how it’s odd that we kept <code>unemp_id_mu</code> in it’s natural metric. Sure, it’s fine in principle–sensible even–to use a variable in a probability metric. But in this particular study, none of the participants had a value of <code>unemp_id_mu == 0</code> because all of them were unemployed at the first time point. Though it is mathematically kosher to fit a model with an intercept based on <code>unemp_id_mu == 0</code>, it’s awkward to interpret. So in this case, it makes sense to transform the metric of our level-2 predictor. Perhaps the simplest way is to standardize the variable. That would then give an intercept based on the average <code>unemp_id_mu</code> value and a <span class="math inline">\(\gamma_{01}\)</span> coefficient that was the expected change in intercept based on a one-standard-deviation higher value in <code>unemp_id_mu</code>. Let’s compute that new standardized variable, which we’ll call <code>unemp_id_mu_s</code>.</p>
+<pre class="r"><code>d &lt;-
+  d %&gt;% 
+  nest(data = c(months:unemp)) %&gt;% 
+  mutate(unemp_id_mu_s = (unemp_id_mu - mean(unemp_id_mu)) / sd(unemp_id_mu)) %&gt;% 
+  unnest(data)
+
+head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 6
+##      id unemp_id_mu months  cesd unemp unemp_id_mu_s
+##   &lt;dbl&gt;       &lt;dbl&gt;  &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;         &lt;dbl&gt;
+## 1   103       1      1.15     25     1         0.873
+## 2   103       1      5.95     16     1         0.873
+## 3   103       1     12.9      33     1         0.873
+## 4   641       0.333  0.789    27     1        -1.58 
+## 5   641       0.333  4.86      7     0        -1.58 
+## 6   641       0.333 11.8      25     0        -1.58</code></pre>
+<p>The model formula is the same as before with the exception that we replace <code>unemp_id_mu</code> with <code>unemp_id_mu_s</code>. For simplicity, I’m leaving the priors the way they were.</p>
+<pre class="r"><code>fit3 &lt;-
+  brm(data = d, 
+      family = gaussian,
+      cesd ~ 0 + intercept + months + unemp + unemp_id_mu_s + unemp_id_mu_s:months + (1 + months | id),
+      prior = c(prior(normal(14.5, 20), class = b, coef = &quot;intercept&quot;),
+                prior(normal(0, 10),    class = b),
+                prior(student_t(3, 0, 10), class = sd),
+                prior(student_t(3, 0, 10), class = sigma),
+                prior(lkj(4), class = cor)),
+      iter = 2000, warmup = 1000, chains = 4, cores = 4,
+      control = list(adapt_delta = .9),
+      seed = 5)</code></pre>
+<p>Instead of examining each of the model summaries one by one, we’ll condense the information into a series of coefficient plots. For simplicity, we’ll restrict our focus to the <span class="math inline">\(\gamma\)</span> parameters.</p>
+<pre class="r"><code># extract the `fit1` summaries
+fixef(fit1) %&gt;%
+  data.frame() %&gt;%
+  rownames_to_column(&quot;par&quot;) %&gt;%
+  mutate(fit = &quot;fit1&quot;) %&gt;% 
+  bind_rows(
+    # add the `fit2` summaries
+    fixef(fit2) %&gt;%
+      data.frame() %&gt;% 
+      rownames_to_column(&quot;par&quot;) %&gt;%
+      mutate(fit = &quot;fit2&quot;),
+    # add the `fit2` summaries
+    fixef(fit3) %&gt;%
+      data.frame() %&gt;% 
+      rownames_to_column(&quot;par&quot;) %&gt;%
+      mutate(fit = &quot;fit3&quot;)
+  ) %&gt;% 
+  # rename the parameters
+  mutate(gamma = case_when(
+    par == &quot;intercept&quot;     ~ &quot;gamma[0][0]&quot;,
+    par == &quot;months&quot;        ~ &quot;gamma[1][0]&quot;,
+    par == &quot;unemp&quot;         ~ &quot;gamma[2][0]&quot;,
+    str_detect(par, &quot;:&quot;)   ~ &quot;gamma[1][1]&quot;,
+    par == &quot;unemp_id_mu&quot;   ~ &quot;gamma[0][1]&quot;,
+    par == &quot;unemp_id_mu_s&quot; ~ &quot;gamma[0][1]&quot;
+  )) %&gt;% 
+  
+  # plot!
+  ggplot(aes(x = fit, y = Estimate, ymin = Q2.5, ymax = Q97.5)) +
+  geom_hline(yintercept = 0, color = &quot;white&quot;) +
+  geom_pointrange(fatten = 3) +
+  xlab(NULL) +
+  coord_flip() +
+  facet_wrap(~ gamma, nrow = 3, scale = &quot;free_x&quot;, labeller = label_parsed)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="576" /></p>
+<p>In case you’re not familiar with the output from the <code>brms::fixef()</code> function, each of the parameter estimates are summarized by their posterior means (i.e,. the dots) and percentile-based 95% intervals (i.e., the horizontal lines).</p>
+<p>Recall how earlier I complained that these data weren’t particularly good for demonstrating this method? Well, here you finally get to see why. Regardless of the model, the estimates didn’t change much. In these data, the predictive utility of our between-level variable, <code>unemp_id_mu</code>–standardized or not–, was just about zilch. This is summarized by the <span class="math inline">\(\gamma_{01}\)</span> and <span class="math inline">\(\gamma_{11}\)</span> parameters. Both are centered around zero for both models containing them. Thus adding in an inconsequential level-2 predictor had little effect on its level-1 companion, <code>unemp</code>, which was expressed by <span class="math inline">\(\gamma_{20}\)</span>.</p>
+<p>Depressing as these results are, the practice was still worthwhile. Had we not decomposed our time-varying <code>unemp</code> variable into its within- and between-level components, we would never had known that the trait levels of <code>umemp</code> were inconsequential for these analyses. Now we know. For these models, all the action for <code>unemp</code> was at the within-person level.</p>
+<p>This is also the explanation for why we focused on the <span class="math inline">\(\gamma\)</span>s to the neglect of the variance parameters. Because our <code>unemp_id_mu</code> variables were poor predictors of the random effects, there was no reason to expect they’d differ meaningfully across models. And because <code>unemp_id_mu</code> is only a level-2 predictor, it never had any hope for changing the estimates for <span class="math inline">\(\sigma_\epsilon\)</span>.</p>
+</div>
+<div id="what-about-centering-umemp" class="section level3">
+<h3>What about centering <code>umemp</code>?</h3>
+<p>If you look through our primary two references for this post, Enders &amp; Tofighi (2007) and Hoffman (2015), you’ll see both works spend a lot of time on discussing how one might center the level-1 versions of the time-varying covariates. If <code>unemp</code> was a continuous variable, we would have had to contend with that issue, too. But this just isn’t necessary with binary variables. They have a sensible interpretation when left in the typical 0/1 format. So my recommendation is when you’re decomposing your binary time-varying covariates, put your focus on meaningfully centering the level-2 version of the variable. Leave the level-1 version alone. However, if you’re really interested in playing around with alternatives like effects coding, Enders and Tofighi provided several recommendations.</p>
+</div>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] brms_2.15.0     Rcpp_1.0.6      forcats_0.5.1   stringr_1.4.0  
+##  [5] dplyr_1.0.5     purrr_0.3.4     readr_1.4.0     tidyr_1.1.3    
+##  [9] tibble_3.1.0    ggplot2_3.3.3   tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6          
+##   [4] igraph_1.2.6         splines_4.0.4        crosstalk_1.1.0.1   
+##   [7] TH.data_1.0-10       rstantools_2.1.1     inline_0.3.17       
+##  [10] digest_0.6.27        htmltools_0.5.1.1    rsconnect_0.8.16    
+##  [13] fansi_0.4.2          magrittr_2.0.1       modelr_0.1.8        
+##  [16] RcppParallel_5.0.2   matrixStats_0.57.0   xts_0.12.1          
+##  [19] sandwich_3.0-0       prettyunits_1.1.1    colorspace_2.0-0    
+##  [22] rvest_0.3.6          haven_2.3.1          xfun_0.22           
+##  [25] callr_3.5.1          crayon_1.4.1         jsonlite_1.7.2      
+##  [28] lme4_1.1-25          survival_3.2-10      zoo_1.8-8           
+##  [31] glue_1.4.2           gtable_0.3.0         emmeans_1.5.2-1     
+##  [34] V8_3.4.0             pkgbuild_1.2.0       rstan_2.21.2        
+##  [37] abind_1.4-5          scales_1.1.1         mvtnorm_1.1-1       
+##  [40] emo_0.0.0.9000       DBI_1.1.0            miniUI_0.1.1.1      
+##  [43] xtable_1.8-4         stats4_4.0.4         StanHeaders_2.21.0-7
+##  [46] DT_0.16              htmlwidgets_1.5.2    httr_1.4.2          
+##  [49] threejs_0.3.3        ellipsis_0.3.1       pkgconfig_2.0.3     
+##  [52] loo_2.4.1            farver_2.0.3         dbplyr_2.0.0        
+##  [55] utf8_1.1.4           tidyselect_1.1.0     labeling_0.4.2      
+##  [58] rlang_0.4.10         reshape2_1.4.4       later_1.1.0.1       
+##  [61] munsell_0.5.0        cellranger_1.1.0     tools_4.0.4         
+##  [64] cli_2.3.1            generics_0.1.0       broom_0.7.5         
+##  [67] ggridges_0.5.2       evaluate_0.14        fastmap_1.0.1       
+##  [70] yaml_2.2.1           processx_3.4.5       knitr_1.31          
+##  [73] fs_1.5.0             nlme_3.1-152         mime_0.10           
+##  [76] projpred_2.0.2       xml2_1.3.2           compiler_4.0.4      
+##  [79] bayesplot_1.8.0      shinythemes_1.1.2    rstudioapi_0.13     
+##  [82] curl_4.3             gamm4_0.2-6          reprex_0.3.0        
+##  [85] statmod_1.4.35       stringi_1.5.3        highr_0.8           
+##  [88] ps_1.6.0             blogdown_1.3         Brobdingnag_1.2-6   
+##  [91] lattice_0.20-41      Matrix_1.3-2         nloptr_1.2.2.2      
+##  [94] markdown_1.1         shinyjs_2.0.0        vctrs_0.3.6         
+##  [97] pillar_1.5.1         lifecycle_1.0.0      bridgesampling_1.0-0
+## [100] estimability_1.3     httpuv_1.5.4         R6_2.5.0            
+## [103] bookdown_0.21        promises_1.1.1       gridExtra_2.3       
+## [106] codetools_0.2-18     boot_1.3-26          colourpicker_1.1.0  
+## [109] MASS_7.3-53          gtools_3.8.2         assertthat_0.2.1    
+## [112] withr_2.4.1          shinystan_2.5.0      multcomp_1.4-16     
+## [115] mgcv_1.8-33          parallel_4.0.4       hms_0.5.3           
+## [118] grid_4.0.4           coda_0.19-4          minqa_1.2.4         
+## [121] rmarkdown_2.7        shiny_1.5.0          lubridate_1.7.9.2   
+## [124] base64enc_0.1-3      dygraphs_1.1.1.6</code></pre>
+</div>

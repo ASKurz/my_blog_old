@@ -1,0 +1,424 @@
+---
+title: 'Bayesian power analysis: Part III.b. What about 0/1 data?'
+author: A. Solomon Kurz
+date: '2019-08-27'
+slug: bayesian-power-analysis-part-iii-b
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - power
+  - R
+  - tidyverse
+  - tutorial
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-21T21:12:25-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+bibliography: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/my_blog.bib
+biblio-style: apalike
+csl: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/apa.csl  
+link-citations: yes
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<div id="version-1.1.0" class="section level2">
+<h2>Version 1.1.0</h2>
+<p>Edited on April 21, 2021, to fix a few code breaks and add a Reference section.</p>
+</div>
+<div id="orientation" class="section level2">
+<h2>Orientation</h2>
+<p>In the <a href="https://solomonkurz.netlify.com/post/bayesian-power-analysis-part-iii-a/">last post</a>, we covered how the Poisson distribution is handy for modeling count data. Binary data are even weirder than counts. They typically only take on two values: 0 and 1. Sometimes 0 is a stand-in for “no” and 1 for “yes” (e.g., <em>Are you an expert in Bayesian power analysis?</em> For me that would be <code>0</code>). You can also have data of this kind if you asked people whether they’d like to choose option A or B. With those kinds of data, you might arbitrarily code A as 0 and B as 1. Binary data also often stand in for trials where 0 = “fail” and 1 = “success.” For example, if you answered “Yes” to the question <em>Are all data normally distributed?</em> we’d mark your answer down as a <code>0</code>.</p>
+<p>Though 0’s and 1’s are popular, sometimes binary data appear in their aggregated form. Let’s say I gave you 10 algebra questions and you got 7 of them right. Here’s one way to encode those data.</p>
+<pre class="r"><code>n &lt;- 10
+z &lt;- 7
+
+rep(0:1, times = c(n - z, z))</code></pre>
+<pre><code>##  [1] 0 0 0 1 1 1 1 1 1 1</code></pre>
+<p>In that example, <code>n</code> stood for the total number of trials and <code>z</code> was the number you got correct (i.e., the number of times we encoded your response as a 1). A more compact way to encode that data is with two columns, one for <code>z</code> and the other for <code>n</code>.</p>
+<pre class="r"><code>library(tidyverse)
+
+tibble(z = z,
+       n = n)</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##       z     n
+##   &lt;dbl&gt; &lt;dbl&gt;
+## 1     7    10</code></pre>
+<p>So then if you gave those same 10 questions to four of your friends, we could encode the results like this.</p>
+<pre class="r"><code>set.seed(3)
+
+tibble(id = letters[1:5],
+       z  = rpois(n = 5, lambda = 5),
+       n  = n)</code></pre>
+<pre><code>## # A tibble: 5 x 3
+##   id        z     n
+##   &lt;chr&gt; &lt;int&gt; &lt;dbl&gt;
+## 1 a         3    10
+## 2 b         7    10
+## 3 c         4    10
+## 4 d         4    10
+## 5 e         5    10</code></pre>
+<p>If you were <code>b</code>, you’d be the smart one in the group.</p>
+<p>Anyway, whether working with binary or aggregated binary data, we’re interested in the probability a given trial will be 1.</p>
+</div>
+<div id="logistic-regression-with-unaggregated-binary-data" class="section level2">
+<h2>Logistic regression with unaggregated binary data</h2>
+<p>Taking unaggregated binary data as a starting point, given <span class="math inline">\(d\)</span> data that includes a variable <span class="math inline">\(y\)</span> where the value in the <span class="math inline">\(i^\text{th}\)</span> row is a 0 or a 1, we’d like to know the probability a given trial would be 1, given <span class="math inline">\(d\)</span> [i.e., <span class="math inline">\(p(y_i = 1 | d)\)</span>]. The binomial distribution will help us get that estimate for <span class="math inline">\(p\)</span>. We’ll do so within the context of a logistic regression model following the form</p>
+<p><span class="math display">\[
+\begin{align*}
+y_i                        &amp; \sim \text{Binomial} (n = 1, p_i) \\
+\operatorname{logit} (p_i) &amp; = \beta_0,
+\end{align*}
+\]</span></p>
+<p>were the logit function is defined as the log odds</p>
+<p><span class="math display">\[
+\operatorname{logit} (p_i) = \log \left (\frac{p_i}{1 - p_i} \right ),
+\]</span></p>
+<p>which also means that</p>
+<p><span class="math display">\[
+\log \left (\frac{p_i}{1 - p_i} \right ) = \beta_0.
+\]</span></p>
+<p>In those formulas, <span class="math inline">\(\beta_0\)</span> is the intercept. In a binomial model with no predictors<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a>, the intercept <span class="math inline">\(\beta_0\)</span> is just the estimate for <span class="math inline">\(p\)</span>, but in the log-odds metric. So yes, similar to the Poisson models from the last post, we typically use a link function with our binomial models. Instead of the log link, we use the logit because it constrains the posterior for <span class="math inline">\(p\)</span> to values between 0 and 1. Just as the null value for a probability is .5, the null value for the parameters within a logistic regression model is typically 0.</p>
+<p>As with the Poisson, I’m not going to go into a full-blown tutorial on the binomial distribution or on logistic regression. For more thorough introductions, check out chapters 9 through 10 in McElreath’s <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2015" role="doc-biblioref">2015</a>)</span> <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical rethinking</em></a> or Agresti’s <span class="citation">(<a href="#ref-agrestiFoundationsLinearGeneralized2015" role="doc-biblioref">2015</a>)</span> <a href="https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034"><em>Foundations of linear and generalized linear models</em></a>.</p>
+<div id="we-need-data." class="section level3">
+<h3>We need data.</h3>
+<p>Time to simulate some data. Let’s say we’d like to estimate the probability someone will hit a ball in a baseball game. Nowadays, batting averages for professional baseball players tend around .25 (see <a href="http://www.baseball-almanac.com/hitting/hibavg4.shtml">here</a>). So if we wanted to simulate 50 at-bats, we might do so like this.</p>
+<pre class="r"><code>set.seed(3)
+
+d &lt;- tibble(y = rbinom(n = 50, size = 1, prob = .25))
+
+str(d)</code></pre>
+<pre><code>## tibble [50 × 1] (S3: tbl_df/tbl/data.frame)
+##  $ y: int [1:50] 0 1 0 0 0 0 0 0 0 0 ...</code></pre>
+<p>Here are what those data look like in a bar plot.</p>
+<pre class="r"><code>theme_set(theme_gray() + theme(panel.grid = element_blank()))
+
+d %&gt;% 
+  mutate(y = factor(y)) %&gt;% 
+  
+  ggplot(aes(x = y)) +
+  geom_bar()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-5-1.png" width="288" /></p>
+</div>
+<div id="time-to-model." class="section level3">
+<h3>Time to model.</h3>
+<p>To practice modeling those data, we’ll want to fire up the <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong> package</a> <span class="citation">(<a href="#ref-burknerBrmsPackageBayesian2017" role="doc-biblioref">Bürkner, 2017</a>, <a href="#ref-burknerAdvancedBayesianMultilevel2018" role="doc-biblioref">2018</a>, <a href="#ref-R-brms" role="doc-biblioref">2020</a>)</span>.</p>
+<pre class="r"><code>library(brms)</code></pre>
+<p>We can use the <code>get_prior()</code> function to get the <strong>brms</strong> default for our intercept-only logistic regression model.</p>
+<pre class="r"><code>get_prior(data = d, 
+          family = binomial,
+          y | trials(1) ~ 1)</code></pre>
+<pre><code>## Intercept ~ student_t(3, 0, 2.5)</code></pre>
+<p>As it turns out, that’s a really liberal prior. We might step up a bit and put a more skeptical <code>normal(0, 2)</code> prior on that intercept. With the context of our logit link, that still puts a 95% probability that the <span class="math inline">\(p\)</span> is between .02 and .98, which is almost the entire parameter space. Here’s how to fit the model with the <code>brm()</code> function.</p>
+<pre class="r"><code>fit1 &lt;-
+  brm(data = d, 
+      family = binomial,
+      y | trials(1) ~ 1,
+      prior(normal(0, 2), class = Intercept),
+      seed = 3)</code></pre>
+<p>In the <code>brm()</code> formula syntax, including a <code>|</code> bar on the left side of a formula indicates we have extra supplementary information about our criterion variable. In this case, that information is that each <code>y</code> value corresponds to a single trial [i.e., <code>trials(1)</code>], which itself corresponds to the <span class="math inline">\(n = 1\)</span> portion of the statistical formula, above. Here are the results.</p>
+<pre class="r"><code>print(fit1)</code></pre>
+<pre><code>##  Family: binomial 
+##   Links: mu = logit 
+## Formula: y | trials(1) ~ 1 
+##    Data: d (Number of observations: 50) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -1.39      0.36    -2.12    -0.71 1.00     1621     1434
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Remember that that intercept is on the scale of the logit link, the log odds. We can transform it with the <code>brms::inv_logit_scaled()</code> function.</p>
+<pre class="r"><code>fixef(fit1)[&quot;Intercept&quot;, 1] %&gt;% 
+  inv_logit_scaled()</code></pre>
+<pre><code>## [1] 0.1995929</code></pre>
+<p>If we’d like to view the full posterior distribution, we’ll need to work with the posterior draws themselves. Then we’ll plot.</p>
+<pre class="r"><code># extract the posterior draws
+posterior_samples(fit1) %&gt;% 
+  # transform from the log-odds to a probability metric
+  transmute(p = inv_logit_scaled(b_Intercept)) %&gt;% 
+  
+  # plot!
+  ggplot(aes(x = p)) +
+  geom_density(fill = &quot;grey25&quot;, size = 0) +
+  scale_x_continuous(&quot;probability of a hit&quot;, limits = c(0, 1)) +
+  scale_y_continuous(NULL, breaks = NULL)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="384" /></p>
+<p>Looks like the null hypothesis of <span class="math inline">\(p = .5\)</span> is not credible for this simulation. If we’d like the posterior median and percentile-based 95% intervals, we might use the <code>median_qi()</code> function from the handy <a href="https://mjskay.github.io/tidybayes/"><strong>tidybayes</strong> package</a> <span class="citation">(<a href="#ref-R-tidybayes" role="doc-biblioref">Kay, 2020</a>)</span>.</p>
+<pre class="r"><code>library(tidybayes)
+
+posterior_samples(fit1) %&gt;% 
+  transmute(p = inv_logit_scaled(b_Intercept)) %&gt;% 
+  median_qi()</code></pre>
+<pre><code>##           p    .lower    .upper .width .point .interval
+## 1 0.2009795 0.1076116 0.3304654   0.95 median        qi</code></pre>
+<p>Yep, .5 was not within those intervals.</p>
+</div>
+<div id="but-what-about-power" class="section level3">
+<h3>But what about power?</h3>
+<p>That’s enough preliminary work. Let’s see what happens when we do a mini power analysis with 100 iterations. First we set up our simulation function using the same methods we introduced in earlier blog posts.</p>
+<pre class="r"><code>sim_data_fit &lt;- function(seed, n_player) {
+  
+  n_trials &lt;- 1
+  prob_hit &lt;- .25
+  
+  set.seed(seed)
+  
+  d &lt;- tibble(y = rbinom(n    = n_player, 
+                         size = n_trials, 
+                         prob = prob_hit))
+  
+  update(fit1,
+         newdata = d,
+         seed = seed) %&gt;% 
+  posterior_samples() %&gt;% 
+  transmute(p = inv_logit_scaled(b_Intercept)) %&gt;% 
+  median_qi() %&gt;% 
+    select(.lower:.upper)
+  
+}</code></pre>
+<p>Simulate.</p>
+<pre class="r"><code>sim1 &lt;-
+  tibble(seed = 1:100) %&gt;% 
+  mutate(ci = map(seed, sim_data_fit, n_player = 50)) %&gt;% 
+  unnest()</code></pre>
+<p>You might plot the intervals.</p>
+<pre class="r"><code>sim1 %&gt;% 
+  ggplot(aes(x = seed, ymin = .lower, ymax = .upper)) +
+  geom_hline(yintercept = c(.25, .5), color = &quot;white&quot;) +
+  geom_linerange() +
+  xlab(&quot;seed (i.e., simulation index)&quot;) +
+  scale_y_continuous(&quot;probability of hitting the ball&quot;, limits = c(0, 1))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="768" /></p>
+<p>Like one of my old coworkers used to say: <em>Purtier ’n a hog!</em> Here we’ll summarize the results both in terms of their conventional power, their mean width, and the proportion of widths more narrow than .25. <em>Why .25?</em> I don’t know. Without a substantively-informed alternative, it’s as good a criterion as any.</p>
+<pre class="r"><code>sim1 %&gt;% 
+  mutate(width = .upper - .lower) %&gt;% 
+  summarise(`conventional power` = mean(.upper &lt; .5),
+            `mean width`         = mean(width),
+            `width below .25`    = mean(width &lt; .25))</code></pre>
+<pre><code>## # A tibble: 1 x 3
+##   `conventional power` `mean width` `width below .25`
+##                  &lt;dbl&gt;        &lt;dbl&gt;             &lt;dbl&gt;
+## 1                 0.95        0.231              0.78</code></pre>
+<p>Depending on your study needs, you’d adjust your sample size accordingly, do a mini simulation or two first, and then follow up with a proper power simulation with 1000+ iterations.</p>
+<p>I should point out that whereas in the last post we evaluated the power of the Poisson model with the parameters on the scale of the link function, here we evaluated the power for our logistic regression model after transforming the intercept back into the probability metric. Both methods are fine. I recommend you run your power simulation based on how you want to interpret and report your results.</p>
+<p>We should also acknowledge that this was our first example of a power simulation that wasn’t based on some group comparison. Comparing groups is fine and normal and important. And it’s also the case that we can care about power and/or parameter precision for more than group-based analyses. Our simulation-based approach is fine for both.</p>
+</div>
+</div>
+<div id="aggregated-binomial-regression" class="section level2">
+<h2>Aggregated binomial regression</h2>
+<p>It’s no more difficult to simulate and work with aggregated binomial data. But since the mechanics for <code>brms::brm()</code> and thus the down-the-road simulation setup are a little different, we should practice. With our new setup, we’ll consider a new example. Since .25 is the typical batting average, it might better sense to define the null hypothesis like this:</p>
+<p><span class="math display">\[H_0 \text{: } p = .25.\]</span></p>
+<p>Consider a case where we had some intervention where we expected a new batting average of .35. How many trials would we need, then, to either reject <span class="math inline">\(H_0\)</span> or perhaps estimate <span class="math inline">\(p\)</span> with a satisfactory degree of precision? Here’s what the statistical formula for the implied aggregated binomial model might look like:</p>
+<p><span class="math display">\[
+\begin{align*}
+y_i                        &amp; \sim \text{Binomial} (n, p_i) \\
+\operatorname{logit} (p_i) &amp; = \beta_0.
+\end{align*}
+\]</span></p>
+<p>The big change is we no longer defined <span class="math inline">\(n\)</span> as 1. Let’s say we wanted our aggregated binomial data set to contain the summary statistics for <span class="math inline">\(n = 100\)</span> trials. Here’s what that might look like.</p>
+<pre class="r"><code>n_trials &lt;- 100
+prob_hit &lt;- .35
+
+set.seed(3)
+
+d &lt;- tibble(n_trials = n_trials,
+            y = rbinom(n    = 1, 
+                       size = n_trials, 
+                       prob = prob_hit))
+
+d</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##   n_trials     y
+##      &lt;dbl&gt; &lt;int&gt;
+## 1      100    32</code></pre>
+<p>Now we have two columns. The first, <code>n_trials</code>, indicates how many cases or trials we’re summarizing. The second, <code>y</code>, indicates how many successes/1’s/hits we might expect given <span class="math inline">\(p = .35\)</span>. This is the aggregated binomial equivalent of if we had a 100-row vector composed of 32 1s and 68 0s.</p>
+<p>Now, before we discuss fitting the model with <strong>brms</strong>, let’s talk priors. Since we’ve updated our definition of <span class="math inline">\(H_0\)</span>, it might make sense to update the prior for <span class="math inline">\(\beta_0\)</span>. As it turns out, setting that prior to <code>normal(-1, 0.5)</code> puts the posterior mode at about .25 on the probability space, but with fairly wide 95% intervals ranging from about .12 to .5. Though centered on our updated null value, this prior is still quite permissive given our hypothesized <span class="math inline">\(p = .35\)</span>. Let’s give it a whirl.</p>
+<p>To fit an aggregated binomial model with the <code>brm()</code> function, we augment the <code>&lt;criterion&gt; | trials()</code> syntax where the value that goes in <code>trials()</code> is either a fixed number or variable in the data indexing <span class="math inline">\(n\)</span>. Our approach will be the latter.</p>
+<pre class="r"><code>fit2 &lt;-
+  brm(data = d, 
+      family = binomial,
+      y | trials(n_trials) ~ 1,
+      prior(normal(-1, 0.5), class = Intercept),
+      seed = 3)</code></pre>
+<p>Inspect the summary.</p>
+<pre class="r"><code>print(fit2)</code></pre>
+<pre><code>##  Family: binomial 
+##   Links: mu = logit 
+## Formula: y | trials(n_trials) ~ 1 
+##    Data: d (Number of observations: 1) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    -0.80      0.20    -1.19    -0.42 1.00     1525     1697
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>After a transformation, here’s what that looks like in a plot.</p>
+<pre class="r"><code>posterior_samples(fit2) %&gt;% 
+  transmute(p = inv_logit_scaled(b_Intercept)) %&gt;% 
+  
+  ggplot(aes(x = p, y = 0)) +
+  stat_halfeye(.width = c(.5, .95)) +
+  scale_x_continuous(&quot;probability of a hit&quot;, limits = c(0, 1)) +
+  scale_y_continuous(NULL, breaks = NULL)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-19-1.png" width="384" /></p>
+<p>Based on a single simulation, it looks like <span class="math inline">\(n = 100\)</span> won’t quite be enough to reject <span class="math inline">\(H_0 \text{: } p = .25\)</span> with a conventional 2-sided 95% interval. But it does look like we’re in the ballpark and that our basic data + model setup will work for a larger-scale simulation. Here’s an example of how you might update our custom simulation function.</p>
+<pre class="r"><code>sim_data_fit &lt;- function(seed, n_trials) {
+  
+  prob_hit &lt;- .35
+  
+  set.seed(seed)
+  
+  d &lt;- tibble(y = rbinom(n    = 1, 
+                         size = n_trials, 
+                         prob = prob_hit),
+              n_trials = n_trials)
+  
+  update(fit2,
+         newdata = d,
+         seed = seed) %&gt;% 
+  posterior_samples() %&gt;% 
+  transmute(p = inv_logit_scaled(b_Intercept)) %&gt;% 
+  median_qi() %&gt;% 
+    select(.lower:.upper)
+  
+}</code></pre>
+<p>Simulate, this time trying out <span class="math inline">\(n = 120\)</span>.</p>
+<pre class="r"><code>sim2 &lt;-
+  tibble(seed = 1:100) %&gt;% 
+  mutate(ci = map(seed, sim_data_fit, n_trials = 120)) %&gt;% 
+  unnest()</code></pre>
+<p>Plot the intervals.</p>
+<pre class="r"><code>sim2 %&gt;% 
+  ggplot(aes(x = seed, ymin = .lower, ymax = .upper)) +
+  geom_hline(yintercept = c(.25, .35), color = &quot;white&quot;) +
+  geom_linerange() +
+  xlab(&quot;seed (i.e., simulation index)&quot;) +
+  scale_y_continuous(&quot;probability of hitting the ball&quot;,
+                     limits = c(0, 1), breaks = c(0, .25, .35, 1))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-21-1.png" width="768" /></p>
+<p>Overall, those intervals look pretty good. They’re fairly narrow and are hovering around the data generating <span class="math inline">\(p = .35\)</span>. But many are still crossing the .25 threshold. Let’s see the results of a formal summary.</p>
+<pre class="r"><code>sim2 %&gt;% 
+  mutate(width = .upper - .lower) %&gt;% 
+  summarise(`conventional power` = mean(.lower &gt; .25),
+            `mean width`         = mean(width),
+            `width below .2`     = mean(width &lt; .2))</code></pre>
+<pre><code>## # A tibble: 1 x 3
+##   `conventional power` `mean width` `width below .2`
+##                  &lt;dbl&gt;        &lt;dbl&gt;            &lt;dbl&gt;
+## 1                 0.54        0.155                1</code></pre>
+<p>All widths were narrower than .2 and the mean width was about .16. In the abstract that might seem reasonably precise. But we’re still not precise enough to reject <span class="math inline">\(H_0\)</span> with a conventional power level. Depending on your needs, adjust the <span class="math inline">\(n\)</span> accordingly and simulate again.</p>
+<p>Now you’ve got a sense of how to work with the binomial likelihood for (aggregated)binary data, next time we’ll play with Likert-type data.</p>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] tidybayes_2.3.1 brms_2.15.0     Rcpp_1.0.6      forcats_0.5.1  
+##  [5] stringr_1.4.0   dplyr_1.0.5     purrr_0.3.4     readr_1.4.0    
+##  [9] tidyr_1.1.3     tibble_3.1.0    ggplot2_3.3.3   tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6          
+##   [4] igraph_1.2.6         svUnit_1.0.3         splines_4.0.4       
+##   [7] crosstalk_1.1.0.1    TH.data_1.0-10       rstantools_2.1.1    
+##  [10] inline_0.3.17        digest_0.6.27        htmltools_0.5.1.1   
+##  [13] rsconnect_0.8.16     fansi_0.4.2          magrittr_2.0.1      
+##  [16] modelr_0.1.8         RcppParallel_5.0.2   matrixStats_0.57.0  
+##  [19] xts_0.12.1           sandwich_3.0-0       prettyunits_1.1.1   
+##  [22] colorspace_2.0-0     rvest_0.3.6          ggdist_2.4.0.9000   
+##  [25] haven_2.3.1          xfun_0.22            callr_3.5.1         
+##  [28] crayon_1.4.1         jsonlite_1.7.2       lme4_1.1-25         
+##  [31] survival_3.2-10      zoo_1.8-8            glue_1.4.2          
+##  [34] gtable_0.3.0         emmeans_1.5.2-1      V8_3.4.0            
+##  [37] distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.2        
+##  [40] abind_1.4-5          scales_1.1.1         mvtnorm_1.1-1       
+##  [43] DBI_1.1.0            miniUI_0.1.1.1       xtable_1.8-4        
+##  [46] stats4_4.0.4         StanHeaders_2.21.0-7 DT_0.16             
+##  [49] htmlwidgets_1.5.2    httr_1.4.2           threejs_0.3.3       
+##  [52] arrayhelpers_1.1-0   ellipsis_0.3.1       pkgconfig_2.0.3     
+##  [55] loo_2.4.1            farver_2.0.3         dbplyr_2.0.0        
+##  [58] utf8_1.1.4           tidyselect_1.1.0     labeling_0.4.2      
+##  [61] rlang_0.4.10         reshape2_1.4.4       later_1.1.0.1       
+##  [64] munsell_0.5.0        cellranger_1.1.0     tools_4.0.4         
+##  [67] cli_2.3.1            generics_0.1.0       broom_0.7.5         
+##  [70] ggridges_0.5.2       evaluate_0.14        fastmap_1.0.1       
+##  [73] yaml_2.2.1           processx_3.4.5       knitr_1.31          
+##  [76] fs_1.5.0             nlme_3.1-152         mime_0.10           
+##  [79] projpred_2.0.2       xml2_1.3.2           compiler_4.0.4      
+##  [82] bayesplot_1.8.0      shinythemes_1.1.2    rstudioapi_0.13     
+##  [85] gamm4_0.2-6          curl_4.3             reprex_0.3.0        
+##  [88] statmod_1.4.35       stringi_1.5.3        highr_0.8           
+##  [91] ps_1.6.0             blogdown_1.3         Brobdingnag_1.2-6   
+##  [94] lattice_0.20-41      Matrix_1.3-2         nloptr_1.2.2.2      
+##  [97] markdown_1.1         shinyjs_2.0.0        vctrs_0.3.6         
+## [100] pillar_1.5.1         lifecycle_1.0.0      bridgesampling_1.0-0
+## [103] estimability_1.3     httpuv_1.5.4         R6_2.5.0            
+## [106] bookdown_0.21        promises_1.1.1       gridExtra_2.3       
+## [109] codetools_0.2-18     boot_1.3-26          colourpicker_1.1.0  
+## [112] MASS_7.3-53          gtools_3.8.2         assertthat_0.2.1    
+## [115] withr_2.4.1          shinystan_2.5.0      multcomp_1.4-16     
+## [118] mgcv_1.8-33          parallel_4.0.4       hms_0.5.3           
+## [121] grid_4.0.4           coda_0.19-4          minqa_1.2.4         
+## [124] rmarkdown_2.7        shiny_1.5.0          lubridate_1.7.9.2   
+## [127] base64enc_0.1-3      dygraphs_1.1.1.6</code></pre>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
+<div id="ref-agrestiFoundationsLinearGeneralized2015" class="csl-entry">
+Agresti, A. (2015). <em>Foundations of linear and generalized linear models</em>. <span>John Wiley &amp; Sons</span>. <a href="https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034">https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034</a>
+</div>
+<div id="ref-burknerBrmsPackageBayesian2017" class="csl-entry">
+Bürkner, P.-C. (2017). <span class="nocase">brms</span>: <span>An R</span> package for <span>Bayesian</span> multilevel models using <span>Stan</span>. <em>Journal of Statistical Software</em>, <em>80</em>(1), 1–28. <a href="https://doi.org/10.18637/jss.v080.i01">https://doi.org/10.18637/jss.v080.i01</a>
+</div>
+<div id="ref-burknerAdvancedBayesianMultilevel2018" class="csl-entry">
+Bürkner, P.-C. (2018). Advanced <span>Bayesian</span> multilevel modeling with the <span>R</span> package brms. <em>The R Journal</em>, <em>10</em>(1), 395–411. <a href="https://doi.org/10.32614/RJ-2018-017">https://doi.org/10.32614/RJ-2018-017</a>
+</div>
+<div id="ref-R-brms" class="csl-entry">
+Bürkner, P.-C. (2020). <em><span class="nocase">brms</span>: <span>Bayesian</span> regression models using ’<span>Stan</span>’</em>. <a href="https://CRAN.R-project.org/package=brms">https://CRAN.R-project.org/package=brms</a>
+</div>
+<div id="ref-R-tidybayes" class="csl-entry">
+Kay, M. (2020). <em><span class="nocase">tidybayes</span>: <span>Tidy</span> data and ’geoms’ for <span>Bayesian</span> models</em>. <a href="http://mjskay.github.io/tidybayes">http://mjskay.github.io/tidybayes</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2015" class="csl-entry">
+McElreath, R. (2015). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em>. <span>CRC press</span>. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>In case this is all new to you and you and you had the question in your mind: Yes, you can add predictors to the logistic regression model. Say we had a model with two predictors, <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span>. Our statistical model would then follow the form <span class="math inline">\(\operatorname{logit} (p_i) = \beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i}\)</span>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

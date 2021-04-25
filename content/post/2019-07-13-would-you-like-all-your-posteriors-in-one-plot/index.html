@@ -1,0 +1,413 @@
+---
+title: Would you like all your posteriors in one plot?
+author: A. Solomon Kurz
+date: '2019-07-13'
+slug: ''
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - multilevel
+  - plot
+  - R
+  - tidyverse
+  - tutorial
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-21T17:03:31-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>A colleague reached out to me earlier this week with a plotting question. They had fit a series of Bayesian models, all containing a common parameter of interest. They knew how to plot their focal parameter one model at a time, but were stumped on how to combine the plots across models into a seamless whole. It reminded me a bit of this gif</p>
+<p><img src="https://media.giphy.com/media/Bqn8Z7xdPCFy0/giphy.gif" /></p>
+<p>which I originally got from <a href="https://twitter.com/JennyBryan">Jenny Bryan</a>’s great talk, <a href="https://www.youtube.com/watch?v=4MfUCX_KpdE"><em>Behind every great plot there’s a great deal of wrangling</em></a>.</p>
+<p>The goal of this post is to provide solutions. We’ll practice a few different ways you can combine the posterior samples from your Bayesian models into a single plot. As usual, we’ll be fitting our models with <a href="https://github.com/paul-buerkner/brms"><strong>brms</strong></a>, wrangling with packages from the <a href="https://www.tidyverse.org"><strong>tidyverse</strong></a>, and getting a little help from the <a href="https://mjskay.github.io/tidybayes/index.html"><strong>tidybayes</strong> package</a>.</p>
+<div id="i-make-assumptions." class="section level2">
+<h2>I make assumptions.</h2>
+<p>For this post, I’m presuming you are familiar Bayesian regression using <strong>brms.</strong> I’m also assuming you’ve coded using some of the foundational functions from the <strong>tidyverse.</strong> If you’d like to firm up your foundations a bit, check out these resources.</p>
+<ul>
+<li>To learn about Bayesian regression, I recommend the introductory text books by either McElreath (<a href="https://xcelab.net/rm/statistical-rethinking/">here</a>) or Kruschke (<a href="http://www.indiana.edu/~kruschke/DoingBayesianDataAnalysis/">here</a>). Both authors host blogs (<a href="http://doingbayesiandataanalysis.blogspot.com">here</a> and <a href="http://elevanth.org/blog/">here</a>, respectively). If you go with McElreath, do check out his <a href="https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists">online lectures</a> and my ebooks where I translated his text to <strong>brms</strong> and <strong>tidyverse</strong> code (<a href="https://bookdown.org/content/3890/">here</a> and <a href="https://bookdown.org/content/4857/">here</a>). I have a similar ebook translation for Kruschke’s text (<a href="https://bookdown.org/content/3686/">here</a>).</li>
+<li>For even more <strong>brms</strong>-related resources, you can find vignettes and documentation <a href="https://cran.r-project.org/web/packages/brms/index.html">here</a>.</li>
+<li>For <strong>tidyverse</strong> introductions, your best bets are <a href="https://r4ds.had.co.nz"><em>R4DS</em></a> and <a href="https://style.tidyverse.org"><em>The tidyverse style guide</em></a>.</li>
+</ul>
+</div>
+<div id="same-parameter-different-models" class="section level2">
+<h2>Same parameter, different models</h2>
+<p>Let’s load our primary statistical packages.</p>
+<pre class="r"><code>library(tidyverse)
+library(brms)
+library(tidybayes)</code></pre>
+<p>Simulate <span class="math inline">\(n = 150\)</span> draws from the standard normal distribution.</p>
+<pre class="r"><code>n &lt;- 150
+
+set.seed(1)
+d &lt;-
+  tibble(y = rnorm(n, mean = 0, sd = 1))
+
+head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 1
+##        y
+##    &lt;dbl&gt;
+## 1 -0.626
+## 2  0.184
+## 3 -0.836
+## 4  1.60 
+## 5  0.330
+## 6 -0.820</code></pre>
+<p>Here we’ll fit three intercept-only models for <code>y</code>. Each will follow the form</p>
+<p><span class="math display">\[
+\begin{align*}
+y_i     &amp; \sim \text{Normal} (\mu, \sigma) \\
+\mu     &amp; = \beta_0 \\
+\beta_0 &amp; \sim \text{Normal} (0, x) \\
+\sigma  &amp; \sim \text{Student-t}(3, 0, 10)
+\end{align*}
+\]</span></p>
+<p>where <span class="math inline">\(\beta_0\)</span> is the unconditional intercept (i.e., an intercept not conditioned on any predictors). We will be fitting three alternative models. All will have the same prior for <span class="math inline">\(\sigma\)</span>, <span class="math inline">\(\text{Student-t}(3, 0, 10)\)</span>, which is the <strong>brms</strong> default in this case. [If you’d like to check, use the <code>get_prior()</code> function.] The only way the models will differ is by their prior on the intercept <span class="math inline">\(\beta_0\)</span>. By model, those priors will be</p>
+<ul>
+<li><code>fit1</code>: <span class="math inline">\(\beta_0 \sim \text{Normal} (0, 10)\)</span>,</li>
+<li><code>fit2</code>: <span class="math inline">\(\beta_0 \sim \text{Normal} (0, 1)\)</span>, and</li>
+<li><code>fit3</code>: <span class="math inline">\(\beta_0 \sim \text{Normal} (0, 0.1)\)</span>.</li>
+</ul>
+<p>So if you were wondering, the <span class="math inline">\(x\)</span> in the <span class="math inline">\(\beta_0 \sim \text{Normal} (0, x)\)</span> line, above, was a stand-in for the varying <a href="https://en.wikipedia.org/wiki/Hyperparameter">hyperparameter</a>.</p>
+<p>Here we fit the models in bulk.</p>
+<pre class="r"><code>fit1 &lt;-
+  brm(data = d,
+      family = gaussian,
+      y ~ 1,
+      prior(normal(0, 10), class = Intercept),
+      seed = 1)
+
+fit2 &lt;-
+  update(fit1,
+         prior = prior(normal(0, 1), class = Intercept),
+         seed = 1)
+
+fit3 &lt;-
+  update(fit1,
+         prior = prior(normal(0, 0.1), class = Intercept),
+         seed = 1)</code></pre>
+<p>Normally we’d use <code>plot()</code> to make sure the chains look good and then use something like <code>print()</code> or <code>posterior_summary()</code> to summarize the models’ results. I’ve checked and they’re all fine. For the sake of space, let’s press forward.</p>
+<p>If you were going to plot the results of an individual fit using something like the <code>tidybayes::stat_halfeye()</code> function, the next step would be extracting the posterior draws. Here we’ll do so with the <code>brms::posterior_samples()</code> function.</p>
+<pre class="r"><code>post1 &lt;- posterior_samples(fit1)
+post2 &lt;- posterior_samples(fit2)
+post3 &lt;- posterior_samples(fit3)</code></pre>
+<p>Focusing on <code>fit1</code>, here’s how we’d plot the results for the intercept <span class="math inline">\(\beta_0\)</span>.</p>
+<pre class="r"><code># this part is unnecessary; it just adjusts some theme defaults to my liking
+theme_set(theme_gray() +
+            theme(axis.text.y  = element_text(hjust = 0),
+                  axis.ticks.y = element_blank(),
+                  panel.grid   = element_blank()))
+
+# plot!
+post1 %&gt;% 
+  ggplot(aes(x = b_Intercept, y = 0)) +
+  stat_halfeye() +
+  scale_y_continuous(NULL, breaks = NULL)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-6-1.png" width="480" /></p>
+<p><em>But how might we get the posterior draws from all three fits into one plot?</em> The answer is by somehow combining the posterior draws from each into one data frame. There are many ways to do this. Perhaps the simplest is with the <code>bind_rows()</code> function.</p>
+<pre class="r"><code>posts &lt;-
+  bind_rows(
+    post1,
+    post2,
+    post3
+  ) %&gt;% 
+  mutate(prior = str_c(&quot;normal(0, &quot;, c(10, 1, 0.1), &quot;)&quot;) %&gt;% rep(., each = 4000))
+
+head(posts)</code></pre>
+<pre><code>##   b_Intercept     sigma      lp__         prior
+## 1  0.06440413 0.9408454 -202.2537 normal(0, 10)
+## 2  0.02603356 0.9416735 -202.1114 normal(0, 10)
+## 3 -0.02122717 0.8967501 -202.0446 normal(0, 10)
+## 4  0.02620046 0.9521795 -202.2594 normal(0, 10)
+## 5  0.02620046 0.9521795 -202.2594 normal(0, 10)
+## 6  0.08025366 0.9101939 -202.1808 normal(0, 10)</code></pre>
+<p>The <code>bind_rows()</code> function worked well, here, because all three post objects had the same number of columns of the same names. So we just stacked them three high. That is, we went from three data objects of 4,000 rows and 3 columns to one data object with 12,000 rows and 3 columns. But with the <code>mutate()</code> function we did add a fourth column, <code>prior</code>, that indexed which model each row came from. Now our data are ready, we can plot.</p>
+<pre class="r"><code>posts %&gt;% 
+  ggplot(aes(x = b_Intercept, y = prior)) +
+  stat_halfeye()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-8-1.png" width="576" /></p>
+<p>Our plot arrangement made it easy to compare the results of tightening the prior on <span class="math inline">\(\beta_0\)</span>; the narrower the prior, the narrower the posterior.</p>
+</div>
+<div id="what-if-my-posterior_samples-arent-of-the-same-dimensions-across-models" class="section level2">
+<h2>What if my <code>posterior_samples()</code> aren’t of the same dimensions across models?</h2>
+<p>For the next examples, we need new data. Here we’ll simulate three predictors–<code>x1</code>, <code>x2</code>, and <code>x3</code>. We then simulate our criterion <code>y</code> as a linear additive function of those predictors.</p>
+<pre class="r"><code>set.seed(1)
+d &lt;-
+  tibble(x1 = rnorm(n, mean = 0, sd = 1),
+         x2 = rnorm(n, mean = 0, sd = 1),
+         x3 = rnorm(n, mean = 0, sd = 1)) %&gt;% 
+  mutate(y  = rnorm(n, mean = 0 + x1 * 0 + x2 * 0.2 + x3 * -0.4))
+
+head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##       x1      x2     x3      y
+##    &lt;dbl&gt;   &lt;dbl&gt;  &lt;dbl&gt;  &lt;dbl&gt;
+## 1 -0.626  0.450   0.894  0.694
+## 2  0.184 -0.0186 -1.05  -0.189
+## 3 -0.836 -0.318   1.97  -1.61 
+## 4  1.60  -0.929  -0.384 -1.59 
+## 5  0.330 -1.49    1.65  -2.41 
+## 6 -0.820 -1.08    1.51  -0.764</code></pre>
+<p>We are going to work with these data in two ways. For the first example, we’ll fit a series of univariable models following the same basic form, but each with a different predictor. For the second example, we’ll fit a series of multivariable models with various combinations of the predictors. Each requires its own approach.</p>
+<div id="same-form-different-predictors." class="section level3">
+<h3>Same form, different predictors.</h3>
+<p>This time we’re just using the <strong>brms</strong> default priors. As such, the models all follow the form</p>
+<p><span class="math display">\[
+\begin{align*}
+y_i     &amp; \sim \text{Normal} (\mu_i, \sigma) \\
+\mu_i   &amp; = \beta_0 + \beta_n x_n\\
+\beta_0 &amp; \sim \text{Student-t}(3, 0, 10) \\
+\sigma  &amp; \sim \text{Student-t}(3, 0, 10)
+\end{align*}
+\]</span></p>
+<p>You may be wondering <em>What about the prior for</em> <span class="math inline">\(\beta_n\)</span><em>?</em> The <strong>brms</strong> defaults for those are improper flat priors. We define <span class="math inline">\(\beta_n x_n\)</span> for the next three models as</p>
+<ul>
+<li><code>fit4</code>: <span class="math inline">\(\beta_1 x_1\)</span>,</li>
+<li><code>fit5</code>: <span class="math inline">\(\beta_2 x_2\)</span>, and</li>
+<li><code>fit5</code>: <span class="math inline">\(\beta_3 x_3\)</span>.</li>
+</ul>
+<p>Let’s fit the models.</p>
+<pre class="r"><code>fit4 &lt;-
+  brm(data = d,
+      family = gaussian,
+      y ~ 1 + x1,
+      seed = 1)
+
+fit5 &lt;-
+  update(fit4,
+         newdata = d,
+         y ~ 1 + x2,
+         seed = 1)
+
+fit6 &lt;-
+  update(fit4,
+         newdata = d,
+         y ~ 1 + x3,
+         seed = 1)</code></pre>
+<p>Like before, save the posterior draws for each as separate data frames.</p>
+<pre class="r"><code>post4 &lt;- posterior_samples(fit4)
+post5 &lt;- posterior_samples(fit5)
+post6 &lt;- posterior_samples(fit6)</code></pre>
+<p>This time, our simple <code>bind_rows()</code> trick won’t work well.</p>
+<pre class="r"><code>bind_rows(
+  post4,
+  post5,
+  post6
+) %&gt;% 
+  head()</code></pre>
+<pre><code>##   b_Intercept        b_x1    sigma      lp__ b_x2 b_x3
+## 1 -0.26609646 -0.07795464 1.249694 -242.9716   NA   NA
+## 2 -0.11933443 -0.03143494 1.251379 -240.4618   NA   NA
+## 3 -0.10952301  0.02739295 1.278072 -241.2102   NA   NA
+## 4 -0.08785528 -0.01065453 1.443157 -245.2715   NA   NA
+## 5 -0.22020421 -0.16635358 1.185220 -241.7569   NA   NA
+## 6  0.02973246 -0.13106488 1.123438 -239.2940   NA   NA</code></pre>
+<p>We don’t want separate columns for <code>b_x1</code>, <code>b_x2</code>, and <code>b_x3</code>. We want them all stacked atop one another. One simple solution is a two-step wherein we (1) select the relevant columns from each and bind them together with <code>bind_cols()</code> and then (2) stack them atop one another with the <code>gather()</code> function.</p>
+<pre class="r"><code>posts &lt;-
+  bind_cols(
+    post4 %&gt;% select(b_x1),
+    post5 %&gt;% select(b_x2),
+    post6 %&gt;% select(b_x3)
+  ) %&gt;% 
+  gather() %&gt;% 
+  mutate(predictor = str_remove(key, &quot;b_&quot;))
+
+head(posts)</code></pre>
+<pre><code>##    key       value predictor
+## 1 b_x1 -0.07795464        x1
+## 2 b_x1 -0.03143494        x1
+## 3 b_x1  0.02739295        x1
+## 4 b_x1 -0.01065453        x1
+## 5 b_x1 -0.16635358        x1
+## 6 b_x1 -0.13106488        x1</code></pre>
+<p>That <code>mutate()</code> line at the end wasn’t necessary, but it will make the plot more attractive.</p>
+<pre class="r"><code>posts %&gt;% 
+  ggplot(aes(x = value, y = predictor)) +
+  stat_halfeye()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-14-1.png" width="576" /></p>
+</div>
+<div id="different-combinations-of-predictors-in-different-forms." class="section level3">
+<h3>Different combinations of predictors in different forms.</h3>
+<p>Now we fit a series of multivariable models. The first three will have combinations of two of the predictors. The final model will have all three. For simplicity, we continue to use the <strong>brms</strong> default priors.</p>
+<pre class="r"><code>fit7 &lt;-
+  brm(data = d,
+      family = gaussian,
+      y ~ 1 + x1 + x2,
+      seed = 1)
+
+fit8 &lt;-
+  update(fit7,
+         newdata = d,
+         y ~ 1 + x1 + x3,
+         seed = 1)
+
+fit9 &lt;-
+  update(fit7,
+         newdata = d,
+         y ~ 1 + x2 + x3,
+         seed = 1)
+
+fit10 &lt;-
+  update(fit7,
+         newdata = d,
+         y ~ 1 + x1 + x2 + x3,
+         seed = 1)</code></pre>
+<p>Individually extract the posterior draws.</p>
+<pre class="r"><code>post7  &lt;- posterior_samples(fit7)
+post8  &lt;- posterior_samples(fit8)
+post9  &lt;- posterior_samples(fit9)
+post10 &lt;- posterior_samples(fit10)</code></pre>
+<p>Take a look at what happens this time when we use the <code>bind_rows()</code> approach.</p>
+<pre class="r"><code>posts &lt;-
+  bind_rows(
+    post7,
+    post8,
+    post9,
+    post10
+  ) 
+
+glimpse(posts)</code></pre>
+<pre><code>## Rows: 16,000
+## Columns: 6
+## $ b_Intercept &lt;dbl&gt; -0.034398871, 0.008116322, 0.109134954, -0.134114504, -0.148230448, 0.04629622…
+## $ b_x1        &lt;dbl&gt; -0.018887709, -0.156024614, -0.248414749, 0.057442787, 0.241874229, -0.3504998…
+## $ b_x2        &lt;dbl&gt; 0.23847261, 0.27500306, 0.37294396, 0.20640317, 0.15437136, 0.28201317, 0.1538…
+## $ sigma       &lt;dbl&gt; 1.250134, 1.065501, 1.029253, 1.220301, 1.206074, 1.114755, 1.180636, 1.266597…
+## $ lp__        &lt;dbl&gt; -236.9970, -236.7477, -241.3055, -237.9540, -242.0909, -239.3407, -237.2902, -…
+## $ b_x3        &lt;dbl&gt; NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA, NA…</code></pre>
+<p>We still have the various data frames stacked atop another, with the data from <code>post7</code> in the first 4,000 rows. See how the values in the <code>b_x3</code> column are all missing (i.e., filled with <code>NA</code> values)? That’s because <code>fit7</code> didn’t contain <code>x3</code> as a predictor. Similarly, if we were to look at rows 4,001 through 8,000, we’d see column <code>b_x2</code> would be the one filled with <code>NA</code>s. This behavior is a good thing, here. After a little more wrangling, we’ll plot and it should be become clear why. Here’s the wrangling.</p>
+<pre class="r"><code>posts &lt;-
+  posts %&gt;% 
+  select(starts_with(&quot;b_x&quot;)) %&gt;% 
+  mutate(contains = rep(c(&quot;&lt;1, 1, 0&gt;&quot;, &quot;&lt;1, 0, 1&gt;&quot;, &quot;&lt;0, 1, 1&gt;&quot;, &quot;&lt;1, 1, 1&gt;&quot;), each = 4000)) %&gt;% 
+  gather(key, value, -contains) %&gt;% 
+  mutate(coefficient = str_remove(key, &quot;b_x&quot;) %&gt;% str_c(&quot;beta[&quot;, ., &quot;]&quot;))
+
+head(posts)</code></pre>
+<pre><code>##    contains  key       value coefficient
+## 1 &lt;1, 1, 0&gt; b_x1 -0.01888771     beta[1]
+## 2 &lt;1, 1, 0&gt; b_x1 -0.15602461     beta[1]
+## 3 &lt;1, 1, 0&gt; b_x1 -0.24841475     beta[1]
+## 4 &lt;1, 1, 0&gt; b_x1  0.05744279     beta[1]
+## 5 &lt;1, 1, 0&gt; b_x1  0.24187423     beta[1]
+## 6 &lt;1, 1, 0&gt; b_x1 -0.35049990     beta[1]</code></pre>
+<p>With the <code>contains</code> variable, we indexed which fit the draws came from. The 1’s and 0’s within the angle brackets indicate which of the three predictors were present within the model with the 1’s indicating they were and the 0’s indicating they were not. For example, <code>&lt;1, 1, 0&gt;</code> in the first row indicated this was the model including <code>x1</code> and <code>x2</code>. Importantly, we also added a <code>coefficient</code> index. This is just a variant of <code>key</code> that’ll make the strip labels in our plot more attractive. Behold:</p>
+<pre class="r"><code>posts %&gt;% 
+  drop_na(value) %&gt;% 
+  ggplot(aes(x = value, y = contains)) +
+  stat_halfeye() +
+  ylab(NULL) +
+  facet_wrap(~coefficient, ncol = 1, labeller = label_parsed)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-18-1.png" width="576" /></p>
+<p>Hopefully now it’s clear why it was good to save those cells with the <code>NA</code>s.</p>
+</div>
+</div>
+<div id="bonus-you-can-streamline-your-workflow." class="section level2">
+<h2>Bonus: You can streamline your workflow.</h2>
+<p>The workflows above are generally fine. But they’re a little inefficient. If you’d like to reduce the amount of code you’re writing and the number of objects you have floating around in your environment, you might consider a more streamlined workflow where you work with your fit objects in bulk. Here we’ll demonstrate a nested tibble approach with the first three fits.</p>
+<pre class="r"><code>posts &lt;-
+  tibble(name  = str_c(&quot;fit&quot;, 1:3),
+         prior = str_c(&quot;normal(0, &quot;, c(10, 1, 0.1), &quot;)&quot;)) %&gt;% 
+  mutate(fit = map(name, get)) %&gt;% 
+  mutate(post = map(fit, posterior_samples))
+  
+head(posts)</code></pre>
+<pre><code>## # A tibble: 3 x 4
+##   name  prior          fit       post                
+##   &lt;chr&gt; &lt;chr&gt;          &lt;list&gt;    &lt;list&gt;              
+## 1 fit1  normal(0, 10)  &lt;brmsfit&gt; &lt;df[,3] [4,000 × 3]&gt;
+## 2 fit2  normal(0, 1)   &lt;brmsfit&gt; &lt;df[,3] [4,000 × 3]&gt;
+## 3 fit3  normal(0, 0.1) &lt;brmsfit&gt; &lt;df[,3] [4,000 × 3]&gt;</code></pre>
+<p>We have a 3-row nested tibble. The first column, <code>name</code> is just a character vector with the names of the fits. The next column isn’t necessary, but it nicely explicates the main difference in the models: the prior we used on the intercept. It’s in the <code>map()</code> functions within the two <code>mutate()</code>lines where all the magic happens. With the first, we used the <code>get()</code> function to snatch up the <strong>brms</strong> fit objects matching the names in the <code>name</code> column. In the second, we used the <code>posterior_samples()</code> function to extract the posterior draws from each of the fits saved in <code>fit</code>. Do you see how each for in the <code>post</code> column contains an entire <span class="math inline">\(4,000 \times 3\)</span> data frame? That’s why we refer to this as a nested tibble. We have data frames compressed within data frames. If you’d like to access the data within the <code>post</code> column, just <code>unnest()</code>.</p>
+<pre class="r"><code>posts %&gt;% 
+  select(-fit) %&gt;% 
+  unnest(post)</code></pre>
+<pre><code>## # A tibble: 12,000 x 5
+##    name  prior         b_Intercept sigma  lp__
+##    &lt;chr&gt; &lt;chr&gt;               &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+##  1 fit1  normal(0, 10)     0.0644  0.941 -202.
+##  2 fit1  normal(0, 10)     0.0260  0.942 -202.
+##  3 fit1  normal(0, 10)    -0.0212  0.897 -202.
+##  4 fit1  normal(0, 10)     0.0262  0.952 -202.
+##  5 fit1  normal(0, 10)     0.0262  0.952 -202.
+##  6 fit1  normal(0, 10)     0.0803  0.910 -202.
+##  7 fit1  normal(0, 10)    -0.00142 0.886 -202.
+##  8 fit1  normal(0, 10)     0.0696  0.939 -202.
+##  9 fit1  normal(0, 10)    -0.172   0.943 -205.
+## 10 fit1  normal(0, 10)     0.0259  0.839 -203.
+## # … with 11,990 more rows</code></pre>
+<p>After un-nesting, we can remake the plot from above.</p>
+<pre class="r"><code>posts %&gt;% 
+  select(-fit) %&gt;% 
+  unnest(post) %&gt;% 
+
+  ggplot(aes(x = b_Intercept, y = prior)) +
+  stat_halfeye()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-21-1.png" width="576" /></p>
+<p>To learn more about using the <strong>tidyverse</strong> for iterating and saving the results in nested tibbles, check out <a href="https://twitter.com/hadleywickham">Hadley Wickham</a>’s great talk, <a href="https://www.youtube.com/watch?v=rz3_FDVt9eg"><em>Managing many models</em></a>.</p>
+</div>
+<div id="session-information" class="section level2">
+<h2>Session information</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] tidybayes_2.3.1 brms_2.15.0     Rcpp_1.0.6      forcats_0.5.1   stringr_1.4.0   dplyr_1.0.5    
+##  [7] purrr_0.3.4     readr_1.4.0     tidyr_1.1.3     tibble_3.1.0    ggplot2_3.3.3   tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6           igraph_1.2.6        
+##   [5] splines_4.0.4        svUnit_1.0.3         crosstalk_1.1.0.1    TH.data_1.0-10      
+##   [9] rstantools_2.1.1     inline_0.3.17        digest_0.6.27        htmltools_0.5.1.1   
+##  [13] rsconnect_0.8.16     fansi_0.4.2          magrittr_2.0.1       modelr_0.1.8        
+##  [17] RcppParallel_5.0.2   matrixStats_0.57.0   xts_0.12.1           sandwich_3.0-0      
+##  [21] prettyunits_1.1.1    colorspace_2.0-0     rvest_0.3.6          ggdist_2.4.0.9000   
+##  [25] haven_2.3.1          xfun_0.22            callr_3.5.1          crayon_1.4.1        
+##  [29] jsonlite_1.7.2       lme4_1.1-25          survival_3.2-10      zoo_1.8-8           
+##  [33] glue_1.4.2           gtable_0.3.0         emmeans_1.5.2-1      V8_3.4.0            
+##  [37] distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.2         abind_1.4-5         
+##  [41] scales_1.1.1         mvtnorm_1.1-1        DBI_1.1.0            miniUI_0.1.1.1      
+##  [45] xtable_1.8-4         stats4_4.0.4         StanHeaders_2.21.0-7 DT_0.16             
+##  [49] htmlwidgets_1.5.2    httr_1.4.2           threejs_0.3.3        arrayhelpers_1.1-0  
+##  [53] ellipsis_0.3.1       farver_2.0.3         pkgconfig_2.0.3      loo_2.4.1           
+##  [57] dbplyr_2.0.0         utf8_1.1.4           labeling_0.4.2       tidyselect_1.1.0    
+##  [61] rlang_0.4.10         reshape2_1.4.4       later_1.1.0.1        munsell_0.5.0       
+##  [65] cellranger_1.1.0     tools_4.0.4          cli_2.3.1            generics_0.1.0      
+##  [69] broom_0.7.5          ggridges_0.5.2       evaluate_0.14        fastmap_1.0.1       
+##  [73] yaml_2.2.1           processx_3.4.5       knitr_1.31           fs_1.5.0            
+##  [77] nlme_3.1-152         mime_0.10            projpred_2.0.2       xml2_1.3.2          
+##  [81] compiler_4.0.4       bayesplot_1.8.0      shinythemes_1.1.2    rstudioapi_0.13     
+##  [85] gamm4_0.2-6          curl_4.3             reprex_0.3.0         statmod_1.4.35      
+##  [89] stringi_1.5.3        highr_0.8            ps_1.6.0             blogdown_1.3        
+##  [93] Brobdingnag_1.2-6    lattice_0.20-41      Matrix_1.3-2         nloptr_1.2.2.2      
+##  [97] markdown_1.1         shinyjs_2.0.0        vctrs_0.3.6          pillar_1.5.1        
+## [101] lifecycle_1.0.0      bridgesampling_1.0-0 estimability_1.3     httpuv_1.5.4        
+## [105] R6_2.5.0             bookdown_0.21        promises_1.1.1       gridExtra_2.3       
+## [109] codetools_0.2-18     boot_1.3-26          colourpicker_1.1.0   MASS_7.3-53         
+## [113] gtools_3.8.2         assertthat_0.2.1     withr_2.4.1          shinystan_2.5.0     
+## [117] multcomp_1.4-16      mgcv_1.8-33          parallel_4.0.4       hms_0.5.3           
+## [121] grid_4.0.4           coda_0.19-4          minqa_1.2.4          rmarkdown_2.7       
+## [125] shiny_1.5.0          lubridate_1.7.9.2    base64enc_0.1-3      dygraphs_1.1.1.6</code></pre>
+</div>

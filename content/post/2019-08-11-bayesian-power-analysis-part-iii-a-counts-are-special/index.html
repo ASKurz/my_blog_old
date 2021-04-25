@@ -1,0 +1,412 @@
+---
+title: 'Bayesian power analysis: Part III.a. Counts are special.'
+author: A. Solomon Kurz
+date: '2019-08-11'
+slug: bayesian-power-analysis-part-iii-a
+categories: []
+tags:
+  - Bayesian
+  - brms
+  - power
+  - R
+  - tidyverse
+  - tutorial
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-21T20:38:33-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+bibliography: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/my_blog.bib
+biblio-style: apalike
+csl: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/apa.csl  
+link-citations: yes 
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<div id="version-1.1.0" class="section level2">
+<h2>Version 1.1.0</h2>
+<p>Edited on April 21, 2021, to remove the <code>broom::tidy()</code> portion of the workflow.</p>
+</div>
+<div id="orientation" class="section level2">
+<h2>Orientation</h2>
+<p>So far we’ve covered Bayesian power simulations from both a null hypothesis orientation (see <a href="https://solomonkurz.netlify.com/post/bayesian-power-analysis-part-i/">part I</a>) and a parameter width perspective (see <a href="https://solomonkurz.netlify.com/post/bayesian-power-analysis-part-ii/">part II</a>). In both instances, we kept things simple and stayed with Gaussian (i.e., normally distributed) data. But not all data follow that form, so it might do us well to expand our skill set a bit. In the next few posts, we’ll cover how we might perform power simulations with other kinds of data. In this post, we’ll focus on how to use the Poisson likelihood to model counts. In follow-up posts, we’ll explore how to model binary and Likert-type data.</p>
+</div>
+<div id="the-poisson-distribution-is-handy-for-counts." class="section level2">
+<h2>The Poisson distribution is handy for counts.</h2>
+<p>In the social sciences, count data arise when we ask questions like:</p>
+<ul>
+<li>How many sexual partners have you had?</li>
+<li>How many pets do you have at home?</li>
+<li>How many cigarettes did you smoke, yesterday?</li>
+</ul>
+<p>The values these data will take are discrete<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> in that you’ve either slept with 9 or 10 people, but definitely not 9.5. The values cannot go below zero in that even if you quit smoking cold turkey 15 years ago and have been a health nut since, you still could not have smoked -3 cigarettes, yesterday. Zero is as low as it goes.</p>
+<p>The canonical distribution for data of this type–non-negative integers–is the Poisson. It’s named after the French mathematician Siméon Denis Poisson, <a href="https://upload.wikimedia.org/wikipedia/commons/e/e8/E._Marcellot_Siméon-Denis_Poisson_1804.jpg">who had quite the confident stare in his youth</a>. The Poisson distribution has one parameter, <span class="math inline">\(\lambda\)</span>, which controls both its mean and variance. Although the numbers the Poisson describes are counts, the <span class="math inline">\(\lambda\)</span> parameter does not need to be an integer. For example, here’s the plot of 1,000 draws from a Poisson for which <span class="math inline">\(\lambda = 3.2\)</span>.</p>
+<pre class="r"><code>library(tidyverse)
+
+theme_set(theme_gray() + theme(panel.grid = element_blank()))
+
+tibble(x = rpois(n = 1e3, lambda = 3.2)) %&gt;% 
+  mutate(x = factor(x)) %&gt;% 
+  
+  ggplot(aes(x = x)) +
+  geom_bar()</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-1-1.png" width="384" /></p>
+<p>In case you missed it, the key function for generating those data was <code>rpois()</code> (see <code>?rpois</code>). I’m not going to go into a full-blown tutorial on the Poisson distribution or on count regression. For more thorough introductions, check out Atkins et al’s <span class="citation">(<a href="#ref-atkinsTutorialOnCount2013" role="doc-biblioref">2013</a>)</span> <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3513584/pdf/nihms396181.pdf"><em>A tutorial on count regression and zero-altered count models for longitudinal substance use data</em></a>, chapters 9 through 11 in McElreath’s <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2015" role="doc-biblioref">2015</a>)</span> <a href="https://xcelab.net/rm/statistical-rethinking/"><em>Statistical Rethinking</em></a>, or, if you really want to dive in, Agresti’s <span class="citation">(<a href="#ref-agrestiFoundationsLinearGeneralized2015" role="doc-biblioref">2015</a>)</span> <a href="https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034"><em>Foundations of linear and generalized linear models</em></a>.</p>
+<p>For our power example, let’s say you were interested in drinking. Using data from <a href="https://pubs.niaaa.nih.gov/publications/AA70/AA70.htm">the National Epidemiologic Survey on Alcohol and Related Conditions</a> <span class="citation">(<a href="#ref-niaaaNationalEpidemiologicSurvey2006" role="doc-biblioref">{{National Institute on Alcohol Abuse and Alcoholism}}, 2006</a>)</span>, Christopher Ingraham <span class="citation">(<a href="#ref-ingrahamThinkYouDrink2014" role="doc-biblioref">2014</a>)</span> presented <a href="https://www.washingtonpost.com/news/wonk/wp/2014/09/25/think-you-drink-a-lot-this-chart-will-tell-you/?utm_term=.b81599bbbe25">a data visualization</a> of the average number of alcoholic drinks American adults consume, per week. By decile, the numbers were:</p>
+<ol style="list-style-type: decimal">
+<li>0.00</li>
+<li>0.00</li>
+<li>0.00</li>
+<li>0.02</li>
+<li>0.14</li>
+<li>0.63</li>
+<li>2.17</li>
+<li>6.25</li>
+<li>15.28</li>
+<li>73.85</li>
+</ol>
+<p>Let’s say you wanted to run a study where you planned on comparing two demographic groups by their weekly drinking levels. Let’s further say you suspected one of those groups drank like the American adults in the 7<sup>th</sup> decile and the other drank like American adults in the 8<sup>th</sup>. We’ll call them low and high drinkers, respectively. For convenience, let’s further presume you’ll be able to recruit equal numbers of participants from both groups. The objective for our power analysis–or sample size analysis if you prefer to avoid the language of <em>power</em>–is to determine how many you’d need per group to detect reliable differences. Using <span class="math inline">\(n = 50\)</span> as a starting point, here’s what the data for our hypothetical groups might look like.</p>
+<pre class="r"><code>mu_7 &lt;- 2.17
+mu_8 &lt;- 6.25
+
+n &lt;- 50
+
+set.seed(3)
+
+d &lt;-
+  tibble(low  = rpois(n = n, lambda = mu_7),
+         high = rpois(n = n, lambda = mu_8)) %&gt;% 
+  gather(group, count) 
+
+d %&gt;%
+  mutate(count = factor(count)) %&gt;% 
+  
+  ggplot(aes(x = count)) +
+  geom_bar() +
+  facet_wrap(~group, ncol = 1)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" width="384" /></p>
+<p>This will be our primary data type. Our next step is to determine how to express our research question as a regression model. Like with our two-group Gaussian models, we can predict counts in terms of an intercept (i.e., standing for the expected value on the reference group) and slope (i.e., standing for the expected difference between the reference group and the comparison group). If we coded our two groups by a <code>high</code> variable for which 0 stood for low drinkers and 1 stood for high drinkers, the basic model would follow the form</p>
+<p><span class="math display">\[
+\begin{align*}
+\text{drinks_per_week}_i         &amp; \sim \operatorname{Poisson}(\lambda_i) \\
+\log(\lambda_i)   &amp; = \beta_0 + \beta_1 \text{high}_i.
+\end{align*}
+\]</span></p>
+<p>Here’s how to set the data up for that model.</p>
+<pre class="r"><code>d &lt;-
+  d %&gt;% 
+  mutate(high = ifelse(group == &quot;low&quot;, 0, 1))</code></pre>
+<p>If you were attending closely to our model formula, you noticed we ran into a detail. Count regression, such as with the Poisson likelihood, tends to use the log link. <em>Why?</em> you ask. Recall that counts need to be 0 and above. Same deal for our <span class="math inline">\(\lambda\)</span> parameter. In order to make sure our models don’t yield silly estimates for <span class="math inline">\(\lambda\)</span>, like -2 or something, we typically use the log link. You don’t have to, of course. The world is your playground. But this is the method most of your colleagues are likely to use and it’s the one I suggest you use until you have compelling reasons to do otherwise.</p>
+<p>So then since we’re now fitting a model with a log link, it might seem challenging to pick good priors. As a place to start, we can use the <code>brms::get_prior()</code> function to see the <strong>brms</strong> defaults.</p>
+<pre class="r"><code>library(brms)
+
+get_prior(data = d,
+          family = poisson,
+          count ~ 0 + Intercept + high)</code></pre>
+<pre><code>##   prior class      coef group resp dpar nlpar bound       source
+##  (flat)     b                                            default
+##  (flat)     b      high                             (vectorized)
+##  (flat)     b Intercept                             (vectorized)</code></pre>
+<p>Hopefully two things popped out. First, there’s no prior of <code>class = sigma</code>. Since the Poisson distribution only has one parameter <span class="math inline">\(\lambda\)</span>, we don’t need to set a prior for <span class="math inline">\(\sigma\)</span>. Our model won’t have one. Second, because we’re continuing to use the <code>0 + Intercept</code> syntax for our model intercept, both our intercept and slope are of prior <code>class = b</code> and those currently have default flat priors with <strong>brms</strong>. To be sure, flat priors aren’t the best. But maybe if this was your first time playing around with a Poisson model, default flat priors might seem like a safe place to start. <a href="https://xkcd.com/386/">Feel free to disagree</a>. In the meantime, here’s how to fit that default Poisson model with <code>brms::brm()</code>.</p>
+<pre class="r"><code>fit1 &lt;-
+  brm(data = d,
+      family = poisson,
+      count ~ 0 + Intercept + high,
+      seed = 3)</code></pre>
+<pre class="r"><code>print(fit1)</code></pre>
+<pre><code>##  Family: poisson 
+##   Links: mu = log 
+## Formula: count ~ 0 + Intercept + high 
+##    Data: d (Number of observations: 100) 
+## Samples: 4 chains, each with iter = 2000; warmup = 1000; thin = 1;
+##          total post-warmup samples = 4000
+## 
+## Population-Level Effects: 
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept     0.59      0.11     0.38     0.79 1.01      917     1133
+## high          1.27      0.12     1.03     1.51 1.01      935     1182
+## 
+## Samples were drawn using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).</code></pre>
+<p>Since we used the log link, our model results are in the log metric, too. If you’d like them in the metric of the data, you’d work directly with the poster samples and exponentiate.</p>
+<pre class="r"><code>post &lt;- 
+  posterior_samples(fit1) %&gt;% 
+  mutate(`beta_0 (i.e., low)`                       = exp(b_Intercept),
+         `beta_1 (i.e., difference score for high)` = exp(b_high))</code></pre>
+<p>We can then just summarize our parameters of interest.</p>
+<pre class="r"><code>post %&gt;% 
+  select(starts_with(&quot;beta_&quot;)) %&gt;% 
+  gather() %&gt;% 
+  group_by(key) %&gt;% 
+  summarise(mean  = mean(value),
+            lower = quantile(value, prob = .025),
+            upper = quantile(value, prob = .975))</code></pre>
+<pre><code>## # A tibble: 2 x 4
+##   key                                       mean lower upper
+##   &lt;chr&gt;                                    &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+## 1 beta_0 (i.e., low)                        1.81  1.46  2.21
+## 2 beta_1 (i.e., difference score for high)  3.58  2.81  4.53</code></pre>
+<p>For the sake of simulation, it’ll be easier if we press on with evaluating the parameters on the log metric, though. If you’re working within a null-hypothesis oriented power paradigm, you’ll be happy to know zero is still the number to beat for evaluating our 95% intervals for <span class="math inline">\(\beta_1\)</span>, even when that parameter is in the log metric. Here it is, again.</p>
+<pre class="r"><code>fixef(fit1)[&quot;high&quot;, ]</code></pre>
+<pre><code>##  Estimate Est.Error      Q2.5     Q97.5 
+## 1.2690437 0.1211455 1.0330613 1.5108894</code></pre>
+<p>So our first fit suggests we’re on good footing to run a quick power simulation holding <span class="math inline">\(n = 50\)</span>. As in the prior blog posts, our lives will be simpler if we set up a custom simulation function. Since we’ll be using it to simulate the data and fit the model in one step, let’s call it <code>sim_data_fit()</code>.</p>
+<pre class="r"><code>sim_data_fit &lt;- function(seed, n) {
+  
+  # define our mus in the function
+  mu_7 &lt;- 2.17
+  mu_8 &lt;- 6.25
+
+  # make your results reproducible
+  set.seed(seed)
+  
+  # simulate the data
+  d &lt;-
+    tibble(high  = rep(0:1, each = n),
+           count = c(rpois(n = n, lambda = mu_7),
+                     rpois(n = n, lambda = mu_8)))
+  
+  # fit and summarize
+  update(fit1,
+         newdata = d,
+         seed = seed) %&gt;% 
+    fixef() %&gt;% 
+    data.frame() %&gt;% 
+    rownames_to_column(&quot;parameter&quot;) %&gt;% 
+    filter(parameter == &quot;high&quot;) %&gt;% 
+    select(Q2.5:Q97.5 )
+  
+}</code></pre>
+<p>Here’s the simulation for a simple 100 iterations.</p>
+<pre class="r"><code>sim1 &lt;-
+  tibble(seed = 1:100) %&gt;% 
+  mutate(ci = map(seed, sim_data_fit, n = 50)) %&gt;% 
+  unnest()</code></pre>
+<p>That went quick–just a little over a minute on my laptop. Here’s what those 100 <span class="math inline">\(\beta_1\)</span> intervals look like in bulk.</p>
+<pre class="r"><code>sim1 %&gt;% 
+  ggplot(aes(x = seed, ymin = Q2.5, ymax = Q97.5)) +
+  geom_hline(yintercept = 0, color = &quot;white&quot;) +
+  geom_linerange() +
+  labs(x = &quot;seed (i.e., simulation index)&quot;,
+       y = expression(beta[1]))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-10-1.png" width="768" /></p>
+<p>None of them are anywhere near the null value 0. So it appears we’re well above .8 power to reject the typical <span class="math inline">\(H_0\)</span> with <span class="math inline">\(n = 50\)</span>. Switching to the precision orientation, here’s the distribution of their widths.</p>
+<pre class="r"><code>sim1 %&gt;% 
+  mutate(width = Q97.5 - Q2.5) %&gt;% 
+  
+  ggplot(aes(x = width)) +
+  geom_histogram(binwidth = 0.01) +
+  geom_rug(size = 1/6)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-11-1.png" width="384" /></p>
+<p>What if we wanted a mean width of 0.25 on the log scale? We might try the simulation with <span class="math inline">\(n = 150\)</span>.</p>
+<pre class="r"><code>sim2 &lt;-
+  tibble(seed = 1:100) %&gt;% 
+  mutate(ci = map(seed, sim_data_fit, n = 150)) %&gt;% 
+  unnest()</code></pre>
+<p>Here we’ll summarize the widths both in terms of their mean and what proportion were smaller than 0.25.</p>
+<pre class="r"><code>sim2 %&gt;% 
+  mutate(width = Q97.5 - Q2.5) %&gt;% 
+  summarise(`mean width` = mean(width),
+            `below 0.25` = mean(width &lt; 0.25))</code></pre>
+<pre><code>## # A tibble: 1 x 2
+##   `mean width` `below 0.25`
+##          &lt;dbl&gt;        &lt;dbl&gt;
+## 1        0.252         0.43</code></pre>
+<p>If we wanted to focus on the mean, we did pretty good. Perhaps set the <span class="math inline">\(n = 155\)</span> and simulate a full 1,000+ iterations for a serious power analysis. But if we wanted to make the stricter criteria of all below 0.25, we’d need to up the <span class="math inline">\(n\)</span> quite a bit more. And of course, once you have a little experience working with Poisson models, you might do the power simulations with more ambitious priors. For example, if your count values are lower than like 1,000, there’s a good chance a <code>normal(0, 6)</code> prior on your <span class="math inline">\(\beta\)</span> parameters will be nearly flat within the reasonable neighborhoods of the parameter space.</p>
+</div>
+<div id="but-logs-are-hard." class="section level2">
+<h2>But logs are hard.</h2>
+<p>If we approach our Bayesian power analysis from a precision perspective, it can be difficult to settle on a reasonable interval width when they’re on the log scale. So let’s modify our simulation flow so it converts the width summaries back into the natural metric. Before we go big, let’s practice with a single iteration.</p>
+<pre class="r"><code>seed &lt;- 0
+set.seed(seed)
+
+# simulate the data
+d &lt;-
+  tibble(high  = rep(0:1, each = n),
+         count = c(rpois(n = n, lambda = mu_7),
+                   rpois(n = n, lambda = mu_8)))
+
+# fit the model
+fit2 &lt;-
+  update(fit1,
+         newdata = d,
+         seed = seed) </code></pre>
+<p>Now summarize.</p>
+<pre class="r"><code>library(tidybayes)
+
+fit2 %&gt;% 
+  posterior_samples() %&gt;% 
+  transmute(`beta_1` = exp(b_high)) %&gt;% 
+  mean_qi()</code></pre>
+<pre><code>##     beta_1  .lower   .upper .width .point .interval
+## 1 2.705404 2.16512 3.341729   0.95   mean        qi</code></pre>
+<p>Before we used the <code>fixef()</code> function to extract our intervals, which took the <strong>brms</strong> fit object as input. Here we took a different approach. Because we are transforming <span class="math inline">\(\beta_1\)</span>, we used the <code>posterior_samples()</code> function to work directly with the posterior draws. We then exponentiated within <code>transmute()</code>, which returned a single-column tibble, not a <strong>brms</strong> fit object. So instead of <code>fixef()</code>, it’s easier to get our summary statistics with the <code>tidybayes::mean_qi()</code> function. Do note that now our lower and upper levels are named <code>.lower</code> and <code>.upper</code>, respectively.</p>
+<p>Now we’ve practiced with the new flow, let’s redefine our simulation function.</p>
+<pre class="r"><code>sim_data_fit &lt;- function(seed, n) {
+  
+  # define our mus in the function
+  mu_7 &lt;- 2.17
+  mu_8 &lt;- 6.25
+
+  # make your results reproducible
+  set.seed(seed)
+  
+  # simulate the data
+  d &lt;-
+    tibble(high  = rep(0:1, each = n),
+           count = c(rpois(n = n, lambda = mu_7),
+                     rpois(n = n, lambda = mu_8)))
+  
+  # fit and summarize
+  update(fit1,
+         newdata = d,
+         seed = seed) %&gt;% 
+  posterior_samples() %&gt;% 
+  transmute(`beta_1` = exp(b_high)) %&gt;% 
+  mean_qi()
+  
+}</code></pre>
+<p>Simulate.</p>
+<pre class="r"><code>sim3 &lt;-
+  tibble(seed = 1:100) %&gt;% 
+  mutate(ci = map(seed, sim_data_fit, n = 50)) %&gt;% 
+  unnest()</code></pre>
+<p>Here’s what those 100 <span class="math inline">\(\beta_1\)</span> intervals look like in bulk.</p>
+<pre class="r"><code>sim3 %&gt;% 
+  ggplot(aes(x = seed, y = beta_1, ymin = .lower, ymax = .upper)) +
+  geom_hline(yintercept = 0, color = &quot;white&quot;) +
+  geom_pointrange(fatten = 1) +
+  labs(x = &quot;seed (i.e., simulation index)&quot;,
+       y = expression(beta[1]))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-17-1.png" width="768" /></p>
+<p>Inspect the distribution of their widths.</p>
+<pre class="r"><code>sim3 %&gt;% 
+  mutate(width = .upper - .lower) %&gt;% 
+  
+  ggplot(aes(x = width)) +
+  geom_histogram(binwidth = 0.05) +
+  geom_rug(size = 1/6)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-18-1.png" width="384" /></p>
+<p>What if we wanted a mean 95% interval width of 1? Let’s run the simulation again, this time with <span class="math inline">\(n = 100\)</span>.</p>
+<pre class="r"><code>sim4 &lt;-
+  tibble(seed = 1:100) %&gt;% 
+  mutate(ci = map(seed, sim_data_fit, n = 100)) %&gt;% 
+  unnest() %&gt;% 
+  mutate(width = .upper - .lower)</code></pre>
+<p>Here’s the new width distribution.</p>
+<pre class="r"><code>sim4 %&gt;% 
+  ggplot(aes(x = width)) +
+  geom_histogram(binwidth = 0.05) +
+  geom_rug(size = 1/6)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-19-1.png" width="384" /></p>
+<p>And the mean width is:</p>
+<pre class="r"><code>sim4 %&gt;% 
+  summarise(mean_width = mean(width))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   mean_width
+##        &lt;dbl&gt;
+## 1      0.913</code></pre>
+<p>Nice! If we want a mean width of 1, it looks like we’re a little <em>overpowered</em> with <span class="math inline">\(n = 100\)</span>. The next step would be to up your iterations to 1,000 or so to do a proper simulation.</p>
+<p>Now you’ve got a sense of how to work with the Poisson likelihood, <a href="https://solomonkurz.netlify.app/post/bayesian-power-analysis-part-iii-b/">next time</a> we’ll play with binary data.</p>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] tidybayes_2.3.1 brms_2.15.0     Rcpp_1.0.6      forcats_0.5.1  
+##  [5] stringr_1.4.0   dplyr_1.0.5     purrr_0.3.4     readr_1.4.0    
+##  [9] tidyr_1.1.3     tibble_3.1.0    ggplot2_3.3.3   tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##   [1] readxl_1.3.1         backports_1.2.1      plyr_1.8.6          
+##   [4] igraph_1.2.6         svUnit_1.0.3         splines_4.0.4       
+##   [7] crosstalk_1.1.0.1    TH.data_1.0-10       rstantools_2.1.1    
+##  [10] inline_0.3.17        digest_0.6.27        htmltools_0.5.1.1   
+##  [13] rsconnect_0.8.16     fansi_0.4.2          magrittr_2.0.1      
+##  [16] modelr_0.1.8         RcppParallel_5.0.2   matrixStats_0.57.0  
+##  [19] xts_0.12.1           sandwich_3.0-0       prettyunits_1.1.1   
+##  [22] colorspace_2.0-0     rvest_0.3.6          ggdist_2.4.0.9000   
+##  [25] haven_2.3.1          xfun_0.22            callr_3.5.1         
+##  [28] crayon_1.4.1         jsonlite_1.7.2       lme4_1.1-25         
+##  [31] survival_3.2-10      zoo_1.8-8            glue_1.4.2          
+##  [34] gtable_0.3.0         emmeans_1.5.2-1      V8_3.4.0            
+##  [37] distributional_0.2.2 pkgbuild_1.2.0       rstan_2.21.2        
+##  [40] abind_1.4-5          scales_1.1.1         mvtnorm_1.1-1       
+##  [43] DBI_1.1.0            miniUI_0.1.1.1       xtable_1.8-4        
+##  [46] stats4_4.0.4         StanHeaders_2.21.0-7 DT_0.16             
+##  [49] htmlwidgets_1.5.2    httr_1.4.2           threejs_0.3.3       
+##  [52] arrayhelpers_1.1-0   ellipsis_0.3.1       pkgconfig_2.0.3     
+##  [55] loo_2.4.1            farver_2.0.3         dbplyr_2.0.0        
+##  [58] utf8_1.1.4           tidyselect_1.1.0     labeling_0.4.2      
+##  [61] rlang_0.4.10         reshape2_1.4.4       later_1.1.0.1       
+##  [64] munsell_0.5.0        cellranger_1.1.0     tools_4.0.4         
+##  [67] cli_2.3.1            generics_0.1.0       broom_0.7.5         
+##  [70] ggridges_0.5.2       evaluate_0.14        fastmap_1.0.1       
+##  [73] yaml_2.2.1           processx_3.4.5       knitr_1.31          
+##  [76] fs_1.5.0             nlme_3.1-152         mime_0.10           
+##  [79] projpred_2.0.2       xml2_1.3.2           compiler_4.0.4      
+##  [82] bayesplot_1.8.0      shinythemes_1.1.2    rstudioapi_0.13     
+##  [85] gamm4_0.2-6          curl_4.3             reprex_0.3.0        
+##  [88] statmod_1.4.35       stringi_1.5.3        highr_0.8           
+##  [91] ps_1.6.0             blogdown_1.3         Brobdingnag_1.2-6   
+##  [94] lattice_0.20-41      Matrix_1.3-2         nloptr_1.2.2.2      
+##  [97] markdown_1.1         shinyjs_2.0.0        vctrs_0.3.6         
+## [100] pillar_1.5.1         lifecycle_1.0.0      bridgesampling_1.0-0
+## [103] estimability_1.3     httpuv_1.5.4         R6_2.5.0            
+## [106] bookdown_0.21        promises_1.1.1       gridExtra_2.3       
+## [109] codetools_0.2-18     boot_1.3-26          colourpicker_1.1.0  
+## [112] MASS_7.3-53          gtools_3.8.2         assertthat_0.2.1    
+## [115] withr_2.4.1          shinystan_2.5.0      multcomp_1.4-16     
+## [118] mgcv_1.8-33          parallel_4.0.4       hms_0.5.3           
+## [121] grid_4.0.4           coda_0.19-4          minqa_1.2.4         
+## [124] rmarkdown_2.7        shiny_1.5.0          lubridate_1.7.9.2   
+## [127] base64enc_0.1-3      dygraphs_1.1.1.6</code></pre>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
+<div id="ref-agrestiFoundationsLinearGeneralized2015" class="csl-entry">
+Agresti, A. (2015). <em>Foundations of linear and generalized linear models</em>. <span>John Wiley &amp; Sons</span>. <a href="https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034">https://www.wiley.com/en-us/Foundations+of+Linear+and+Generalized+Linear+Models-p-9781118730034</a>
+</div>
+<div id="ref-atkinsTutorialOnCount2013" class="csl-entry">
+Atkins, D. C., Baldwin, S. A., Zheng, C., Gallop, R. J., &amp; Neighbors, C. (2013). A tutorial on count regression and zero-altered count models for longitudinal substance use data. <em>Psychology of Addictive Behaviors</em>, <em>27</em>(1), 166. <a href="https://doi.org/10.1037/a0029508">https://doi.org/10.1037/a0029508</a>
+</div>
+<div id="ref-ingrahamThinkYouDrink2014" class="csl-entry">
+Ingraham, C. (2014). Think you drink a lot? <span>This</span> chart will tell you. <em>Wonkblog. The Washington Post</em>. <a href="https://www.washingtonpost.com/news/wonk/wp/2014/09/25/think-you-drink-a-lot-this-chart-will-tell-you/?utm_term=.b81599bbbe25">https://www.washingtonpost.com/news/wonk/wp/2014/09/25/think-you-drink-a-lot-this-chart-will-tell-you/?utm_term=.b81599bbbe25</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2015" class="csl-entry">
+McElreath, R. (2015). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em>. <span>CRC press</span>. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-niaaaNationalEpidemiologicSurvey2006" class="csl-entry">
+{{National Institute on Alcohol Abuse and Alcoholism}}. (2006). <em>National epidemiologic survey on alcohol and related conditions</em>. <a href="https://pubs.niaaa.nih.gov/publications/AA70/AA70.htm">https://pubs.niaaa.nih.gov/publications/AA70/AA70.htm</a>
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Yes, one can smoke half a cigarette or drink 1/3 of a drink. Ideally, we’d have the exact amount of nicotine in your blood at a given moment and over time and the same for the amount of alcohol in your system relative to your blood volume and such. But in practice, substance use researchers just don’t tend to have access to data of that quality. Instead, we’re typically stuck with simple counts. And I look forward to the day the right team of engineers, computer scientists, and substance use researchers (and whoever else I forgot to mention) release the cheap, non-invasive technology we need to passively measure these things. Until then: <em>How many standard servings of alcohol did you drink, last night?</em><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>

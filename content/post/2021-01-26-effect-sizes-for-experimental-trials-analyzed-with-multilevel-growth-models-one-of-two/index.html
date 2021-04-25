@@ -1,0 +1,364 @@
+---
+title: 'Effect sizes for experimental trials analyzed with multilevel growth models:
+  One of two'
+author: A. Solomon Kurz
+date: '2021-01-26'
+slug: ''
+categories: []
+tags:
+  - effect size
+  - longitudinal
+  - multilevel
+  - R
+  - tidyverse
+  - tutorial
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-22T11:57:59-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+bibliography: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/my_blog.bib
+biblio-style: apalike
+csl: /Users/solomonkurz/Dropbox/temporary_blog_2/content/post/apa.csl  
+link-citations: yes
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<div id="background" class="section level2">
+<h2>Background</h2>
+<p>This post is the first installment of a two-part series. The impetus is a project at work. A colleague had longitudinal data for participants in two experimental groups, which they examined with a multilevel growth model of the kind we’ll explore in the next post. My colleague then summarized the difference in growth for the two conditions with a standardized mean difference they called <span class="math inline">\(d\)</span>. Their effect size looked large, to me, and I was perplexed when I saw the formula they used to compute their version of <span class="math inline">\(d\)</span>. It had been a while since I had to compute an effect size like this, so I dove back into the literature, where I realized Feingold had worked this issue out in his <span class="citation">(<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>)</span> paper in <a href="https://www.apa.org/pubs/journals/met"><em>Psychological Methods</em></a>.</p>
+<p>The purpose of this series is to show how to compute a Cohen’s-<span class="math inline">\(d\)</span> type effect size when you have longitudinal data on <span class="math inline">\(3+\)</span> time points for two experimental groups. In this first post, we’ll warm up with the basics. In the second post, we’ll get down to business. The data and overall framework come from <span class="citation"><a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">Feingold</a> (<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>)</span>.</p>
+<div id="i-make-assumptions." class="section level3">
+<h3>I make assumptions.</h3>
+<p>This series is an applied tutorial moreso than an introduction. I’m presuming you have a passing familiarity with the following:</p>
+<ul>
+<li><p>You should be familiar with effect sizes, particularly with standardized mean differences. If you need to brush up, consider Cohen’s <span class="citation">(<a href="#ref-cohenStatisticalPowerAnalysis1988a" role="doc-biblioref">1988</a>)</span> authoritative text, or Cummings newer <span class="citation">(<a href="#ref-cummingUnderstandingTheNewStatistics2012" role="doc-biblioref">2012</a>)</span> text. Since we’ll be making extensive use of Feingold’s <span class="citation">(<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>)</span> paper, you should at least save it as a reference. For nice conceptual overview, I also recommend Kelley and Preacher’s <span class="citation">(<a href="#ref-kelley2012effect" role="doc-biblioref">2012</a>)</span> paper, <a href="https://www3.nd.edu/~kkelley/publications/articles/Kelley_and_Preacher_Psychological_Methods_2012.pdf"><em>On effect size</em></a>.</p></li>
+<li><p>Though it won’t be important for this first post, you’ll want to be familiar with multilevel regression for the next–it’s a major part of why I’m making this series! For texts that focus on the longitudinal models relevant for the topic, I recommend <span class="citation"><a href="#ref-raudenbushHLM2002" role="doc-biblioref">Raudenbush &amp; Bryk</a> (<a href="#ref-raudenbushHLM2002" role="doc-biblioref">2002</a>)</span>; <span class="citation"><a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">Singer &amp; Willett</a> (<a href="#ref-singerAppliedLongitudinalData2003" role="doc-biblioref">2003</a>)</span>–the one I personally learned on–; or <span class="citation"><a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">Hoffman</a> (<a href="#ref-hoffmanLongitudinalAnalysisModeling2015" role="doc-biblioref">2015</a>)</span>.</p></li>
+<li><p>To fully befit from the next post, it’ll help if you have a passing familiarity with Bayesian regression (though frequentists will still be able to get the main points). For thorough introductions, I recommend either edition of McElreath’s text <span class="citation">(<a href="#ref-mcelreathStatisticalRethinkingBayesian2020" role="doc-biblioref">2020</a>, <a href="#ref-mcelreathStatisticalRethinkingBayesian2015" role="doc-biblioref">2015</a>)</span>; Kruschke’s <span class="citation">(<a href="#ref-kruschkeDoingBayesianData2015" role="doc-biblioref">2015</a>)</span> text; or Gelman, Hill, and Vehtari’s <span class="citation">(<a href="#ref-gelmanRegressionOtherStories2020" role="doc-biblioref">2020</a>)</span> text. If you go with McElreath, he has a fine series of freely-available lectures <a href="https://www.youtube.com/channel/UCNJK6_DZvcMqNSzQdEkzvzA/playlists">here</a>.</p></li>
+<li><p>All code is in <strong>R</strong> <span class="citation">(<a href="#ref-R-base" role="doc-biblioref">R Core Team, 2020</a>)</span>, with healthy doses of the <strong>tidyverse</strong> <span class="citation">(<a href="#ref-R-tidyverse" role="doc-biblioref">Wickham, 2019</a>; <a href="#ref-wickhamWelcomeTidyverse2019" role="doc-biblioref">Wickham et al., 2019</a>)</span>. Probably the best place to learn about the <strong>tidyverse</strong>-style of coding, as well as an introduction to <strong>R</strong>, is Grolemund and Wickham’s <span class="citation">(<a href="#ref-grolemundDataScience2017" role="doc-biblioref">2017</a>)</span> freely-available online text, <a href="https://r4ds.had.co.nz"><em>R for data science</em></a>.</p></li>
+</ul>
+<p>Here we load our primary <strong>R</strong> packages and adjust the global plotting theme defaults.</p>
+<pre class="r"><code>library(tidyverse)
+library(patchwork)
+
+# adjust the global plotting theme
+theme_set(
+  theme_linedraw() +
+    theme(text = element_text(family = &quot;Times&quot;),
+          panel.grid = element_blank(),
+          strip.text = element_text(margin = margin(b = 3, t = 3)))
+)</code></pre>
+</div>
+<div id="we-need-data." class="section level3">
+<h3>We need data.</h3>
+<p>Happily, Feingold included a working example of synthetic trial data in his paper. You can find the full data set displayed in his Table 1 (p. 46). Here we’ll use a <a href="https://tibble.tidyverse.org/reference/tribble.html">tribble</a> approach to enter those data into <strong>R</strong>.</p>
+<pre class="r"><code>d &lt;-
+  tribble(
+    ~id, ~tx, ~t1, ~t2, ~t3, ~t4,
+    101, -0.5, 3, 5, 5,  7,
+    102, -0.5, 4, 4, 6,  6,
+    103, -0.5, 4, 5, 7,  8,
+    104, -0.5, 5, 6, 6,  8,
+    105, -0.5, 5, 6, 7,  8,
+    106, -0.5, 5, 7, 7,  7,
+    107, -0.5, 5, 6, 8,  8,
+    108, -0.5, 6, 6, 7,  9,
+    109, -0.5, 6, 8, 9,  10,
+    110, -0.5, 7, 7, 8,  9,
+    111,  0.5, 3, 5, 7,  9,
+    112,  0.5, 4, 7, 9,  11,
+    113,  0.5, 4, 6, 8,  11,
+    114,  0.5, 5, 7, 9,  10,
+    115,  0.5, 5, 6, 9,  11,
+    116,  0.5, 5, 7, 10, 10,
+    117,  0.5, 5, 8, 8,  11,
+    118,  0.5, 6, 7, 9,  12,
+    119,  0.5, 6, 9, 11, 13,
+    120,  0.5, 7, 8, 10, 12
+  ) %&gt;% 
+  mutate(`t4-t1`   = t4 - t1,
+         condition = ifelse(tx == -0.5, &quot;control&quot;, &quot;treatment&quot;))
+
+# inspect the first six rows
+head(d)</code></pre>
+<pre><code>## # A tibble: 6 x 8
+##      id    tx    t1    t2    t3    t4 `t4-t1` condition
+##   &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;chr&gt;    
+## 1   101  -0.5     3     5     5     7       4 control  
+## 2   102  -0.5     4     4     6     6       2 control  
+## 3   103  -0.5     4     5     7     8       4 control  
+## 4   104  -0.5     5     6     6     8       3 control  
+## 5   105  -0.5     5     6     7     8       3 control  
+## 6   106  -0.5     5     7     7     7       2 control</code></pre>
+<p>These synthetic data are from a hypothetical clinical trial where (<span class="math inline">\(N = 20\)</span>) participants were randomized into a control group (<code>tx == -0.5</code>, <span class="math inline">\(n = 10\)</span>) or a treatment group (<code>tx == 0.5</code>, <span class="math inline">\(n = 10\)</span>). Their responses on a single outcome variable, <span class="math inline">\(y_i\)</span>, were recorded over four time points, which are recorded in columns <code>t1</code> through <code>t4</code>. The simple difference score between the first (<code>t1</code>) and last time points (<code>t4</code>) was computed in the <code>t4-t1</code> column. For good measure, I threw in a nominal <code>condition</code> variable to help clarify the levels of <code>tx</code>.</p>
+<p>To get a sense of the data, it might be helpful to plot.</p>
+<pre class="r"><code># participant-level trajectories
+p1 &lt;-
+  d %&gt;% 
+  pivot_longer(t1:t4) %&gt;% 
+  mutate(time      = str_extract(name, &quot;\\d&quot;) %&gt;% as.double(),
+         condition = factor(condition, levels = c(&quot;treatment&quot;, &quot;control&quot;))) %&gt;% 
+  
+  ggplot(aes(x = time, y = value, color = condition)) +
+  geom_line(size = 1) +
+  scale_color_viridis_d(end = .75, breaks = NULL) +
+  scale_y_continuous(breaks = 0:4 * 3, limits = c(0, 13)) +
+  labs(subtitle = &quot;participant-level trajectories&quot;,
+       y = &quot;outcome&quot;) +
+  facet_wrap(~id) +
+  theme(strip.text.x = element_text(margin = margin(b = 0.25, t = 0.25)))
+
+# group average trajectories
+p2 &lt;-
+  d %&gt;% 
+  pivot_longer(t1:t4) %&gt;% 
+  mutate(time      = str_extract(name, &quot;\\d&quot;) %&gt;% as.double(),
+         condition = factor(condition, levels = c(&quot;treatment&quot;, &quot;control&quot;))) %&gt;% 
+  group_by(time, condition) %&gt;% 
+  summarise(mean = mean(value)) %&gt;% 
+  
+  ggplot(aes(x = time, y = mean, color = condition)) +
+  geom_line(size = 2) +
+  scale_color_viridis_d(end = .75) +
+  scale_y_continuous(breaks = 0:4 * 3, limits = c(0, 13)) +
+  labs(subtitle = &quot;group averages&quot;,
+       y = &quot;outcome&quot;)
+
+# combine
+p1 + p2 + plot_layout(widths = c(5, 4))</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-3-1.png" width="720" /></p>
+<p>The series of miniature plots on the left shows the trajectory of each participant’s raw data, over time. The larger plot on the right shows the average value for each of the experimental conditions, over time. Although there is some variation across individuals within experimental conditions, clear trends emerge. The plot on the right shows the experimental conditions had the same average values at baseline (<code>t1</code>), both conditions tended to increase over time, but the <code>treatment</code> condition showed larger changes over time, relative to the <code>control</code> condition.</p>
+</div>
+</div>
+<div id="what-do-we-care-about" class="section level2">
+<h2>What do we care about?</h2>
+<p>There are a lot of questions a clinical researcher might want to ask from data of this kind. If we narrow our focus to causal inference<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a> with regards to the treatment conditions, I think there are three fundamental questions we’d want to ask. They all have to do with change over time:</p>
+<ol style="list-style-type: decimal">
+<li>How much did the participants in the control group change, on average?</li>
+<li>How much did the participants in the treatment group change, on average?</li>
+<li>What was the difference in change in the treatment group versus the control group, on average?</li>
+</ol>
+<p>Ideally, we’d like to express our answers to these questions, particularly the third, in terms of a meaningfully defined effect size. That will be the goal of the remainder of this post and the next.</p>
+</div>
+<div id="warm-up-with-just-two-time-points" class="section level2">
+<h2>Warm up with just two time points</h2>
+<p>Before we put on our big-kid pants and start fitting longitudinal growth models, I recommend we follow Feingold’s approach and first focus on how we’d answer these questions with two-time-point data. If we were to drop the variables <code>t2</code> and <code>t3</code>, these data would have the form of a pre/post experiment, which Feingold called an <em>independent-groups pretest–posttest</em> design <span class="citation">(IGPP<a href="#fn2" class="footnote-ref" id="fnref2"><sup>2</sup></a>, <a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009, p. 46</a>)</span>. A major reason to warm up in this way is because much of the work on effect sizes, from <span class="citation"><a href="#ref-cohenStatisticalPowerAnalysis1988a" role="doc-biblioref">Cohen</a> (<a href="#ref-cohenStatisticalPowerAnalysis1988a" role="doc-biblioref">1988</a>)</span> and others <span class="citation">(e.g., <a href="#ref-cummingUnderstandingTheNewStatistics2012" role="doc-biblioref">Cumming, 2012</a>)</span>, has been in the context of cross-sectional and pre/post designs, such as the IGPP. Not only have the analytic strategies centered on these simple cases, but the effect sizes designed for these simple cases are the ones most readers are used to interpreting. One of the big points in Feingold’s paper is we should prefer it when the effect sizes for our longitudinal growth models have clear links to the traditional effect sizes. I am inclined to agree.</p>
+<div id="data-summaries." class="section level3">
+<h3>Data summaries.</h3>
+<p>To get a sense of the pre/post changes in the two conditions, a fine place to start is with summary statistics. Here we compute the means and standard deviations in the outcome variable for each condition at pre and post. We also throw in the means and standard deviations for the change scores, <code>t4-t1</code>.</p>
+<pre class="r"><code>d %&gt;% 
+  pivot_longer(cols = c(t1, t4, `t4-t1`),
+               names_to = &quot;variable&quot;) %&gt;% 
+  group_by(variable, condition) %&gt;% 
+  summarise(mean = mean(value),
+            sd   = sd(value))</code></pre>
+<pre><code>## # A tibble: 6 x 4
+## # Groups:   variable [3]
+##   variable condition  mean    sd
+##   &lt;chr&gt;    &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt;
+## 1 t1       control       5 1.15 
+## 2 t1       treatment     5 1.15 
+## 3 t4       control       8 1.15 
+## 4 t4       treatment    11 1.15 
+## 5 t4-t1    control       3 0.816
+## 6 t4-t1    treatment     6 0.816</code></pre>
+<p>Feingold displayed most of these statistics in his Table 1 (p. 46). Make special note of how consistent the <span class="math inline">\(SD\)</span> values are. This will become important in the second post. Anyway, now we’re ready to start defining the effect sizes. We’ll start with the unstandardized kind.</p>
+</div>
+<div id="unstandardized-mean-differences." class="section level3">
+<h3>Unstandardized mean differences.</h3>
+<p>The version of Cohen’s <span class="math inline">\(d\)</span> we’re ultimately working up to is a special kind of standardized effect size. Yet not all effect sizes are standardized. In cases where the metric of the dependent variable is inherently meaningful, Pek and Flora <span class="citation">(<a href="#ref-pekReportingEffectSizes2018" role="doc-biblioref">2018</a>)</span> actually recommend researchers use <em>un</em>standardized effect sizes. Say we thought the data in this example had values that were inherently meaningful. We could answer the three research questions, above, directly with sample statistics. Here we answer the first two questions by focusing on the means of the change scores, by experimental condition.</p>
+<pre class="r"><code>d %&gt;% 
+  group_by(condition) %&gt;% 
+  summarise(mean_change = mean(`t4-t1`))</code></pre>
+<pre><code>## # A tibble: 2 x 2
+##   condition mean_change
+##   &lt;chr&gt;           &lt;dbl&gt;
+## 1 control             3
+## 2 treatment           6</code></pre>
+<p>To answer to our final question, we simply compute the difference between those two change scores.</p>
+<pre class="r"><code>6 - 3</code></pre>
+<pre><code>## [1] 3</code></pre>
+<p>Although the average values in both groups changed over time, the participants in the <code>treatment</code> condition changed 3 units more, on average, than those in the <code>control</code> condition. Is that difference meaningful? At the moment, it seems hard to say because these data are not actually on an inherently meaningful metric. The whole thing is made up and abstract. We might be better off by using a standardized effect size, instead.</p>
+</div>
+<div id="standardized-mean-differences." class="section level3">
+<h3>Standardized mean differences.</h3>
+<p>The approach above works great if the outcome variable is inherently meaningful and if we have no interest in comparing these results with studies on different outcome variables. In reality, clinical researchers often use sum scores from self-report questionnaires as their primary outcome variables and these scores take on seemingly arbitrary values. Say you work in depression research. There are numerous questionnaires designed to measure depression <span class="citation">(e.g., <a href="#ref-friedThe52SymptomsOfMajorDepression2017" role="doc-biblioref">Fried, 2017</a>)</span> and their sum scores are all scaled differently. The problem is even worse if you’d like to compare two different kinds of outcomes, such as depression and anxiety. This is where standardized effect sizes come in.</p>
+<p>Since we are focusing on the data from the first and last time points, we can use conventional summary-statistic oriented strategies to compute the <em>standardized</em> mean differences. In the literature, you’ll often find standardized mean differences referred to as a Cohen’s <span class="math inline">\(d\)</span>, named after the late <a href="https://en.wikipedia.org/wiki/Jacob_Cohen_(statistician)">Jacob Cohen</a>. I suspect what isn’t always appreciated is that there are many ways to compute <span class="math inline">\(d\)</span> and that “Cohen’s <span class="math inline">\(d\)</span>” can both refer to the general family of standardized mean differences or to a specific kind of standardized mean difference. In addition to Cohen’s original <span class="citation">(<a href="#ref-cohenStatisticalPowerAnalysis1988a" role="doc-biblioref">1988</a>)</span> work, I think Geoff Cumming walked this out nicely in Chapter 11 of his <span class="citation">(<a href="#ref-cummingUnderstandingTheNewStatistics2012" role="doc-biblioref">2012</a>)</span> text. Here we’ll consider two versions of <span class="math inline">\(d\)</span> from Feingold’s paper:</p>
+<blockquote>
+<p>Two effect sizes can be calculated from an IGPP design, one using the standard deviation of the change scores in the denominator and the other using the standard deviation of the raw scores <span class="citation">(<a href="#ref-morrisEstimatingEffectSizes2008" role="doc-biblioref">Morris, 2008</a>; <a href="#ref-morrisCombiningEffectSizeEstimates2002" role="doc-biblioref">Morris &amp; DeShon, 2002</a>)</span>:</p>
+<p><span class="math display">\[\begin{align*}
+d_\text{IGPP-change} &amp; = (M_\text{change-T} / SD_\text{change-T}) - (M_\text{change-C} / SD_\text{change-C}) \\
+&amp; = (6/0.82) - (3/0.82) = 3.67,
+\end{align*}\]</span></p>
+<p>where <span class="math inline">\(SD_\text{change-T}\)</span> is the [standard deviation for the change scores]<a href="#fn3" class="footnote-ref" id="fnref3"><sup>3</sup></a> for the treatment group and <span class="math inline">\(SD_\text{change-T}\)</span> is the [standard deviation for the change scores] for the control group. (If homogeneity of variance across conditions is assumed, each of these terms can be replaced by <span class="math inline">\(SD_\text{change}\)</span>).</p>
+<p><span class="math display">\[\begin{align*}
+d_\text{IGPP-raw} &amp; = (M_\text{change-T} / SD_\text{raw(pre-T)}) - (M_\text{change-C} / SD_\text{raw(pre-C)}) \\
+&amp; = (6/1.15) - (3/1.15) = 2.60,
+\end{align*}\]</span></p>
+<p>where <span class="math inline">\(M_\text{change-T}\)</span> is the mean of the change scores for the treatment group, <span class="math inline">\(M_\text{change-C}\)</span> is the mean of change scores for the control group, <span class="math inline">\(SD_\text{raw(pre-T)}\)</span> is the pretest <span class="math inline">\(SD\)</span> for the treatment group, and <span class="math inline">\(SD_\text{raw(pre-C)}\)</span> is the pretest <span class="math inline">\(SD\)</span> for the control group. (If homogeneity of variance is assumed, each of the last two terms can be replaced by <span class="math inline">\(SD_\text{raw}\)</span>.) (p. 47)</p>
+</blockquote>
+<p>We should practice computing these values by hand. First, we compute the group-level summary statistics and save each value separately for further use.</p>
+<pre class="r"><code># group-level change score means
+m_change_t &lt;- filter(d, tx ==  &quot;0.5&quot;) %&gt;% summarise(m = mean(`t4-t1`)) %&gt;% pull()  # 6
+m_change_c &lt;- filter(d, tx == &quot;-0.5&quot;) %&gt;% summarise(m = mean(`t4-t1`)) %&gt;% pull()  # 3
+
+# group-level change score sds
+sd_change_t &lt;- filter(d, tx ==  &quot;0.5&quot;) %&gt;% summarise(s = sd(`t4-t1`)) %&gt;% pull()  # 0.8164966
+sd_change_c &lt;- filter(d, tx == &quot;-0.5&quot;) %&gt;% summarise(s = sd(`t4-t1`)) %&gt;% pull()  # 0.8164966
+
+# group-level baseline sds
+sd_raw_pre_t &lt;- filter(d, tx ==  &quot;0.5&quot;) %&gt;% summarise(s = sd(t1)) %&gt;% pull()  # 1.154701
+sd_raw_pre_c &lt;- filter(d, tx == &quot;-0.5&quot;) %&gt;% summarise(s = sd(t1)) %&gt;% pull()  # 1.154701</code></pre>
+<p>With all those values saved, here’s how we might use the first equation, above, to compute Feingold’s <span class="math inline">\(d_\text{IGPP-change}\)</span>.</p>
+<pre class="r"><code>(m_change_t / sd_change_t) - (m_change_c / sd_change_c)</code></pre>
+<pre><code>## [1] 3.674235</code></pre>
+<p>In a similar way, here’s how we might the second equation to compute <span class="math inline">\(d_\text{IGPP-raw}\)</span>.</p>
+<pre class="r"><code>(m_change_t / sd_raw_pre_t) - (m_change_c / sd_raw_pre_c)</code></pre>
+<pre><code>## [1] 2.598076</code></pre>
+<p>In most areas of psychology, <span class="math inline">\(d\)</span>’s of this size would seem large. Whether researchers prefer the <span class="math inline">\(d_\text{IGPP-change}\)</span> approach or the <span class="math inline">\(d_\text{IGPP-raw}\)</span> approach, both return effect sizes in the form of a <em>standardized difference of differences</em>. The primary question is what values to standardize the differences by (i.e., which <span class="math inline">\(SD\)</span> estimates might we place in the denominators). As discussed by both <span class="citation"><a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">Feingold</a> (<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>)</span> and <span class="citation"><a href="#ref-cummingUnderstandingTheNewStatistics2012" role="doc-biblioref">Cumming</a> (<a href="#ref-cummingUnderstandingTheNewStatistics2012" role="doc-biblioref">2012</a>)</span>, researchers are at liberty to make rational decisions on how to standardize their variables, and thus how to compute <span class="math inline">\(d\)</span>. Whatever you decide for your research, just make sure you clarify your choice and your formulas for your audience.</p>
+</div>
+<div id="extensions." class="section level3">
+<h3>Extensions.</h3>
+<p>This is about as far as we’re going to go with the IGPP version of Feingold’s synthetic data. But if you do end up with data of this kind or similar, there are other things to consider. Real brief, here are two:</p>
+<div id="its-good-to-express-uncertainty." class="section level4">
+<h4>It’s good to express uncertainty.</h4>
+<p>Just like any other statistical estimate, we should express the uncertainty in our effect sizes, somehow. In the seventh edition of the APA <em>Publication Manual</em>, we read: “whenever possible, provide a confidence interval for each effect size reported to indicate the precision of estimation of the effect size” <span class="citation">(<a href="#ref-apaPublicationManual2020" role="doc-biblioref">American Psychological Association, 2020, p. 89</a>)</span><a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a>. Since the ultimate purpose of this mini blog series is to show how to compute effect sizes for multilevel growth models, I am not going to dive into this issue, here. We’re just warming up for the main event in the next post. But if you ever need to compute 95% CIs for <span class="math inline">\(d_\text{IGPP-change}\)</span> or <span class="math inline">\(d_\text{IGPP-raw}\)</span> based on IGPP data, check out Chapter 11 in <span class="citation"><a href="#ref-cummingUnderstandingTheNewStatistics2012" role="doc-biblioref">Cumming</a> (<a href="#ref-cummingUnderstandingTheNewStatistics2012" role="doc-biblioref">2012</a>)</span><a href="#fn5" class="footnote-ref" id="fnref5"><sup>5</sup></a>.</p>
+</div>
+<div id="there-are-many-more-ds." class="section level4">
+<h4>There are many more <span class="math inline">\(d\)</span>’s.</h4>
+<p>We’ve already mentioned there are several kinds of Cohen’s <span class="math inline">\(d\)</span> effect sizes. With Feingold’s data, we practiced two: <span class="math inline">\(d_\text{IGPP-change}\)</span> and <span class="math inline">\(d_\text{IGPP-raw}\)</span>. Feingold built his paper on the foundation of <span class="citation"><a href="#ref-morrisCombiningEffectSizeEstimates2002" role="doc-biblioref">Morris &amp; DeShon</a> (<a href="#ref-morrisCombiningEffectSizeEstimates2002" role="doc-biblioref">2002</a>)</span>, which covered a larger variety of <span class="math inline">\(d\)</span>’s suited for cross-sectional and pre/post designs with one or two experimental conditions. Morris and DeShon’s writing style was accessible and I liked their statistical notation. You might check out their paper and expand your <span class="math inline">\(d\)</span> repertoire.</p>
+</div>
+</div>
+</div>
+<div id="what-we-learned-and-whats-soon-to-come" class="section level2">
+<h2>What we learned and what’s soon to come</h2>
+<p>In this first post, we learned:</p>
+<ul>
+<li>Effect sizes for experimental trials analyzed with multilevel growth models aren’t straightforward.</li>
+<li>Much of the effect size literature is based on simple cross-sectional or two-time-point designs with one or two groups.</li>
+<li>Effect sizes can be standardized or unstandardized.</li>
+<li>“Cohen’s <span class="math inline">\(d\)</span>” can refer to either a general class of standardized mean differences, or to a specific standardized mean differences.</li>
+<li>As discussed in <span class="citation"><a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">Feingold</a> (<a href="#ref-feingoldEffectSizeForGMA2009" role="doc-biblioref">2009</a>)</span>, the two effect sizes recommended for IGPP designs are <span class="math inline">\(d_\text{IGPP-change}\)</span> or <span class="math inline">\(d_\text{IGPP-raw}\)</span>, both of which can be computed with simple summary statistics.</li>
+</ul>
+<p>Stay tuned for the second post in this series, where we’ll extend these skills to two-group experimental data with more than two time points. The multilevel growth model will make its grand appearance and it’ll just be great!</p>
+</div>
+<div id="session-info" class="section level2">
+<h2>Session info</h2>
+<pre class="r"><code>sessionInfo()</code></pre>
+<pre><code>## R version 4.0.4 (2021-02-15)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Catalina 10.15.7
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] patchwork_1.1.1 forcats_0.5.1   stringr_1.4.0   dplyr_1.0.5    
+##  [5] purrr_0.3.4     readr_1.4.0     tidyr_1.1.3     tibble_3.1.0   
+##  [9] ggplot2_3.3.3   tidyverse_1.3.0
+## 
+## loaded via a namespace (and not attached):
+##  [1] tidyselect_1.1.0  xfun_0.22         haven_2.3.1       colorspace_2.0-0 
+##  [5] vctrs_0.3.6       generics_0.1.0    viridisLite_0.3.0 htmltools_0.5.1.1
+##  [9] yaml_2.2.1        utf8_1.1.4        rlang_0.4.10      pillar_1.5.1     
+## [13] withr_2.4.1       glue_1.4.2        DBI_1.1.0         dbplyr_2.0.0     
+## [17] modelr_0.1.8      readxl_1.3.1      lifecycle_1.0.0   munsell_0.5.0    
+## [21] blogdown_1.3      gtable_0.3.0      cellranger_1.1.0  rvest_0.3.6      
+## [25] evaluate_0.14     labeling_0.4.2    knitr_1.31        fansi_0.4.2      
+## [29] highr_0.8         broom_0.7.5       Rcpp_1.0.6        scales_1.1.1     
+## [33] backports_1.2.1   jsonlite_1.7.2    farver_2.0.3      fs_1.5.0         
+## [37] hms_0.5.3         digest_0.6.27     stringi_1.5.3     bookdown_0.21    
+## [41] grid_4.0.4        cli_2.3.1         tools_4.0.4       magrittr_2.0.1   
+## [45] crayon_1.4.1      pkgconfig_2.0.3   ellipsis_0.3.1    xml2_1.3.2       
+## [49] reprex_0.3.0      lubridate_1.7.9.2 assertthat_0.2.1  rmarkdown_2.7    
+## [53] httr_1.4.2        rstudioapi_0.13   R6_2.5.0          compiler_4.0.4</code></pre>
+</div>
+<div id="references" class="section level2 unnumbered">
+<h2>References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" line-spacing="2">
+<div id="ref-apaPublicationManual2020" class="csl-entry">
+American Psychological Association. (2020). <em>Publication manual of the <span>American Psychological Association</span></em> (Seventh Edition). <span>American Psychological Association</span>. <a href="https://apastyle.apa.org/products/publication-manual-7th-edition">https://apastyle.apa.org/products/publication-manual-7th-edition</a>
+</div>
+<div id="ref-cohenStatisticalPowerAnalysis1988a" class="csl-entry">
+Cohen, J. (1988). <em>Statistical power analysis for the behavioral sciences</em>. <span>L. Erlbaum Associates</span>. <a href="https://www.worldcat.org/title/statistical-power-analysis-for-the-behavioral-sciences/oclc/17877467">https://www.worldcat.org/title/statistical-power-analysis-for-the-behavioral-sciences/oclc/17877467</a>
+</div>
+<div id="ref-cummingUnderstandingTheNewStatistics2012" class="csl-entry">
+Cumming, G. (2012). <em>Understanding the new statistics: <span>Effect</span> sizes, confidence intervals, and meta-analysis</em>. <span>Routledge</span>. <a href="https://www.routledge.com/Understanding-The-New-Statistics-Effect-Sizes-Confidence-Intervals-and/Cumming/p/book/9780415879682">https://www.routledge.com/Understanding-The-New-Statistics-Effect-Sizes-Confidence-Intervals-and/Cumming/p/book/9780415879682</a>
+</div>
+<div id="ref-feingoldEffectSizeForGMA2009" class="csl-entry">
+Feingold, A. (2009). Effect sizes for growth-modeling analysis for controlled clinical trials in the same metric as for classical analysis. <em>Psychological Methods</em>, <em>14</em>(1), 43. <a href="https://doi.org/10.1037/a0014699">https://doi.org/10.1037/a0014699</a>
+</div>
+<div id="ref-friedThe52SymptomsOfMajorDepression2017" class="csl-entry">
+Fried, E. I. (2017). The 52 symptoms of major depression: <span>Lack</span> of content overlap among seven common depression scales. <em>Journal of Affective Disorders</em>, <em>208</em>, 191–197. <a href="https://doi.org/10.1016/j.jad.2016.10.019">https://doi.org/10.1016/j.jad.2016.10.019</a>
+</div>
+<div id="ref-gelmanRegressionOtherStories2020" class="csl-entry">
+Gelman, A., Hill, J., &amp; Vehtari, A. (2020). <em>Regression and other stories</em>. <span>Cambridge University Press</span>. <a href="https://doi.org/10.1017/9781139161879">https://doi.org/10.1017/9781139161879</a>
+</div>
+<div id="ref-grolemundDataScience2017" class="csl-entry">
+Grolemund, G., &amp; Wickham, H. (2017). <em>R for data science</em>. <span>O’Reilly</span>. <a href="https://r4ds.had.co.nz">https://r4ds.had.co.nz</a>
+</div>
+<div id="ref-hoffmanLongitudinalAnalysisModeling2015" class="csl-entry">
+Hoffman, L. (2015). <em>Longitudinal analysis: <span>Modeling</span> within-person fluctuation and change</em> (1 edition). <span>Routledge</span>. <a href="https://www.routledge.com/Longitudinal-Analysis-Modeling-Within-Person-Fluctuation-and-Change/Hoffman/p/book/9780415876025">https://www.routledge.com/Longitudinal-Analysis-Modeling-Within-Person-Fluctuation-and-Change/Hoffman/p/book/9780415876025</a>
+</div>
+<div id="ref-kelley2012effect" class="csl-entry">
+Kelley, K., &amp; Preacher, K. J. (2012). On effect size. <em>Psychological Methods</em>, <em>17</em>(2), 137. <a href="https://doi.org/10.1037/a0028086">https://doi.org/10.1037/a0028086</a>
+</div>
+<div id="ref-kruschkeDoingBayesianData2015" class="csl-entry">
+Kruschke, J. K. (2015). <em>Doing <span>Bayesian</span> data analysis: <span>A</span> tutorial with <span>R</span>, <span>JAGS</span>, and <span>Stan</span></em>. <span>Academic Press</span>. <a href="https://sites.google.com/site/doingbayesiandataanalysis/">https://sites.google.com/site/doingbayesiandataanalysis/</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2020" class="csl-entry">
+McElreath, R. (2020). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em> (Second Edition). <span>CRC Press</span>. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-mcelreathStatisticalRethinkingBayesian2015" class="csl-entry">
+McElreath, R. (2015). <em>Statistical rethinking: <span>A Bayesian</span> course with examples in <span>R</span> and <span>Stan</span></em>. <span>CRC press</span>. <a href="https://xcelab.net/rm/statistical-rethinking/">https://xcelab.net/rm/statistical-rethinking/</a>
+</div>
+<div id="ref-morrisEstimatingEffectSizes2008" class="csl-entry">
+Morris, S. B. (2008). Estimating effect sizes from pretest-posttest-control group designs. <em>Organizational Research Methods</em>, <em>11</em>(2), 364–386. <a href="https://doi.org/10.1177/1094428106291059">https://doi.org/10.1177/1094428106291059</a>
+</div>
+<div id="ref-morrisCombiningEffectSizeEstimates2002" class="csl-entry">
+Morris, S. B., &amp; DeShon, R. P. (2002). Combining effect size estimates in meta-analysis with repeated measures and independent-groups designs. <em>Psychological Methods</em>, <em>7</em>(1), 105. <a href="https://doi.org/10.1037/1082-989X.7.1.105">https://doi.org/10.1037/1082-989X.7.1.105</a>
+</div>
+<div id="ref-pekReportingEffectSizes2018" class="csl-entry">
+Pek, J., &amp; Flora, D. B. (2018). Reporting effect sizes in original psychological research: <span>A</span> discussion and tutorial. <em>Psychological Methods</em>, <em>23</em>(2), 208. https://doi.org/<a href="https://doi.apa.org/fulltext/2017-10871-001.html">https://doi.apa.org/fulltext/2017-10871-001.html</a>
+</div>
+<div id="ref-R-base" class="csl-entry">
+R Core Team. (2020). <em>R: <span>A</span> language and environment for statistical computing</em>. <span>R Foundation for Statistical Computing</span>. <a href="https://www.R-project.org/">https://www.R-project.org/</a>
+</div>
+<div id="ref-raudenbushHLM2002" class="csl-entry">
+Raudenbush, S. W., &amp; Bryk, A. S. (2002). <em>Hierarchical linear models: <span>Applications</span> and data analysis methods</em> (Second Edition). <span>SAGE Publications, Inc</span>. <a href="https://us.sagepub.com/en-us/nam/hierarchical-linear-models/book9230">https://us.sagepub.com/en-us/nam/hierarchical-linear-models/book9230</a>
+</div>
+<div id="ref-singerAppliedLongitudinalData2003" class="csl-entry">
+Singer, J. D., &amp; Willett, J. B. (2003). <em>Applied longitudinal data analysis: <span>Modeling</span> change and event occurrence</em>. <span>Oxford University Press, USA</span>. <a href="https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968">https://oxford.universitypressscholarship.com/view/10.1093/acprof:oso/9780195152968.001.0001/acprof-9780195152968</a>
+</div>
+<div id="ref-R-tidyverse" class="csl-entry">
+Wickham, H. (2019). <em><span class="nocase">tidyverse</span>: <span>Easily</span> install and load the ’tidyverse’</em>. <a href="https://CRAN.R-project.org/package=tidyverse">https://CRAN.R-project.org/package=tidyverse</a>
+</div>
+<div id="ref-wickhamWelcomeTidyverse2019" class="csl-entry">
+Wickham, H., Averick, M., Bryan, J., Chang, W., McGowan, L. D., François, R., Grolemund, G., Hayes, A., Henry, L., Hester, J., Kuhn, M., Pedersen, T. L., Miller, E., Bache, S. M., Müller, K., Ooms, J., Robinson, D., Seidel, D. P., Spinu, V., … Yutani, H. (2019). Welcome to the tidyverse. <em>Journal of Open Source Software</em>, <em>4</em>(43), 1686. <a href="https://doi.org/10.21105/joss.01686">https://doi.org/10.21105/joss.01686</a>
+</div>
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>If you are unfamiliar with causal inference and confused over why causal inference might lead us to limit our focus in this way, check out Chapters 18 through 21 in <span class="citation"><a href="#ref-gelmanRegressionOtherStories2020" role="doc-biblioref">Gelman et al.</a> (<a href="#ref-gelmanRegressionOtherStories2020" role="doc-biblioref">2020</a>)</span>.<a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+<li id="fn2"><p>I’m not in love with introducing this new acronym. But if we want to follow along with Feingold, we may as well get used to his term.<a href="#fnref2" class="footnote-back">↩︎</a></p></li>
+<li id="fn3"><p>In the original paper, Feingold used the term “mean change score” here as well as a bit later in the sentence. After reading this through several times and working through his examples, I’m confident these were typos. With technical material of this kind, it’s hard to avoid a typo or two.<a href="#fnref3" class="footnote-back">↩︎</a></p></li>
+<li id="fn4"><p>We Bayesians, of course, can forgive the frequentist bias in the wording of the APA’s otherwise sound recommendation.<a href="#fnref4" class="footnote-back">↩︎</a></p></li>
+<li id="fn5"><p>Could you compute Bayesian credible intervals for IGPP effect sizes by adjusting some of the strategies from my earlier blog post, <a href="Regression%20models%20for%202-timepoint%20non-experimental%20data"><em>Regression models for 2-timepoint non-experimental data</em></a>? Yes, you could.<a href="#fnref5" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
