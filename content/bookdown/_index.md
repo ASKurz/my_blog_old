@@ -1,19 +1,10 @@
-+++
-# Custom widget.
-# An example of using the custom widget to create your own homepage section.
-# To create more sections, duplicate this file and edit the values below as desired.
-
-# widget = "custom"
-# active = true
-date = 2016-04-20T00:00:00
-
-# Note: a full width section format can be enabled by commenting out the `title` and `subtitle` with a `#`.
-title = "Books"
-
-# Order that this section will appear in.
-weight = 50
-
-+++
+---
+header:
+  caption: ""
+  image: ""
+title: Books
+type: page
+---
 
 At present, all of my books share a similar format and goal. I am a fan of applied Bayesian statistics. In recent years, scholars have released user-friendly Bayesian software packages and have published reasonably-accessible introductory books on applied Bayesian analysis. This have been a boon for us all.
 
