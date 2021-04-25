@@ -1,0 +1,30 @@
+---
+title: new post
+author: A. Solomon Kurz
+date: '2021-04-25'
+slug: ''
+categories: []
+tags:
+  - R
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2021-04-25T16:04:46-07:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>Load</p>
+<pre class="r"><code>library(tidyverse)</code></pre>
+<p>plot</p>
+<pre class="r"><code>mtcars %&gt;% 
+  ggplot(aes(mpg)) +
+  geom_histogram(bins = 25)</code></pre>
+<p><img src="{{< blogdown/postref >}}index_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
